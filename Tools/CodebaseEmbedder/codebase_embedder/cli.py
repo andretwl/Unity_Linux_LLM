@@ -10,7 +10,7 @@ from .config import CodebaseEmbedderConfig
 from .embeddings import EmbeddingClient
 from .indexer import build_index, load_chunks
 from .qdrant_store import QdrantStore
-from .query import format_results, lexical_query, qdrant_query
+from .query import build_query_response, format_query_workflow, format_results, lexical_query, qdrant_query
 
 
 def _config(args: argparse.Namespace) -> CodebaseEmbedderConfig:
@@ -71,15 +71,18 @@ def cmd_index(args: argparse.Namespace) -> int:
 def cmd_query(args: argparse.Namespace) -> int:
     cfg = _config(args)
     try:
-        results = lexical_query(cfg, args.question, args.limit) if args.local else qdrant_query(cfg, args.question, args.limit)
+        response = build_query_response(cfg, args.question, args.limit, local=args.local)
     except Exception as exc:  # noqa: BLE001
         if args.local:
             raise
         print(f"Qdrant query failed ({exc}); falling back to local lexical artifacts.", file=sys.stderr)
-        results = lexical_query(cfg, args.question, args.limit)
+        response = build_query_response(cfg, args.question, args.limit, local=True)
+    results = response["results"]
     if args.json:
-        print(json.dumps(results, indent=2, sort_keys=True))
+        print(json.dumps(response, indent=2, sort_keys=True))
     else:
+        print(format_query_workflow(args.question))
+        print("")
         print(format_results(results))
     return 0
 

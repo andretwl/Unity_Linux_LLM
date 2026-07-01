@@ -8,6 +8,14 @@ from .config import CodebaseEmbedderConfig
 from .embeddings import EmbeddingClient
 from .indexer import load_chunks
 from .qdrant_store import QdrantStore
+from .workflow import (
+    QUERY_CLASS_BEHAVIOR,
+    QUERY_CLASS_OWNERSHIP,
+    QUERY_CLASS_SCENE_INTEGRATION,
+    QUERY_CLASS_STRUCTURAL,
+    classify_prompt,
+    query_workflow,
+)
 
 STRUCTURAL_TERMS = {
     "namespace", "namespaces", "using", "usings", "reference", "references",
@@ -28,6 +36,8 @@ STRUCTURAL_RECORD_BOOSTS = {
     "member": 4.0,
 }
 
+GENERIC_QUERY_STOPWORDS = {"script", "scripts", "handle", "handles", "handled", "manage", "manages", "managed"}
+
 
 def _region_sort_key(payload: dict) -> int:
     """Return sort order for unity_region: Runtime=0, Scene=1, Editor=2, other=3."""
@@ -43,7 +53,11 @@ def _region_sort_key(payload: dict) -> int:
 
 def lexical_query(config: CodebaseEmbedderConfig, question: str, limit: int = 8) -> list[dict]:
     terms = _query_terms(question)
-    structural = _is_structural_query(question)
+    query_class = classify_prompt(question)
+    structural = query_class == QUERY_CLASS_STRUCTURAL
+    owner_intent = query_class == QUERY_CLASS_OWNERSHIP
+    behavior_intent = query_class == QUERY_CLASS_BEHAVIOR
+    scene_intent = query_class == QUERY_CLASS_SCENE_INTEGRATION
     results = []
     for rec in load_chunks(config.artifact_dir):
         raw_hay = rec.text + " " + json.dumps(rec.payload) + " " + _payload_aliases(rec.payload)
@@ -52,6 +66,11 @@ def lexical_query(config: CodebaseEmbedderConfig, question: str, limit: int = 8)
         if not structural and rec.record_type in {"type", "member", "serialized_field"}:
             score *= 3
         score += _record_type_boost(rec.payload, structural)
+        score += _owner_record_boost(rec.payload, owner_intent)
+        score += _behavior_record_boost(rec.payload, behavior_intent)
+        score += _scene_record_boost(rec.payload, scene_intent)
+        score += _symbol_name_boost(rec.payload, terms)
+        score += _path_term_boost(rec.payload, terms)
         if terms and all(t in hay for t in terms):
             score += 25
         if score:
@@ -70,7 +89,7 @@ def _query_terms(question: str) -> list[str]:
     stopwords = {
         "where", "what", "which", "implemented", "implementation", "with", "that", "this",
         "the", "and", "for", "is", "list", "all", "every", "project", "from", "into", "about",
-    }
+    } | GENERIC_QUERY_STOPWORDS
     terms: list[str] = []
     for raw in question.replace("_", " ").split():
         token = raw.lower().strip(".,:;!?()[]{}\"'")
@@ -83,7 +102,11 @@ def _query_terms(question: str) -> list[str]:
 
 
 def qdrant_query(config: CodebaseEmbedderConfig, question: str, limit: int = 8) -> list[dict]:
-    structural = _is_structural_query(question)
+    query_class = classify_prompt(question)
+    structural = query_class == QUERY_CLASS_STRUCTURAL
+    owner_intent = query_class == QUERY_CLASS_OWNERSHIP
+    behavior_intent = query_class == QUERY_CLASS_BEHAVIOR
+    scene_intent = query_class == QUERY_CLASS_SCENE_INTEGRATION
     emb = EmbeddingClient(config.localai_base_url, config.embedding_model)
     vec = emb.embed([question])[0]
     candidate_limit = max(80 if structural else 50, limit * (20 if structural else 10))
@@ -109,6 +132,11 @@ def qdrant_query(config: CodebaseEmbedderConfig, question: str, limit: int = 8) 
         if terms and all(t in hay for t in terms):
             lexical_boost += 0.20
         lexical_boost += 0.02 * _record_type_boost(payload, structural)
+        lexical_boost += 0.02 * _owner_record_boost(payload, owner_intent)
+        lexical_boost += 0.02 * _behavior_record_boost(payload, behavior_intent)
+        lexical_boost += 0.02 * _scene_record_boost(payload, scene_intent)
+        lexical_boost += 0.02 * _symbol_name_boost(payload, terms)
+        lexical_boost += 0.02 * _path_term_boost(payload, terms)
         item["score"] = float(item.get("score", 0.0)) + lexical_boost
     # Primary sort: high score first; secondary: Runtime before Editor before other
     candidates.sort(key=lambda r: (-r.get("score", 0.0), _region_sort_key(r.get("payload", {}))))
@@ -129,15 +157,136 @@ def format_results(results: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def format_query_workflow(question: str, has_scene_context: bool = False) -> str:
+    plan = query_workflow(question, has_scene_context)
+    return (
+        f"Workflow: {plan['query_class']}\n"
+        f"Preferred sources: {', '.join(plan['preferred_sources'])}"
+    )
+
+
+def build_query_response(config: CodebaseEmbedderConfig, question: str, limit: int = 8, local: bool = False) -> dict:
+    results = lexical_query(config, question, limit) if local else qdrant_query(config, question, limit)
+    workflow = query_workflow(question, has_scene_context=False)
+    return {
+        "question": question,
+        "workflow": workflow,
+        "results": results,
+    }
+
+
 def _is_structural_query(question: str) -> bool:
-    q = question.lower()
-    return any(term in q for term in STRUCTURAL_TERMS)
+    return classify_prompt(question) == QUERY_CLASS_STRUCTURAL
 
 
 def _record_type_boost(payload: dict, structural: bool) -> float:
     if not structural:
         return 0.0
     return STRUCTURAL_RECORD_BOOSTS.get(payload.get("record_type", ""), 0.0)
+
+
+def _is_owner_query(question: str) -> bool:
+    return classify_prompt(question) == QUERY_CLASS_OWNERSHIP
+
+
+def _owner_record_boost(payload: dict, owner_intent: bool) -> float:
+    if not owner_intent:
+        return 0.0
+    boosts = {
+        "type": 14.0,
+        "file_overview": 12.0,
+        "runtime_summary": 8.0,
+        "namespace": 4.0,
+        "assembly": 3.0,
+        "member": -8.0,
+        "serialized_field": -4.0,
+    }
+    bonus = boosts.get(payload.get("record_type", ""), 0.0)
+    region = str(payload.get("unity_region") or "")
+    if region == "Runtime":
+        bonus += 6.0
+    elif region == "Editor":
+        bonus -= 6.0
+    elif region == "Tests":
+        bonus -= 10.0
+    type_name = str(payload.get("type_name") or "")
+    if payload.get("record_type") == "type" and type_name.endswith(("Request", "Response", "Payload", "Point", "Metadata")):
+        bonus -= 16.0
+    if type_name.startswith("Test"):
+        bonus -= 12.0
+    if type_name.endswith("Sample"):
+        bonus -= 10.0
+    return bonus
+
+
+def _behavior_record_boost(payload: dict, behavior_intent: bool) -> float:
+    if not behavior_intent:
+        return 0.0
+    boosts = {
+        "member": 14.0,
+        "type": 10.0,
+        "relation": 8.0,
+        "runtime_summary": 8.0,
+        "file_overview": 6.0,
+        "assembly": -4.0,
+    }
+    bonus = boosts.get(payload.get("record_type", ""), 0.0)
+    if str(payload.get("unity_region") or "") == "Runtime":
+        bonus += 6.0
+    return bonus
+
+
+def _scene_record_boost(payload: dict, scene_intent: bool) -> float:
+    if not scene_intent:
+        return 0.0
+    boosts = {
+        "runtime_summary": 14.0,
+        "file_overview": 12.0,
+        "type": 10.0,
+        "member": 2.0,
+        "relation": 6.0,
+        "assembly": -2.0,
+        "using_directive": -8.0,
+    }
+    bonus = boosts.get(payload.get("record_type", ""), 0.0)
+    region = str(payload.get("unity_region") or "")
+    if region == "Runtime":
+        bonus += 6.0
+    elif region == "Editor":
+        bonus -= 4.0
+    elif region == "Scene":
+        bonus += 8.0
+    return bonus
+
+
+def _symbol_name_boost(payload: dict, terms: list[str]) -> float:
+    if not terms:
+        return 0.0
+    symbol = str(payload.get("type_name") or payload.get("member_name") or payload.get("using_namespace") or "")
+    if not symbol:
+        return 0.0
+    symbol_words = _camel_words(symbol).lower().split()
+    if not symbol_words:
+        return 0.0
+    matched = sum(1 for term in terms if term in symbol_words)
+    bonus = 6.0 * matched
+    if matched == len(terms):
+        bonus += 18.0
+    return bonus
+
+
+def _path_term_boost(payload: dict, terms: list[str]) -> float:
+    if not terms:
+        return 0.0
+    path_text = str(payload.get("path") or "") + " " + str(payload.get("relative_dir") or "")
+    words = _camel_words(path_text).lower().split()
+    if not words:
+        return 0.0
+    matched = sum(1 for term in terms if term in words)
+    bonus = 4.0 * matched
+    if matched >= 2:
+        bonus += 8.0
+    return bonus
 
 
 def _payload_aliases(payload: dict) -> str:

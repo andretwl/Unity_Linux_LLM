@@ -49,3 +49,21 @@ def test_analyze_csharp_emits_namespace_and_using_records(tmp_path: Path):
     assert using_record.payload["declared_namespaces"] == ["NPCSystem.Dialogue"]
     assert "LLMUnity" in file_record.payload["using_directives"]
     assert any(rel.relation_kind == "namespace-uses-namespace" and rel.source == "NPCSystem.Dialogue" and rel.target == "LLMUnity" for rel in relations)
+
+
+def test_analyze_csharp_ignores_xml_summary_text_as_fake_type(tmp_path: Path):
+    source = tmp_path / "Assets/LLMUnity/Runtime/LLMClient.cs"
+    source.parent.mkdir(parents=True)
+    source.write_text(
+        "/// <summary>\n"
+        "/// Unity MonoBehaviour base class for LLM client functionality.\n"
+        "/// </summary>\n"
+        "namespace LLMUnity { public class LLMClient : MonoBehaviour {} }\n"
+    )
+    asm = AssemblyRecord(name="undream.llmunity.Runtime", path="Assets/LLMUnity/Runtime/undream.llmunity.Runtime.asmdef", root_namespace="LLMUnity")
+
+    records, _relations = analyze_csharp_files(tmp_path, [source], [asm])
+
+    type_names = [r.payload["type_name"] for r in records if r.record_type == "type"]
+    assert "LLMClient" in type_names
+    assert "for" not in type_names

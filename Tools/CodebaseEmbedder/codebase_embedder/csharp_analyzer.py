@@ -8,10 +8,11 @@ from .discovery import classify_unity_region
 from .records import IndexRecord, RelationRecord
 
 NS_RE = re.compile(r"\bnamespace\s+([A-Za-z_][A-Za-z0-9_.]*)")
-TYPE_RE = re.compile(r"(?P<attrs>(?:\s*\[[^\]]+\]\s*)*)(?P<mods>\b(?:public|internal|private|protected|static|abstract|sealed|partial|readonly|unsafe|new)\s+)*(?P<kind>class|struct|interface|enum)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*(?P<bases>[^\{]+))?", re.MULTILINE)
-METHOD_RE = re.compile(r"(?P<attrs>(?:\s*\[[^\]]+\]\s*)*)(?P<sig>\b(?:public|private|protected|internal|static|async|virtual|override|sealed|partial|extern|new)\s+[A-Za-z0-9_<>,\\.\?\[\]\s]+\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\([^;{}]*\))", re.MULTILINE)
-FIELD_RE = re.compile(r"(?P<attrs>(?:\s*\[[^\]]+\]\s*)*)\s*(?P<mods>public|private|protected|internal)(?P<rest>[^;{}()=]+)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*(?:=[^;]*)?;", re.MULTILINE)
+TYPE_RE = re.compile(r"(?:^|[;{}])\s*(?P<attrs>(?:\[[^\]]+\]\s*)*)(?P<mods>(?:(?:public|internal|private|protected|static|abstract|sealed|partial|readonly|unsafe|new)\s+)*)?(?P<kind>class|struct|interface|enum)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*(?P<bases>[^\{]+))?", re.MULTILINE)
+METHOD_RE = re.compile(r"(?:^|[;{}])\s*(?P<attrs>(?:\[[^\]]+\]\s*)*)(?P<sig>(?:public|private|protected|internal|static|async|virtual|override|sealed|partial|extern|new)\s+[A-Za-z0-9_<>,\\.\?\[\]\s]+\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\([^;{}]*\))", re.MULTILINE)
+FIELD_RE = re.compile(r"(?:^|[;{}])\s*(?P<attrs>(?:\[[^\]]+\]\s*)*)(?P<mods>public|private|protected|internal)(?P<rest>[^;{}()=]+)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*(?:=[^;]*)?;", re.MULTILINE)
 CALL_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)?)\s*\(")
+
 USING_RE = re.compile(r"^\s*using\s+([A-Za-z_][A-Za-z0-9_.]*)\s*;", re.MULTILINE)
 SUMMARY_RE = re.compile(r"///\s*<summary>\s*(.*?)\s*</summary>", re.DOTALL)
 

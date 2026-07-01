@@ -8,7 +8,7 @@ This project is a Unity `6000.5.1f1` prototype centered on `Assets/Scenes/NPCDia
 
 - direct LocalAI chat requests from `NPCDialogueManager`
 - local LLMUnity `.rag` retrieval with a MiniLM embedding model
-- optional Qdrant and Cognee memory layers
+- optional Qdrant retrieval and a currently-disabled Cognee runtime layer
 - per-NPC profiles and knowledge files
 - editor tooling for NPC generation and scene/template workflows
 
@@ -125,6 +125,11 @@ That collection name is part of the actual current state, but it should not be a
 ### Cognee
 
 `CogneeMemoryService` exists as a separate scene object and editor tooling can call into it, but `NPCDialogueManager.useCogneeMemory` is currently off.
+
+Practical current policy:
+- Hermes CLI agent memory may continue using the Cognee plugin/backend
+- Unity runtime Cognee integration is not part of the active preferred lane right now
+- codebase retrieval should continue to use Qdrant / CodebaseEmbedder, not Cognee
 
 ### Logging and history
 

@@ -38,6 +38,8 @@ def classify_unity_region(path: Path) -> str:
         return "Samples"
     if "Runtime" in parts:
         return "Runtime"
+    if parts[:3] == ["Assets", "LLMUnity", "Scripts"]:
+        return "Runtime"
     if parts and parts[0] == "Packages":
         return "Package"
     return "Unknown"

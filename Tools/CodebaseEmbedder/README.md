@@ -35,5 +35,34 @@ The `audit` command is the best way to evaluate retrieval quality for holistic U
 - smoke-query retrieval checks
 - scenario presets such as `localai-llmunity` to inspect how well runtime/backend scripts outrank editor/docs for LocalAI + LLMUnity tasks
 - optional scene-aware overlay via `--scene Assets/...unity` that parses the Unity scene YAML and reports LocalAI transport wiring, dedicated-agent splits, and Qdrant/Cognee/FunctionCalling hotspots in one report
+- an explicit workflow section that classifies each prompt and recommends a GladeKit MCP pre-phase before repo-only retrieval when scene/component truth matters
+
+## Recommended Workflow
+
+For project questions that touch live Unity state, do not start from repo text alone.
+
+1. Use GladeKit MCP first for live Unity truth.
+   - `get_scene_hierarchy`
+   - `find_game_objects`
+   - `get_gameobject_components`
+   - `get_component_inspector_properties`
+   - `find_component_usages`
+2. Use `codebase-embedder audit` to correlate that live state with runtime/editor ownership in indexed code.
+3. Use `codebase-embedder query` to verify the same prompt classification and preferred-source guidance on individual questions.
+4. Only then tune retrieval, chunking, prompts, or collection strategy.
+
+This matters most for:
+
+- scene wiring questions
+- component enablement / remote flag questions
+- LLMAgent / LLM / LocalAI transport questions
+- Qdrant / Cognee integration ownership
+- inspector-state mismatches between intended and actual runtime setup
+
+The `query` command now prints a short workflow header before ranked results, and `--json` includes:
+
+- `workflow.query_class`
+- `workflow.preferred_sources`
+- `results`
 
 Qdrant collection: `unity_linux_llm_codebase_v1`.

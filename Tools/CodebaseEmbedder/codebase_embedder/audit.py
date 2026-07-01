@@ -8,6 +8,7 @@ from typing import Any
 
 from .config import CodebaseEmbedderConfig
 from .query import lexical_query, qdrant_query
+from .workflow import MCP_PREPHASE_TOOLING, build_workflow_plan
 
 
 SCENARIOS: dict[str, list[str]] = {
@@ -88,6 +89,7 @@ def audit_project(
         report["script"] = _audit_script(script_path, symbols, relations)
     if scene_path:
         report["scene"] = _audit_scene(config, scene_path)
+    report["workflow"] = build_workflow_plan(unique_prompts, scenario, scene_path, report.get("scene"))
     report["insights"] = _scenario_insights(report["smoke_queries"], scenario, report.get("scene"))
     return report
 
@@ -140,6 +142,28 @@ def format_audit_report(report: dict[str, Any]) -> str:
             if scene_recommendations:
                 lines.append("- scene_recommendations:")
                 lines.extend(f"  - {recommendation}" for recommendation in scene_recommendations)
+
+    workflow = report.get("workflow")
+    if workflow:
+        pre_phase = workflow.get("pre_phase", {})
+        lines += ["", "Workflow:"]
+        lines.append(f"- strategy: {pre_phase.get('strategy', '-')}")
+        lines.append(f"- rationale: {pre_phase.get('rationale', '-')}")
+        lines.append(f"- live_scene_required: {pre_phase.get('live_scene_required', False)}")
+        mcp_tools = pre_phase.get("mcp_tools", [])
+        if mcp_tools:
+            lines.append(f"- mcp_tools: {', '.join(mcp_tools)}")
+        scene_targets = pre_phase.get("scene_targets", [])
+        if scene_targets:
+            lines.append(f"- scene_targets: {', '.join(scene_targets)}")
+        query_plans = workflow.get("queries", [])
+        if query_plans:
+            lines.append("- query_plan:")
+            for plan in query_plans:
+                lines.append(
+                    f"  - {plan['prompt']} [{plan['query_class']}] -> "
+                    f"{', '.join(plan['preferred_sources'])}"
+                )
 
     lines += ["", "Smoke queries:"]
     for item in report.get("smoke_queries", []):
@@ -285,6 +309,7 @@ def _scenario_insights(smoke_queries: list[dict[str, Any]], scenario: str | None
             strengths.append("FunctionCalling uses a dedicated selector agent instead of sharing the NPC dialogue LLMAgent.")
         warnings.extend(scene_report.get("warnings", []))
         recommendations.extend(scene_report.get("recommendations", []))
+        recommendations.append("Use GladeKit MCP scene/component inspection before code-only retrieval when answering wiring or inspector-state questions.")
 
     return {
         "candidate_paths": candidate_paths,
@@ -305,6 +330,7 @@ def _namespace_from_symbol(symbol: str) -> str | None:
     if len(parts) == 2:
         return None
     return ".".join(parts[:-2]) if parts[-1][:1].isupper() and parts[-2][:1].isupper() else ".".join(parts[:-1])
+
 
 
 def _resolve_project_path(project_root: Path, project_relative_path: str) -> Path:

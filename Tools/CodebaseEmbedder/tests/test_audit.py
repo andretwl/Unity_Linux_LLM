@@ -372,6 +372,8 @@ def test_audit_project_localai_llmunity_scenario_surfaces_llmunity_files(tmp_pat
     assert any("QdrantRAGService.cs" in item["top_hit_path"] for item in prompts.values())
     assert "insights" in report
     assert any("LLMClient.cs" in path for path in report["insights"]["candidate_paths"])
+    assert report["workflow"]["pre_phase"]["strategy"] == "gladekit_mcp_first"
+    assert "get_scene_hierarchy" in report["workflow"]["pre_phase"]["mcp_tools"]
 
 
 def test_audit_project_scene_overlay_reports_localai_transport_and_hotspots(tmp_path: Path):
@@ -395,3 +397,28 @@ def test_audit_project_scene_overlay_reports_localai_transport_and_hotspots(tmp_
     assert any("QdrantRAGService.cs" in path for path in scene["component_paths"])
     assert any("CogneeMemoryService.cs" in path for path in report["insights"]["candidate_paths"])
     assert any("direct LocalAI HTTP" in strength for strength in report["insights"]["strengths"])
+    assert report["workflow"]["pre_phase"]["live_scene_required"] is True
+    assert "NPCDialogueSystem" in report["workflow"]["pre_phase"]["scene_targets"]
+
+
+def test_audit_project_workflow_classifies_query_sources(tmp_path: Path):
+    cfg = _seed_project(tmp_path)
+
+    report = audit_project(
+        cfg,
+        prompts=[
+            "which scripts reference LLMAgent",
+            "where is LocalAI chat transport implemented",
+            "which scene objects use Qdrant",
+            "how does the dialogue request reach LocalAI",
+        ],
+        use_qdrant=False,
+        scene_path="Assets/Scenes/NPCDialoguePrototype.unity",
+    )
+
+    plans = {item["prompt"]: item for item in report["workflow"]["queries"]}
+    assert plans["which scripts reference LLMAgent"]["query_class"] == "structural"
+    assert plans["where is LocalAI chat transport implemented"]["query_class"] == "ownership"
+    assert plans["which scene objects use Qdrant"]["query_class"] == "scene_integration"
+    assert plans["how does the dialogue request reach LocalAI"]["query_class"] == "behavior"
+    assert plans["which scene objects use Qdrant"]["preferred_sources"][0] == "gladekit_mcp_scene_hierarchy"

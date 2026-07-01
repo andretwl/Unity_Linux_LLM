@@ -24,3 +24,4 @@ def test_classify_unity_region():
     assert classify_unity_region(Path("Assets/Scripts/Editor/Foo.cs")) == "Editor"
     assert classify_unity_region(Path("Assets/Scripts/Tests/Editor/Foo.cs")) == "Tests"
     assert classify_unity_region(Path("Assets/LLMUnity/Samples/RAG/Foo.cs")) == "Samples"
+    assert classify_unity_region(Path("Assets/LLMUnity/Scripts/CogneeMemoryService.cs")) == "Runtime"

@@ -45,7 +45,7 @@ class QdrantStore:
             "vectors": {"size": vector_size, "distance": "Cosine", "on_disk": False},
             "on_disk_payload": True,
             "hnsw_config": {"m": 16, "ef_construct": 100, "full_scan_threshold": 10000},
-            "optimizers_config": {"default_segment_number": 2, "indexing_threshold": 1000},
+            "optimizers_config": {"default_segment_number": 2, "indexing_threshold": 1},
         })
         self.ensure_payload_indexes()
 

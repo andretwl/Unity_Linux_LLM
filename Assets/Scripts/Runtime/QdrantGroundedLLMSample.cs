@@ -65,13 +65,34 @@ namespace NPCSystem
         int _currentProfileIndex = -1;
         bool _listenerBound;
         bool _npcSelectorBound;
+        string _composedPersonaPrompt = "";
+
+        static NPCFlowLogger Logger => NPCFlowLogger.FindOrCreate();
+
+        NPCProfile CurrentProfile =>
+            profiles != null && _currentProfileIndex >= 0 && _currentProfileIndex < profiles.Length
+                ? profiles[_currentProfileIndex]
+                : null;
+
+        string CurrentNpcSlug => CurrentProfile?.GetNpcSlug() ?? string.Empty;
 
         void Awake()
         {
-            ResolveReferences();
-            ConfigureSceneClients();
-            PopulateNpcSelector();
-            ApplyProfile(0);
+            using var scope = NPCFlowScope.Start(Logger, NPCFlowStage.SceneBootstrap, source: nameof(QdrantGroundedLLMSample));
+            try
+            {
+                ResolveReferences();
+                ValidateConfiguration();
+                ConfigureSceneClients();
+                PopulateNpcSelector();
+                ApplyProfile(0);
+                scope.Success("RAG/LLM sample bootstrap completed.", BuildConfigurationSnapshot());
+            }
+            catch (Exception ex)
+            {
+                scope.Error(ex, "RAG/LLM sample bootstrap failed.");
+                throw;
+            }
         }
 
         void OnEnable()
@@ -95,6 +116,8 @@ namespace NPCSystem
 
         void ResolveReferences()
         {
+            using var scope = NPCFlowScope.Start(Logger, NPCFlowStage.ReferenceResolution, source: nameof(QdrantGroundedLLMSample));
+
             if (rag == null) rag = FindAnyObjectByType<RAG>(FindObjectsInactive.Include);
             if (llmAgent == null) llmAgent = FindAnyObjectByType<LLMAgent>(FindObjectsInactive.Include);
             if (playerText == null) playerText = FindAnyObjectByType<InputField>(FindObjectsInactive.Include);
@@ -115,6 +138,95 @@ namespace NPCSystem
             {
                 TMP_Dropdown[] dropdowns = FindObjectsByType<TMP_Dropdown>(FindObjectsInactive.Include);
                 npcSelector = dropdowns.FirstOrDefault();
+            }
+
+            scope.Success("Scene references resolved.", new Dictionary<string, object>
+            {
+                ["ragAssigned"] = rag != null,
+                ["llmAgentAssigned"] = llmAgent != null,
+                ["playerTextAssigned"] = playerText != null,
+                ["aiTextAssigned"] = aiText != null,
+                ["answerToggleAssigned"] = answerWithLlmToggle != null,
+                ["npcSelectorAssigned"] = npcSelector != null
+            });
+        }
+
+        void ValidateConfiguration()
+        {
+            using var scope = NPCFlowScope.Start(Logger, NPCFlowStage.ConfigurationValidation, source: nameof(QdrantGroundedLLMSample));
+            bool hasWarnings = false;
+            bool hasErrors = false;
+
+            if (rag == null)
+            {
+                hasErrors = true;
+                Logger.Log(NPCFlowStage.ConfigurationValidation, NPCFlowStatus.Error, NPCFlowLogLevel.Error,
+                    "RAG reference is missing.", source: nameof(QdrantGroundedLLMSample));
+            }
+
+            if (llmAgent == null)
+            {
+                hasErrors = true;
+                Logger.Log(NPCFlowStage.ConfigurationValidation, NPCFlowStatus.Error, NPCFlowLogLevel.Error,
+                    "LLMAgent reference is missing.", source: nameof(QdrantGroundedLLMSample));
+            }
+
+            if (playerText == null)
+            {
+                hasErrors = true;
+                Logger.Log(NPCFlowStage.ConfigurationValidation, NPCFlowStatus.Error, NPCFlowLogLevel.Error,
+                    "Player input field is missing.", source: nameof(QdrantGroundedLLMSample));
+            }
+
+            if (aiText == null)
+            {
+                hasErrors = true;
+                Logger.Log(NPCFlowStage.ConfigurationValidation, NPCFlowStatus.Error, NPCFlowLogLevel.Error,
+                    "AI output text is missing.", source: nameof(QdrantGroundedLLMSample));
+            }
+
+            if (answerWithLlmToggle == null)
+            {
+                hasWarnings = true;
+                Logger.Log(NPCFlowStage.ConfigurationValidation, NPCFlowStatus.Warning, NPCFlowLogLevel.Warning,
+                    "Answer-with-LLM toggle is missing; scene will always answer with the active mode.", source: nameof(QdrantGroundedLLMSample));
+            }
+
+            if (npcSelector == null)
+            {
+                hasWarnings = true;
+                Logger.Log(NPCFlowStage.ConfigurationValidation, NPCFlowStatus.Warning, NPCFlowLogLevel.Warning,
+                    "NPC selector dropdown is missing; profile switching will be unavailable.", source: nameof(QdrantGroundedLLMSample));
+            }
+
+            if (string.IsNullOrWhiteSpace(collectionName))
+            {
+                hasErrors = true;
+                Logger.Log(NPCFlowStage.ConfigurationValidation, NPCFlowStatus.Error, NPCFlowLogLevel.Error,
+                    "Qdrant collectionName is empty.", source: nameof(QdrantGroundedLLMSample));
+            }
+
+            if (string.IsNullOrWhiteSpace(localAiBaseUrl))
+            {
+                hasErrors = true;
+                Logger.Log(NPCFlowStage.ConfigurationValidation, NPCFlowStatus.Error, NPCFlowLogLevel.Error,
+                    "LocalAI base URL is empty.", source: nameof(QdrantGroundedLLMSample));
+            }
+
+            Dictionary<string, object> data = BuildConfigurationSnapshot();
+            data["loggerPath"] = Logger.CurrentLogPath;
+
+            if (hasErrors)
+            {
+                scope.Error(null, "Configuration validation found blocking issues.", data);
+            }
+            else if (hasWarnings)
+            {
+                scope.Warning("Configuration validation completed with warnings.", data);
+            }
+            else
+            {
+                scope.Success("Configuration validation completed.", data);
             }
         }
 
@@ -163,20 +275,37 @@ namespace NPCSystem
 
         void ApplyProfile(int index)
         {
-            if (profiles == null || index < 0 || index >= profiles.Length || profiles[index] == null) return;
+            if (profiles == null || index < 0 || index >= profiles.Length || profiles[index] == null)
+            {
+                Logger.Log(NPCFlowStage.NPCSwitch, NPCFlowStatus.Warning, NPCFlowLogLevel.Warning,
+                    "Profile switch skipped because the requested index is invalid.", source: nameof(QdrantGroundedLLMSample),
+                    data: new Dictionary<string, object>
+                    {
+                        ["requestedIndex"] = index,
+                        ["profileCount"] = profiles?.Length ?? 0
+                    });
+                return;
+            }
+
             if (index == _currentProfileIndex) return;
 
             NPCProfile profile = profiles[index];
+            string npcSlug = profile.GetNpcSlug();
+            using var scope = NPCFlowScope.Start(Logger, NPCFlowStage.NPCSwitch, source: nameof(QdrantGroundedLLMSample), npcSlug: npcSlug,
+                data: new Dictionary<string, object>
+                {
+                    ["requestedIndex"] = index,
+                    ["displayName"] = profile.GetDisplayName()
+                });
+
             _currentProfileIndex = index;
             string npcName = profile.GetDisplayName();
 
-            // Compose persona-grounded system prompt
             string personaPrompt = ComposePersonaPrompt(profile, groundedSystemPrompt);
             string activePrompt = personaPrompt;
 
             if (useDirectLocalAiChat)
             {
-                // Store for use in GenerateGroundedAnswerAsync
                 _composedPersonaPrompt = personaPrompt;
             }
 
@@ -184,13 +313,18 @@ namespace NPCSystem
             {
                 llmAgent.systemPrompt = activePrompt;
 
-                if (clearHistoryOnNpcSwitch)
+                if (clearHistoryOnNpcSwitch && !useDirectLocalAiChat)
                 {
                     _ = llmAgent.ClearHistory();
                 }
+                else if (clearHistoryOnNpcSwitch && useDirectLocalAiChat)
+                {
+                    Logger.Log(NPCFlowStage.NPCSwitch, NPCFlowStatus.Skipped, NPCFlowLogLevel.Info,
+                        "Skipped LLMAgent history clear because direct LocalAI chat mode is active.",
+                        source: nameof(QdrantGroundedLLMSample), npcSlug: npcSlug);
+                }
             }
 
-            // Apply character-scoped Qdrant filter if configured
             if (!string.IsNullOrWhiteSpace(characterFilterField))
             {
                 string characterValue = profile.GetRagCategory();
@@ -202,9 +336,18 @@ namespace NPCSystem
             }
 
             SetAiText($"Speaking to {npcName}. Ask me about the codebase...");
+            scope.Success("Sample scene NPC profile applied.", new Dictionary<string, object>
+            {
+                ["profileIndex"] = index,
+                ["displayName"] = npcName,
+                ["npcSlug"] = npcSlug,
+                ["ragCategory"] = profile.GetRagCategory() ?? string.Empty,
+                ["useDirectLocalAiChat"] = useDirectLocalAiChat,
+                ["clearHistoryOnNpcSwitch"] = clearHistoryOnNpcSwitch,
+                ["filterField"] = filterField ?? string.Empty,
+                ["filterValue"] = filterValue ?? string.Empty
+            });
         }
-
-        string _composedPersonaPrompt = "";
 
         string ComposePersonaPrompt(NPCProfile profile, string groundedInstruction)
         {
@@ -252,17 +395,47 @@ namespace NPCSystem
         {
             if (string.IsNullOrWhiteSpace(message)) return;
 
+            string reqId = Logger.NextRequestId();
+            string npcSlug = CurrentNpcSlug;
+
+            Logger.Log(NPCFlowStage.UIInput, NPCFlowStatus.Success, NPCFlowLogLevel.Info,
+                "Sample scene received player input.", source: nameof(QdrantGroundedLLMSample), requestId: reqId, npcSlug: npcSlug,
+                data: Logger.SummarizeText("player", message));
+
+            using var scope = NPCFlowScope.Start(Logger, NPCFlowStage.RequestStart, source: nameof(QdrantGroundedLLMSample), requestId: reqId, npcSlug: npcSlug,
+                data: new Dictionary<string, object>
+                {
+                    ["useDirectLocalAiChat"] = useDirectLocalAiChat,
+                    ["fallbackToLocalRag"] = fallbackToLocalRag,
+                    ["answerWithLlm"] = answerWithLlmToggle == null || answerWithLlmToggle.isOn
+                });
+
             if (playerText != null) playerText.interactable = false;
             SetAiText("...");
 
             try
             {
-                string answer = await BuildAnswerAsync(message.Trim());
+                string answer = await BuildAnswerAsync(message.Trim(), reqId, npcSlug);
                 SetAiText(answer);
+                Logger.Log(NPCFlowStage.ResponseComplete, NPCFlowStatus.Success, NPCFlowLogLevel.Info,
+                    "Sample scene rendered response to the UI.", source: nameof(QdrantGroundedLLMSample), requestId: reqId, npcSlug: npcSlug,
+                    data: Logger.SummarizeText("response", answer));
+                scope.Success("Sample scene request completed.", new Dictionary<string, object>
+                {
+                    ["answerLength"] = answer?.Length ?? 0
+                });
             }
             catch (Exception ex)
             {
                 SetAiText($"Error: {ex.Message}");
+                Logger.Log(NPCFlowStage.ResponseComplete, NPCFlowStatus.Error, NPCFlowLogLevel.Error,
+                    "Sample scene request failed and rendered an error.", source: nameof(QdrantGroundedLLMSample), requestId: reqId, npcSlug: npcSlug,
+                    data: new Dictionary<string, object>
+                    {
+                        ["exceptionType"] = ex.GetType().Name,
+                        ["exceptionMessage"] = ex.Message
+                    });
+                scope.Error(ex, "Sample scene request failed.");
             }
             finally
             {
@@ -275,28 +448,68 @@ namespace NPCSystem
             }
         }
 
-        async Task<string> BuildAnswerAsync(string question)
+        async Task<string> BuildAnswerAsync(string question, string requestId, string npcSlug)
         {
-            List<string> qdrantSnippets = await SearchQdrantAsync(question);
+            using var scope = NPCFlowScope.Start(Logger, NPCFlowStage.DialogueGeneration, source: nameof(QdrantGroundedLLMSample), requestId: requestId, npcSlug: npcSlug,
+                data: Logger.SummarizeText("question", question));
+
+            List<string> qdrantSnippets = await SearchQdrantAsync(question, requestId, npcSlug);
+            bool usedFallback = false;
+
             if (qdrantSnippets.Count == 0 && fallbackToLocalRag)
             {
-                qdrantSnippets = await SearchLocalRagAsync(question);
+                usedFallback = true;
+                qdrantSnippets = await SearchLocalRagAsync(question, requestId, npcSlug);
             }
 
             if (qdrantSnippets.Count == 0)
             {
+                scope.Fallback("No relevant knowledge was found in Qdrant or fallback retrieval.", new Dictionary<string, object>
+                {
+                    ["usedFallback"] = usedFallback,
+                    ["snippetCount"] = 0
+                });
                 return "No relevant knowledge was found in the configured knowledge base.";
             }
 
             if (answerWithLlmToggle != null && !answerWithLlmToggle.isOn)
             {
+                scope.Success("Returned raw retrieval snippets without LLM generation.", new Dictionary<string, object>
+                {
+                    ["snippetCount"] = qdrantSnippets.Count,
+                    ["usedFallback"] = usedFallback,
+                    ["answerMode"] = "retrieval-only"
+                });
                 return string.Join("\n", qdrantSnippets);
             }
 
-            string prompt = BuildGroundedPrompt(question, qdrantSnippets);
+            string prompt;
+            bool structuralQuestion = IsStructuralQuestion(question);
+            using (var promptScope = NPCFlowScope.Start(Logger, NPCFlowStage.PromptBuild, source: nameof(QdrantGroundedLLMSample), requestId: requestId, npcSlug: npcSlug,
+                data: new Dictionary<string, object>
+                {
+                    ["snippetCount"] = qdrantSnippets.Count,
+                    ["structuralQuestion"] = structuralQuestion
+                }))
+            {
+                prompt = BuildGroundedPrompt(question, qdrantSnippets);
+                Dictionary<string, object> promptData = Logger.SummarizeText("prompt", prompt);
+                promptData["snippetCount"] = qdrantSnippets.Count;
+                promptData["structuralQuestion"] = structuralQuestion;
+                promptScope.Success("Grounded prompt built.", promptData);
+            }
+
             if (useDirectLocalAiChat)
             {
-                return await GenerateGroundedAnswerAsync(question, prompt);
+                string answer = await GenerateGroundedAnswerAsync(question, prompt, requestId, npcSlug);
+                scope.Success("Generated grounded answer through direct LocalAI chat.", new Dictionary<string, object>
+                {
+                    ["snippetCount"] = qdrantSnippets.Count,
+                    ["usedFallback"] = usedFallback,
+                    ["answerMode"] = "direct-localai",
+                    ["answerLength"] = answer?.Length ?? 0
+                });
+                return answer;
             }
 
             if (llmAgent == null)
@@ -304,29 +517,59 @@ namespace NPCSystem
                 throw new InvalidOperationException("LLMAgent reference is missing.");
             }
 
-            if (clearHistoryBeforeEachQuery)
+            string llmAnswer;
+            using (var chatScope = NPCFlowScope.Start(Logger, NPCFlowStage.LLMChat, source: nameof(QdrantGroundedLLMSample) + ".LLMAgent", requestId: requestId, npcSlug: npcSlug,
+                data: new Dictionary<string, object>
+                {
+                    ["provider"] = "llmAgent",
+                    ["clearHistoryBeforeEachQuery"] = clearHistoryBeforeEachQuery
+                }))
             {
-                await llmAgent.ClearHistory();
+                if (clearHistoryBeforeEachQuery && !useDirectLocalAiChat)
+                {
+                    await llmAgent.ClearHistory();
+                }
+
+                llmAnswer = await llmAgent.Chat(prompt, null, null, false);
+                llmAnswer = string.IsNullOrWhiteSpace(llmAnswer)
+                    ? "The LLM agent returned an empty response."
+                    : llmAnswer.Trim();
+
+                Dictionary<string, object> answerData = Logger.SummarizeText("response", llmAnswer);
+                answerData["provider"] = "llmAgent";
+                chatScope.Success("Grounded answer generated through LLMAgent.", answerData);
             }
 
-            string answer = await llmAgent.Chat(prompt, null, null, false);
-            return string.IsNullOrWhiteSpace(answer)
-                ? "The LLM agent returned an empty response."
-                : answer.Trim();
+            scope.Success("Generated grounded answer through LLMAgent.", new Dictionary<string, object>
+            {
+                ["snippetCount"] = qdrantSnippets.Count,
+                ["usedFallback"] = usedFallback,
+                ["answerMode"] = "llmAgent",
+                ["answerLength"] = llmAnswer?.Length ?? 0
+            });
+            return llmAnswer;
         }
 
-        async Task<List<string>> SearchQdrantAsync(string question)
+        async Task<List<string>> SearchQdrantAsync(string question, string requestId, string npcSlug)
         {
+            using var scope = NPCFlowScope.Start(Logger, NPCFlowStage.ContextRetrieval, source: nameof(QdrantGroundedLLMSample) + ".Qdrant", requestId: requestId, npcSlug: npcSlug,
+                data: Logger.SummarizeText("question", question));
+
             if (string.IsNullOrWhiteSpace(collectionName))
             {
+                scope.Error(null, "Qdrant collectionName is empty.");
                 throw new InvalidOperationException("Qdrant collectionName is empty.");
             }
 
             bool structuralQuestion = IsStructuralQuestion(question);
 
-            List<float> queryVector = await GetEmbeddingAsync(question);
+            List<float> queryVector = await GetEmbeddingAsync(question, requestId, npcSlug);
             if (queryVector == null || queryVector.Count == 0)
             {
+                scope.Error(null, "Embedding generation returned no vector.", new Dictionary<string, object>
+                {
+                    ["questionLength"] = question?.Length ?? 0
+                });
                 throw new InvalidOperationException("Embedding generation returned no vector.");
             }
 
@@ -344,12 +587,8 @@ namespace NPCSystem
 
             List<JObject> mustClauses = new List<JObject>();
 
-            // Apply manual filter (legacy)
             if (!string.IsNullOrWhiteSpace(filterField) && !string.IsNullOrWhiteSpace(filterValue))
             {
-                // For non-structural questions, always apply the character filter if set.
-                // For structural questions, only apply if applyCharacterFilterForNonStructuralQueries is also true
-                // (structural questions benefit from project-wide namespace/class answers).
                 bool applyFilter = !structuralQuestion || applyCharacterFilterForNonStructuralQueries;
                 if (applyFilter)
                 {
@@ -397,6 +636,20 @@ namespace NPCSystem
             }
 
             string endpoint = $"{qdrantUrl.TrimEnd('/')}/collections/{collectionName.Trim()}/points/search";
+            using var qdrantScope = NPCFlowScope.Start(Logger, NPCFlowStage.QdrantSearch, source: nameof(QdrantGroundedLLMSample), requestId: requestId, npcSlug: npcSlug,
+                data: new Dictionary<string, object>
+                {
+                    ["endpoint"] = endpoint,
+                    ["collectionName"] = collectionName,
+                    ["structuralQuestion"] = structuralQuestion,
+                    ["limit"] = Mathf.Max(1, structuralQuestion ? structuralQuestionTopK : qdrantTopK),
+                    ["scoreThreshold"] = structuralQuestion ? 0f : qdrantScoreThreshold,
+                    ["manualFilterField"] = filterField ?? string.Empty,
+                    ["manualFilterValue"] = filterValue ?? string.Empty,
+                    ["mustClauseCount"] = mustClauses.Count,
+                    ["vectorLength"] = queryVector.Count
+                });
+
             using UnityWebRequest request = new UnityWebRequest(endpoint, "POST");
             byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(requestBody.ToString());
             request.uploadHandler = new UploadHandlerRaw(bodyRaw);
@@ -411,6 +664,11 @@ namespace NPCSystem
 
             if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
             {
+                qdrantScope.Error(null, $"Qdrant request failed: {request.error}", new Dictionary<string, object>
+                {
+                    ["httpError"] = request.error ?? string.Empty,
+                    ["responseLength"] = request.downloadHandler?.text?.Length ?? 0
+                });
                 throw new InvalidOperationException($"Qdrant request failed: {request.error}");
             }
 
@@ -438,16 +696,46 @@ namespace NPCSystem
                 snippets.Add(snippet);
             }
 
-            return snippets.Distinct(StringComparer.Ordinal).ToList();
+            List<string> distinctSnippets = snippets.Distinct(StringComparer.Ordinal).ToList();
+            Dictionary<string, object> resultData = new Dictionary<string, object>
+            {
+                ["rawHitCount"] = result.Count,
+                ["snippetCount"] = distinctSnippets.Count,
+                ["structuralQuestion"] = structuralQuestion,
+                ["vectorLength"] = queryVector.Count,
+                ["collectionName"] = collectionName
+            };
+
+            qdrantScope.Success("Qdrant retrieval completed.", resultData);
+            scope.Success("Context retrieval from Qdrant completed.", resultData);
+            return distinctSnippets;
         }
 
-        async Task<List<string>> SearchLocalRagAsync(string question)
+        async Task<List<string>> SearchLocalRagAsync(string question, string requestId, string npcSlug)
         {
-            if (rag == null) return new List<string>();
+            using var scope = NPCFlowScope.Start(Logger, NPCFlowStage.LocalRagSearch, source: nameof(QdrantGroundedLLMSample), requestId: requestId, npcSlug: npcSlug,
+                data: new Dictionary<string, object>
+                {
+                    ["fallbackTopK"] = Mathf.Max(1, fallbackTopK)
+                });
+
+            if (rag == null)
+            {
+                scope.Skipped("Local RAG fallback skipped because the RAG reference is missing.");
+                return new List<string>();
+            }
+
             (string[] results, _) = await rag.Search(question, Mathf.Max(1, fallbackTopK));
-            return results == null
+            List<string> distinctResults = results == null
                 ? new List<string>()
                 : results.Where(result => !string.IsNullOrWhiteSpace(result)).Distinct(StringComparer.Ordinal).ToList();
+
+            scope.Success("Local RAG fallback retrieval completed.", new Dictionary<string, object>
+            {
+                ["resultCount"] = distinctResults.Count,
+                ["fallbackTopK"] = Mathf.Max(1, fallbackTopK)
+            });
+            return distinctResults;
         }
 
         string ExtractSnippet(JObject payload)
@@ -561,8 +849,15 @@ namespace NPCSystem
             return structuralTerms.Any(term => lowered.Contains(term));
         }
 
-        async Task<List<float>> GetEmbeddingAsync(string question)
+        async Task<List<float>> GetEmbeddingAsync(string question, string requestId, string npcSlug)
         {
+            using var scope = NPCFlowScope.Start(Logger, NPCFlowStage.QdrantEmbedding, source: nameof(QdrantGroundedLLMSample), requestId: requestId, npcSlug: npcSlug,
+                data: new Dictionary<string, object>
+                {
+                    ["embeddingModel"] = localAiEmbeddingModel?.Trim() ?? string.Empty,
+                    ["questionLength"] = question?.Length ?? 0
+                });
+
             JObject payload = new JObject
             {
                 ["model"] = localAiEmbeddingModel.Trim(),
@@ -572,13 +867,40 @@ namespace NPCSystem
             JObject response = await PostJsonAsync($"{localAiBaseUrl.TrimEnd('/')}/v1/embeddings", payload);
             JArray data = response["data"] as JArray;
             JArray embedding = data?.First?["embedding"] as JArray;
-            return embedding == null
+            List<float> vector = embedding == null
                 ? new List<float>()
                 : embedding.Select(token => token.Value<float>()).ToList();
+
+            if (vector.Count == 0)
+            {
+                scope.Warning("Embedding request returned an empty vector.", new Dictionary<string, object>
+                {
+                    ["embeddingModel"] = localAiEmbeddingModel?.Trim() ?? string.Empty
+                });
+            }
+            else
+            {
+                scope.Success("Embedding request completed.", new Dictionary<string, object>
+                {
+                    ["embeddingModel"] = localAiEmbeddingModel?.Trim() ?? string.Empty,
+                    ["vectorLength"] = vector.Count
+                });
+            }
+
+            return vector;
         }
 
-        async Task<string> GenerateGroundedAnswerAsync(string question, string prompt)
+        async Task<string> GenerateGroundedAnswerAsync(string question, string prompt, string requestId, string npcSlug)
         {
+            using var scope = NPCFlowScope.Start(Logger, NPCFlowStage.LLMChat, source: nameof(QdrantGroundedLLMSample) + ".LocalAI", requestId: requestId, npcSlug: npcSlug,
+                data: new Dictionary<string, object>
+                {
+                    ["provider"] = "localai",
+                    ["chatModel"] = localAiChatModel?.Trim() ?? string.Empty,
+                    ["baseUrl"] = localAiBaseUrl?.Trim() ?? string.Empty,
+                    ["questionLength"] = question?.Length ?? 0
+                });
+
             string systemContent = !string.IsNullOrWhiteSpace(_composedPersonaPrompt)
                 ? _composedPersonaPrompt
                 : groundedSystemPrompt.Trim();
@@ -605,10 +927,16 @@ namespace NPCSystem
             string answer = response["choices"]?.First?["message"]?["content"]?.Value<string>();
             if (string.IsNullOrWhiteSpace(answer))
             {
+                scope.Error(null, $"LocalAI returned an empty answer for question '{question}'.", Logger.SummarizeText("prompt", prompt));
                 throw new InvalidOperationException($"LocalAI returned an empty answer for question '{question}'.");
             }
 
-            return answer.Trim();
+            answer = answer.Trim();
+            Dictionary<string, object> answerData = Logger.SummarizeText("response", answer);
+            answerData["provider"] = "localai";
+            answerData["chatModel"] = localAiChatModel?.Trim() ?? string.Empty;
+            scope.Success("Grounded answer generated through direct LocalAI chat.", answerData);
+            return answer;
         }
 
         async Task<JObject> PostJsonAsync(string url, JObject payload)
@@ -640,6 +968,29 @@ namespace NPCSystem
             {
                 aiText.text = text;
             }
+        }
+
+        Dictionary<string, object> BuildConfigurationSnapshot()
+        {
+            return new Dictionary<string, object>
+            {
+                ["qdrantUrl"] = qdrantUrl ?? string.Empty,
+                ["collectionName"] = collectionName ?? string.Empty,
+                ["qdrantTopK"] = qdrantTopK,
+                ["structuralQuestionTopK"] = structuralQuestionTopK,
+                ["qdrantScoreThreshold"] = qdrantScoreThreshold,
+                ["localAiBaseUrl"] = localAiBaseUrl ?? string.Empty,
+                ["localAiChatModel"] = localAiChatModel ?? string.Empty,
+                ["localAiEmbeddingModel"] = localAiEmbeddingModel ?? string.Empty,
+                ["useDirectLocalAiChat"] = useDirectLocalAiChat,
+                ["fallbackToLocalRag"] = fallbackToLocalRag,
+                ["clearHistoryBeforeEachQuery"] = clearHistoryBeforeEachQuery,
+                ["clearHistoryOnNpcSwitch"] = clearHistoryOnNpcSwitch,
+                ["llmAgentAssigned"] = llmAgent != null,
+                ["llmAgentRemote"] = llmAgent != null && llmAgent.remote,
+                ["ragAssigned"] = rag != null,
+                ["profileCount"] = profiles?.Length ?? 0
+            };
         }
     }
 }
