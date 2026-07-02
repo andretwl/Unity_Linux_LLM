@@ -3,7 +3,9 @@
     "rootNamespace": "NPCSystem.Tests",
     "references": [
         "NPCSystem.Runtime",
+        "GladeKit.Bridge",
         "Unity.Netcode.Runtime",
+        "Unity.InputSystem",
         "Unity.Nuget.Newtonsoft-Json"
     ],
     "includePlatforms": [

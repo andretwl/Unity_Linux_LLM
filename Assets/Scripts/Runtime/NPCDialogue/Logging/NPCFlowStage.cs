@@ -20,8 +20,6 @@ namespace NPCSystem
         QdrantSearch,
         LocalRagReady,
         LocalRagSearch,
-        CogneeSearch,
-        CogneeWrite,
         PromptBuild,
         DialogueGeneration,
         LLMChat,
@@ -29,6 +27,8 @@ namespace NPCSystem
         ResponseComplete,
         HistoryPersist,
         SmokeValidation,
+        NetworkHost,
+        PlayerNameRegistration,
         EditorWorkflow
     }
 }

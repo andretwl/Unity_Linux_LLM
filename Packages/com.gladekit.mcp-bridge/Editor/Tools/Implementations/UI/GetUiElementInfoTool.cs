@@ -69,12 +69,15 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                 properties["minValue"] = slider.minValue;
                 properties["maxValue"] = slider.maxValue;
                 properties["value"] = slider.value;
+                properties["hasFillRect"] = slider.fillRect != null;
+                properties["hasHandleRect"] = slider.handleRect != null;
             }
             if (obj.TryGetComponent<Toggle>(out var toggle))
             {
                 componentTypes.Add("Toggle");
                 properties["isOn"] = toggle.isOn;
                 properties["hasGroup"] = toggle.group != null;
+                properties["hasGraphic"] = toggle.graphic != null;
                 properties["onValueChangedCount"] = toggle.onValueChanged.GetPersistentEventCount();
             }
             if (obj.TryGetComponent<Dropdown>(out var dropdown))
@@ -88,6 +91,9 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                 }
                 properties["options"] = options;
                 properties["optionsCount"] = dropdown.options.Count;
+                properties["hasTemplate"] = dropdown.template != null;
+                properties["hasCaptionText"] = dropdown.captionText != null;
+                properties["hasItemText"] = dropdown.itemText != null;
             }
             if (obj.TryGetComponent<InputField>(out var inputField))
             {
@@ -96,6 +102,8 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                 properties["characterLimit"] = inputField.characterLimit;
                 properties["contentType"] = inputField.contentType.ToString();
                 properties["lineType"] = inputField.lineType.ToString();
+                properties["hasTextComponent"] = inputField.textComponent != null;
+                properties["hasPlaceholder"] = inputField.placeholder != null;
             }
             if (obj.TryGetComponent<ScrollRect>(out var scrollRect))
             {
@@ -104,6 +112,8 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                 properties["vertical"] = scrollRect.vertical;
                 properties["hasContent"] = scrollRect.content != null;
                 properties["hasViewport"] = scrollRect.viewport != null;
+                properties["hasHorizontalScrollbar"] = scrollRect.horizontalScrollbar != null;
+                properties["hasVerticalScrollbar"] = scrollRect.verticalScrollbar != null;
             }
             if (obj.TryGetComponent<Scrollbar>(out var scrollbar))
             {
@@ -145,7 +155,7 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
             }
 
             // Check for TMP components
-            var tmpTextType = System.Type.GetType("TMPro.TextMeshProUGUI, Unity.TextMeshPro");
+            var tmpTextType = UIHelpers.GetTmpTextType();
             if (tmpTextType != null)
             {
                 var tmpComponent = obj.GetComponent(tmpTextType);
@@ -159,7 +169,7 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                 }
             }
 
-            var tmpDropdownType = System.Type.GetType("TMPro.TMP_Dropdown, Unity.TextMeshPro");
+            var tmpDropdownType = UIHelpers.GetTmpDropdownType();
             if (tmpDropdownType != null)
             {
                 var tmpDropdown = obj.GetComponent(tmpDropdownType);
@@ -168,10 +178,15 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                     componentTypes.Add("TMP_Dropdown");
                     var valueProp = tmpDropdownType.GetProperty("value");
                     if (valueProp != null) properties["value"] = valueProp.GetValue(tmpDropdown);
+                    properties["options"] = UIHelpers.GetDropdownOptions(tmpDropdown);
+                    properties["optionsCount"] = UIHelpers.GetListCount(tmpDropdown, "options");
+                    properties["hasTemplate"] = UIHelpers.HasObjectReference(tmpDropdown, "template");
+                    properties["hasCaptionText"] = UIHelpers.HasObjectReference(tmpDropdown, "captionText");
+                    properties["hasItemText"] = UIHelpers.HasObjectReference(tmpDropdown, "itemText");
                 }
             }
 
-            var tmpInputFieldType = System.Type.GetType("TMPro.TMP_InputField, Unity.TextMeshPro");
+            var tmpInputFieldType = UIHelpers.GetTmpInputFieldType();
             if (tmpInputFieldType != null)
             {
                 var tmpInputField = obj.GetComponent(tmpInputFieldType);
@@ -180,6 +195,13 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                     componentTypes.Add("TMP_InputField");
                     var textProp = tmpInputFieldType.GetProperty("text");
                     if (textProp != null) properties["text"] = textProp.GetValue(tmpInputField)?.ToString() ?? "";
+                    var contentTypeProp = tmpInputFieldType.GetProperty("contentType");
+                    if (contentTypeProp != null) properties["contentType"] = contentTypeProp.GetValue(tmpInputField)?.ToString() ?? "";
+                    var lineTypeProp = tmpInputFieldType.GetProperty("lineType");
+                    if (lineTypeProp != null) properties["lineType"] = lineTypeProp.GetValue(tmpInputField)?.ToString() ?? "";
+                    properties["hasTextComponent"] = UIHelpers.HasObjectReference(tmpInputField, "textComponent");
+                    properties["hasPlaceholder"] = UIHelpers.HasObjectReference(tmpInputField, "placeholder");
+                    properties["hasTextViewport"] = UIHelpers.HasObjectReference(tmpInputField, "textViewport");
                 }
             }
 

@@ -115,6 +115,11 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
             bool success = false;
             string errorMsg = "";
 
+            Component GetTmpComponent(Type type)
+            {
+                return type == null ? null : obj.GetComponent(type);
+            }
+
             try
             {
                 switch (eventType.ToLower())
@@ -141,9 +146,19 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                             success = AddListenerToEvent(slider, "m_OnValueChanged", targetComponent, methodName);
                             if (!success) errorMsg = "Failed to add listener to Slider.onValueChanged";
                         }
+                        else if (obj.TryGetComponent<InputField>(out var inputValueField))
+                        {
+                            success = AddListenerToEvent(inputValueField, "m_OnValueChanged", targetComponent, methodName);
+                            if (!success) errorMsg = "Failed to add listener to InputField.onValueChanged";
+                        }
+                        else if (GetTmpComponent(UIHelpers.GetTmpInputFieldType()) is Component tmpInputValueField)
+                        {
+                            success = AddListenerToEvent(tmpInputValueField, "m_OnValueChanged", targetComponent, methodName);
+                            if (!success) errorMsg = "Failed to add listener to TMP_InputField.onValueChanged";
+                        }
                         else
                         {
-                            errorMsg = "GameObject does not have a Toggle or Slider component";
+                            errorMsg = "GameObject does not have a Toggle, Slider, InputField, or TMP_InputField component";
                         }
                         break;
                     case "onendedit":
@@ -152,9 +167,14 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                             success = AddListenerToEvent(inputField, "m_OnEndEdit", targetComponent, methodName);
                             if (!success) errorMsg = "Failed to add listener to InputField.onEndEdit";
                         }
+                        else if (GetTmpComponent(UIHelpers.GetTmpInputFieldType()) is Component tmpInputField)
+                        {
+                            success = AddListenerToEvent(tmpInputField, "m_OnEndEdit", targetComponent, methodName);
+                            if (!success) errorMsg = "Failed to add listener to TMP_InputField.onEndEdit";
+                        }
                         else
                         {
-                            errorMsg = "GameObject does not have an InputField component";
+                            errorMsg = "GameObject does not have an InputField or TMP_InputField component";
                         }
                         break;
                     case "onsubmit":
@@ -163,9 +183,14 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                             success = AddListenerToEvent(inputField2, "m_OnSubmit", targetComponent, methodName);
                             if (!success) errorMsg = "Failed to add listener to InputField.onSubmit";
                         }
+                        else if (GetTmpComponent(UIHelpers.GetTmpInputFieldType()) is Component tmpInputField2)
+                        {
+                            success = AddListenerToEvent(tmpInputField2, "m_OnSubmit", targetComponent, methodName);
+                            if (!success) errorMsg = "Failed to add listener to TMP_InputField.onSubmit";
+                        }
                         else
                         {
-                            errorMsg = "GameObject does not have an InputField component";
+                            errorMsg = "GameObject does not have an InputField or TMP_InputField component";
                         }
                         break;
                     case "onvaluechangedint":
@@ -174,9 +199,14 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                             success = AddListenerToEvent(dropdown, "m_OnValueChanged", targetComponent, methodName);
                             if (!success) errorMsg = "Failed to add listener to Dropdown.onValueChanged";
                         }
+                        else if (GetTmpComponent(UIHelpers.GetTmpDropdownType()) is Component tmpDropdown)
+                        {
+                            success = AddListenerToEvent(tmpDropdown, "m_OnValueChanged", targetComponent, methodName);
+                            if (!success) errorMsg = "Failed to add listener to TMP_Dropdown.onValueChanged";
+                        }
                         else
                         {
-                            errorMsg = "GameObject does not have a Dropdown component";
+                            errorMsg = "GameObject does not have a Dropdown or TMP_Dropdown component";
                         }
                         break;
                     default:

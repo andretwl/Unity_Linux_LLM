@@ -89,6 +89,34 @@ Startup toggles:
    - If `startNetworkingAfterInitialization` is true, calls `NPCNetworkBootstrap.StartConfiguredMode()`.
    - Currently off by default to avoid accidental host/client startup in edit/play iteration.
 
+## Network player prefab
+
+`NPCNetworkBootstrap.playerPrefabResourcesPath` points at `Resources/Networking/NPCPlayerAvatar`, which resolves to:
+
+- `Assets/Resources/Networking/NPCPlayerAvatar.prefab`
+
+The prefab is the operational Netcode player object spawned by `NetworkManager` when host/server/client mode is started. Verified root components:
+
+- `NetworkObject`
+- `NPCPlayerNetworkAvatar`
+- `CharacterController`
+- `Animator`
+- `NetworkAnimator` with owner authority
+- `NPCOwnerNetworkTransform` with owner-authoritative transform sync
+- `NPCNetworkPlayerController`
+- `PlayerInput`
+
+The visible avatar is the child `AvatarVisual`, a blue URP capsule using `Assets/Materials/NetworkPlayerBlue.mat`. The root object stays at the CharacterController feet (`0,0,0`) and the visual capsule is offset to `0,1,0` so the controller bottom rests on the ground.
+
+The controller uses the `Player` action map from `Assets/InputSystem_Actions.inputactions`:
+
+- `Move` (`Vector2`) — WASD / arrows / left stick
+- `Look` (`Vector2`) — mouse/gamepad look, used for owner camera yaw
+- `Jump` (`Button`) — CharacterController jump
+- `Sprint` (`Button`) — sprint speed modifier
+
+The player controller is owner-only: the owning client reads input and moves its `CharacterController`; `NPCOwnerNetworkTransform` replicates the resulting transform; `NetworkAnimator` replicates animator parameters/triggers.
+
 ## Folder and namespace structure
 
 Runtime scripts are organized under coherent feature folders:

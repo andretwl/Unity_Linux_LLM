@@ -14,22 +14,19 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
 
         public string Execute(Dictionary<string, object> args)
         {
-            // CRITICAL: All UI actions require TextMeshPro. Check before doing anything.
-            var tmpCheck = UIHelpers.EnsureTMPForUIActions();
-            if (!tmpCheck.IsAvailable)
-            {
-                // TMP not available - user must install it explicitly first
-                return ToolUtils.CreateErrorResponse(tmpCheck.Message);
-            }
-
             string name = args.ContainsKey("name") ? args["name"].ToString() : "Canvas";
             string renderModeStr = args.ContainsKey("renderMode") ? args["renderMode"].ToString() : "ScreenSpaceOverlay";
             string cameraPath = args.ContainsKey("cameraPath") ? args["cameraPath"].ToString() : "";
 
             UnityEngine.GameObject canvasObj = new UnityEngine.GameObject(name);
             Canvas canvas = Undo.AddComponent<Canvas>(canvasObj);
-            Undo.AddComponent<CanvasScaler>(canvasObj);
+            CanvasScaler scaler = Undo.AddComponent<CanvasScaler>(canvasObj);
             Undo.AddComponent<GraphicRaycaster>(canvasObj);
+
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            scaler.matchWidthOrHeight = 0.5f;
 
             if (System.Enum.TryParse(renderModeStr, true, out RenderMode mode))
             {

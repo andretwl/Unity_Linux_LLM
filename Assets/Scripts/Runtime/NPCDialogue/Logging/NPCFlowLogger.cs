@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using EditorAttributes;
 using GladeAgenticAI.Core.Memory;
 using UnityEngine;
 
@@ -10,17 +11,33 @@ namespace NPCSystem
     [DefaultExecutionOrder(-3000)]
     public sealed class NPCFlowLogger : MonoBehaviour
     {
+        // ── EditorAttributes group: reference pattern for any component logging ──
+        [Title("NPC Flow Logger")]
+        [HelpBox("This logger provides a reusable Inspector logging pattern. To add logging to any component:\n1) Call NPCFlowLogger.FindOrCreate().Log(stage, status, level, message, source: nameof(YourClass));\n2) Or wrap work in using var scope = NPCFlowScope.Start(logger, stage, source: nameof(YourClass));\n3) Define stages in NPCFlowStage, statuses in NPCFlowStatus, levels in NPCFlowLogLevel.", MessageMode.Log, drawAbove: true)]
+        [FoldoutGroup("Console Output", true, nameof(logToUnityConsole))]
         public bool logToUnityConsole = true;
+
+        [FoldoutGroup("File Output", true, nameof(logToJsonlFile))]
         public bool logToJsonlFile = true;
+
+        [FoldoutGroup("Text Sanitization", nameof(includeTextSnippets), nameof(includeRawTextPayloads), nameof(maxSnippetChars))]
         public bool includeTextSnippets = false;
         public bool includeRawTextPayloads = false;
+
+        [ShowField(nameof(IncludeTextOrRaw))]
         public int maxSnippetChars = 80;
+
+        [Title("Cache Settings")]
         public int maxInMemoryEvents = 500;
+
+        [Title("Log File Storage")]
+        [FoldoutGroup("Log File Storage", nameof(relativeLogDirectory), nameof(overrideAbsoluteLogDirectory), nameof(maxLogDays), nameof(maxLogDirectorySizeMB))]
         public string relativeLogDirectory = "NPCDialogue/Logs";
         public string overrideAbsoluteLogDirectory = "";
         public int maxLogDays = 7;
         public int maxLogDirectorySizeMB = 100;
 
+        // ── Runtime state ──
         static NPCFlowLogger _instance;
         static int _fallbackWarningEmitted;
         static bool _cleanupRun;
@@ -32,6 +49,20 @@ namespace NPCSystem
         string _currentLogPath = string.Empty;
         bool _fileFailureWarned;
 
+        // ── Inspector preview helpers (not serialised) ──
+        [ShowInInspector]
+        string InspectorSessionId => string.IsNullOrWhiteSpace(_sessionId) ? "not initialized" : _sessionId;
+
+        [ShowInInspector]
+        string InspectorLogFilePath => string.IsNullOrWhiteSpace(_currentLogPath) ? "not set" : _currentLogPath;
+
+        [ShowInInspector]
+        int InspectorRecentEventCount
+        {
+            get { lock (_sync) { return _recentEvents.Count; } }
+        }
+
+        // ── Public instance access ──
         public static NPCFlowLogger Instance => _instance;
 
         public string SessionId
@@ -155,6 +186,64 @@ namespace NPCSystem
             {
                 return new List<NPCFlowEvent>(_recentEvents);
             }
+        }
+
+        [Button("Flush Log File", buttonHeight: 20f)]
+        void FlushInspector()
+        {
+            EnsureLogPath();
+            Log(NPCFlowStage.SceneBootstrap, NPCFlowStatus.Success, NPCFlowLogLevel.Debug,
+                "Manual log flush triggered from Inspector.", source: nameof(NPCFlowLogger));
+        }
+
+        [Button("Run Log Cleanup Now", buttonHeight: 20f)]
+        void RunLogCleanupInspector()
+        {
+            string directory = !string.IsNullOrWhiteSpace(overrideAbsoluteLogDirectory)
+                ? overrideAbsoluteLogDirectory.Trim()
+                : Path.Combine(Application.persistentDataPath, string.IsNullOrWhiteSpace(relativeLogDirectory) ? "NPCDialogue/Logs" : relativeLogDirectory.Trim());
+            RunLogCleanup(directory);
+        }
+
+        [Button("Log Recent Event Count", buttonHeight: 20f)]
+        void LogRecentEventCountInspector()
+        {
+            int count;
+            lock (_sync) { count = _recentEvents.Count; }
+            Log(NPCFlowStage.EditorWorkflow, NPCFlowStatus.Success, NPCFlowLogLevel.Info,
+                $"Inspector diagnostic: {count} events in ring buffer.", source: nameof(NPCFlowLogger));
+        }
+
+        [Button("Validate All Logger Settings")]
+        void ValidateAllSettingsInspector()
+        {
+            var issues = new System.Collections.Generic.List<string>();
+            if (!HasValidMaxEvents()) issues.Add("maxInMemoryEvents must be > 0");
+            if (!HasValidMaxLogDays()) issues.Add("maxLogDays must be > 0");
+            if (!HasValidMaxDirMB()) issues.Add("maxLogDirectorySizeMB must be > 0");
+            if (!HasValidSnippetChars()) issues.Add("maxSnippetChars must be > 0 when text sanitization is active");
+            if (!HasValidRelativeLogDir()) issues.Add("relativeLogDirectory cannot be empty");
+
+            string directory = !string.IsNullOrWhiteSpace(overrideAbsoluteLogDirectory)
+                ? overrideAbsoluteLogDirectory.Trim()
+                : Path.Combine(Application.persistentDataPath, string.IsNullOrWhiteSpace(relativeLogDirectory) ? "NPCDialogue/Logs" : relativeLogDirectory.Trim());
+
+            Log(NPCFlowStage.ConfigurationValidation, issues.Count == 0 ? NPCFlowStatus.Success : NPCFlowStatus.Warning,
+                NPCFlowLogLevel.Info,
+                issues.Count == 0
+                    ? "All logger settings valid. Log path: " + Path.Combine(directory, "npc-flow-*.jsonl").Replace('\\', '/')
+                    : "Logger settings have " + issues.Count + " issue(s): " + string.Join("; ", issues),
+                source: nameof(NPCFlowLogger),
+                data: new Dictionary<string, object>
+                {
+                    ["logToUnityConsole"] = logToUnityConsole,
+                    ["logToJsonlFile"] = logToJsonlFile,
+                    ["maxInMemoryEvents"] = maxInMemoryEvents,
+                    ["maxLogDays"] = maxLogDays,
+                    ["maxLogDirectorySizeMB"] = maxLogDirectorySizeMB,
+                    ["logDirectory"] = directory,
+                    ["issuesFound"] = issues.Count
+                });
         }
 
         public void Flush()
@@ -405,5 +494,18 @@ namespace NPCSystem
                 UnityEngine.Debug.LogWarning($"[NPCFlowLogger] Failed to hook CogneeMemoryService diagnostics: {ex.Message}");
             }
         }
+
+        // ── Validation helpers for EditorAttributes ──
+        bool IncludeTextOrRaw() => includeTextSnippets || includeRawTextPayloads;
+
+        bool HasValidSnippetChars() => !IncludeTextOrRaw() || maxSnippetChars > 0;
+
+        bool HasValidMaxEvents() => maxInMemoryEvents > 0;
+
+        bool HasValidRelativeLogDir() => !string.IsNullOrWhiteSpace(relativeLogDirectory);
+
+        bool HasValidMaxLogDays() => maxLogDays > 0;
+
+        bool HasValidMaxDirMB() => maxLogDirectorySizeMB > 0;
     }
 }

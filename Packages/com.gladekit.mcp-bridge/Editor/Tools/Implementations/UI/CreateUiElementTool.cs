@@ -15,14 +15,6 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
 
         public string Execute(Dictionary<string, object> args)
         {
-            // CRITICAL: All UI actions require TextMeshPro. Check before doing anything.
-            var tmpCheck = UIHelpers.EnsureTMPForUIActions();
-            if (!tmpCheck.IsAvailable)
-            {
-                // TMP not available - user must install it explicitly first
-                return ToolUtils.CreateErrorResponse(tmpCheck.Message);
-            }
-
             string elementType = args.ContainsKey("elementType") ? args["elementType"].ToString() : "Panel";
             string name = args.ContainsKey("name") ? args["name"].ToString() : elementType;
             string parentPath = args.ContainsKey("parentPath") ? args["parentPath"].ToString() : "";
@@ -38,21 +30,14 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                 parentObj = canvas != null ? canvas.gameObject : null;
             }
 
-            UnityEngine.GameObject obj = new UnityEngine.GameObject(name, typeof(RectTransform));
-            if (parentObj != null)
-            {
-                obj.transform.SetParent(parentObj.transform, false);
-            }
+            UnityEngine.GameObject obj;
 
             switch (elementType.ToLower())
             {
                 case "panel":
-                    // Panel: Image component (color should be specified for visibility)
-                    var panelImage = obj.AddComponent<Image>();
-                    if (args.ContainsKey("color"))
-                    {
-                        panelImage.color = ToolUtils.ParseColor(args["color"].ToString());
-                    }
+                    obj = new UnityEngine.GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                    var panelImage = obj.GetComponent<Image>();
+                    panelImage.color = args.ContainsKey("color") ? ToolUtils.ParseColor(args["color"].ToString()) : new Color(1f, 1f, 1f, 0.3921569f);
                     panelImage.type = Image.Type.Simple;
                     break;
                 case "text":
@@ -60,219 +45,72 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                 case "tmp_text":
                 case "textmeshpro":
                 case "textmeshprougui":
-                    // All text elements use TMP - no fallback to regular Text
+                    if (!EnsureTmpAvailable(out string tmpError))
+                    {
+                        return ToolUtils.CreateErrorResponse(tmpError);
+                    }
+
+                    obj = new UnityEngine.GameObject(name, typeof(RectTransform), typeof(CanvasRenderer));
                     if (!UIHelpers.TryAddTmpText(obj, args))
                     {
                         return ToolUtils.CreateErrorResponse("Failed to create TextMeshPro component. TextMeshPro is required for all UI actions in this agent and is the only text rendering system supported. If installation was just started, please wait for Unity to finish and manually click 'Import TMP Essentials' when prompted.");
                     }
                     break;
                 case "image":
-                    var image = obj.AddComponent<Image>();
-                    if (args.ContainsKey("color"))
-                    {
-                        image.color = ToolUtils.ParseColor(args["color"].ToString());
-                    }
-                    // Default to Simple image type (not Tiled) to avoid repeated images unless explicitly set
+                    obj = new UnityEngine.GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                    var image = obj.GetComponent<Image>();
+                    image.color = args.ContainsKey("color") ? ToolUtils.ParseColor(args["color"].ToString()) : Color.white;
                     image.type = Image.Type.Simple;
                     break;
                 case "button":
-                    var buttonImage = obj.AddComponent<Image>();
-                    if (args.ContainsKey("color"))
-                    {
-                        buttonImage.color = ToolUtils.ParseColor(args["color"].ToString());
-                    }
-                    buttonImage.type = Image.Type.Simple;
-                    var button = obj.AddComponent<Button>();
-                    var textObj = new UnityEngine.GameObject("Text", typeof(RectTransform));
-                    textObj.transform.SetParent(obj.transform, false);
-                    if (!UIHelpers.TryAddTmpText(textObj, args))
-                    {
-                        return ToolUtils.CreateErrorResponse("Failed to create TextMeshPro component for button text. TextMeshPro is required for all UI actions in this agent and is the only text rendering system supported. If installation was just started, please wait for Unity to finish and manually click 'Import TMP Essentials' when prompted.");
-                    }
-                    // Set alignment for button text
-                    var tmpComponent = textObj.GetComponent(System.Type.GetType("TMPro.TextMeshProUGUI, Unity.TextMeshPro"));
-                    if (tmpComponent != null && !args.ContainsKey("alignment"))
-                    {
-                        var alignmentProp = tmpComponent.GetType().GetProperty("alignment");
-                        if (alignmentProp != null)
-                        {
-                            var alignmentType = alignmentProp.PropertyType;
-                            var centerValue = System.Enum.Parse(alignmentType, "Center", true);
-                            alignmentProp.SetValue(tmpComponent, centerValue, null);
-                        }
-                    }
-                    RectTransform textRect = textObj.GetComponent<RectTransform>();
-                    textRect.anchorMin = Vector2.zero;
-                    textRect.anchorMax = Vector2.one;
-                    textRect.offsetMin = Vector2.zero;
-                    textRect.offsetMax = Vector2.zero;
+                    obj = DefaultControls.CreateButton(new DefaultControls.Resources());
+                    obj.name = name;
+                    ApplyButtonArgs(obj, args);
                     break;
                 case "slider":
-                    obj.AddComponent<Image>();
-                    var slider = obj.AddComponent<Slider>();
-                    slider.minValue = 0f;
-                    slider.maxValue = 1f;
-                    slider.value = 0.5f;
+                    obj = DefaultControls.CreateSlider(new DefaultControls.Resources());
+                    obj.name = name;
                     break;
                 case "toggle":
-                    obj.AddComponent<Image>();
-                    var toggle = obj.AddComponent<Toggle>();
-                    toggle.isOn = args.ContainsKey("isOn") && bool.TryParse(args["isOn"].ToString(), out bool isOn) ? isOn : false;
-                    if (args.ContainsKey("toggleGroupPath") && !string.IsNullOrEmpty(args["toggleGroupPath"].ToString()))
-                    {
-                        var toggleGroupObj = ToolUtils.FindGameObjectByPath(args["toggleGroupPath"].ToString());
-                        if (toggleGroupObj != null)
-                        {
-                            var toggleGroup = toggleGroupObj.GetComponent<ToggleGroup>();
-                            if (toggleGroup == null) toggleGroup = toggleGroupObj.AddComponent<ToggleGroup>();
-                            toggle.group = toggleGroup;
-                        }
-                    }
-                    // Create label child for toggle
-                    var toggleLabelObj = new UnityEngine.GameObject("Label", typeof(RectTransform));
-                    toggleLabelObj.transform.SetParent(obj.transform, false);
-                    if (!UIHelpers.TryAddTmpText(toggleLabelObj, args))
-                    {
-                        return ToolUtils.CreateErrorResponse("Failed to create TextMeshPro component for toggle label. TextMeshPro is required for all UI actions in this agent and is the only text rendering system supported. If installation was just started, please wait for Unity to finish and manually click 'Import TMP Essentials' when prompted.");
-                    }
-                    RectTransform toggleLabelRect = toggleLabelObj.GetComponent<RectTransform>();
-                    toggleLabelRect.anchorMin = Vector2.zero;
-                    toggleLabelRect.anchorMax = Vector2.one;
-                    toggleLabelRect.offsetMin = Vector2.zero;
-                    toggleLabelRect.offsetMax = Vector2.zero;
+                    obj = DefaultControls.CreateToggle(new DefaultControls.Resources());
+                    obj.name = name;
                     break;
                 case "dropdown":
+                    obj = DefaultControls.CreateDropdown(new DefaultControls.Resources());
+                    obj.name = name;
+                    break;
                 case "tmp_dropdown":
-                    // All dropdowns use TMP - TMP already checked at start of Execute()
-                    var tmpDropdownType = System.Type.GetType("TMPro.TMP_Dropdown, Unity.TextMeshPro");
-                    if (tmpDropdownType == null || !UIHelpers.IsTextMeshProAvailable())
+                    if (!EnsureTmpAvailable(out string tmpDropdownError))
                     {
-                        return ToolUtils.CreateErrorResponse("TMP_Dropdown requires TextMeshPro. TextMeshPro is required for all UI actions in this agent and is the only text rendering system supported. Please ensure TMP is installed and Essential Resources are imported.");
+                        return ToolUtils.CreateErrorResponse(tmpDropdownError);
                     }
-                    
-                    obj.AddComponent<Image>();
-                    var tmpDropdown = obj.AddComponent(tmpDropdownType);
-                    if (args.ContainsKey("options") && args["options"] is System.Collections.IList tmpOptionsList)
-                    {
-                        var optionsProp = tmpDropdownType.GetProperty("options");
-                        if (optionsProp != null)
-                        {
-                            var tmpOptionsListValue = optionsProp.GetValue(tmpDropdown);
-                            var clearMethod = tmpOptionsListValue.GetType().GetMethod("Clear");
-                            clearMethod?.Invoke(tmpOptionsListValue, null);
-                            var addMethod = tmpOptionsListValue.GetType().GetMethod("Add");
-                            foreach (var opt in tmpOptionsList)
-                            {
-                                var optionData = System.Activator.CreateInstance(tmpOptionsListValue.GetType().GetGenericArguments()[0]);
-                                var textProp = optionData.GetType().GetProperty("text");
-                                textProp?.SetValue(optionData, opt.ToString(), null);
-                                addMethod?.Invoke(tmpOptionsListValue, new[] { optionData });
-                            }
-                        }
-                    }
+
+                    obj = CreateTmpDropdown(name, args);
                     break;
                 case "inputfield":
+                    obj = DefaultControls.CreateInputField(new DefaultControls.Resources());
+                    obj.name = name;
+                    break;
                 case "tmp_inputfield":
-                    // All input fields use TMP - TMP already checked at start of Execute()
-                    var tmpInputFieldType = System.Type.GetType("TMPro.TMP_InputField, Unity.TextMeshPro");
-                    if (tmpInputFieldType == null || !UIHelpers.IsTextMeshProAvailable())
+                    if (!EnsureTmpAvailable(out string tmpInputFieldError))
                     {
-                        return ToolUtils.CreateErrorResponse("TMP_InputField requires TextMeshPro. TextMeshPro is required for all UI actions in this agent and is the only text rendering system supported. Please ensure TMP is installed and Essential Resources are imported.");
+                        return ToolUtils.CreateErrorResponse(tmpInputFieldError);
                     }
-                    
-                    obj.AddComponent<Image>();
-                    var tmpInputField = obj.AddComponent(tmpInputFieldType);
-                    // Set placeholder
-                    if (args.ContainsKey("placeholder"))
-                    {
-                        var placeholderObj = new UnityEngine.GameObject("Placeholder", typeof(RectTransform));
-                        placeholderObj.transform.SetParent(obj.transform, false);
-                        var tmpPlaceholderType = System.Type.GetType("TMPro.TextMeshProUGUI, Unity.TextMeshPro");
-                        if (tmpPlaceholderType != null)
-                        {
-                            var tmpPlaceholder = placeholderObj.AddComponent(tmpPlaceholderType);
-                            var textProp = tmpPlaceholderType.GetProperty("text");
-                            textProp?.SetValue(tmpPlaceholder, args["placeholder"].ToString(), null);
-                            var colorProp = tmpPlaceholderType.GetProperty("color");
-                            colorProp?.SetValue(tmpPlaceholder, new Color(0.2f, 0.2f, 0.2f, 0.5f), null);
-                            var placeholderProp = tmpInputFieldType.GetProperty("placeholder");
-                            placeholderProp?.SetValue(tmpInputField, tmpPlaceholder, null);
-                        }
-                        RectTransform placeholderRect = placeholderObj.GetComponent<RectTransform>();
-                        placeholderRect.anchorMin = Vector2.zero;
-                        placeholderRect.anchorMax = Vector2.one;
-                        placeholderRect.offsetMin = Vector2.zero;
-                        placeholderRect.offsetMax = Vector2.zero;
-                    }
-                    // Set text component
-                    var textObj2 = new UnityEngine.GameObject("Text", typeof(RectTransform));
-                    textObj2.transform.SetParent(obj.transform, false);
-                    var tmpTextType = System.Type.GetType("TMPro.TextMeshProUGUI, Unity.TextMeshPro");
-                    if (tmpTextType != null)
-                    {
-                        var tmpText = textObj2.AddComponent(tmpTextType);
-                        var textComponentProp = tmpInputFieldType.GetProperty("textComponent");
-                        textComponentProp?.SetValue(tmpInputField, tmpText, null);
-                    }
-                    RectTransform inputTextRect = textObj2.GetComponent<RectTransform>();
-                    inputTextRect.anchorMin = Vector2.zero;
-                    inputTextRect.anchorMax = Vector2.one;
-                    inputTextRect.offsetMin = Vector2.zero;
-                    inputTextRect.offsetMax = Vector2.zero;
-                    if (args.ContainsKey("contentType"))
-                    {
-                        var contentTypeProp = tmpInputFieldType.GetProperty("contentType");
-                        if (contentTypeProp != null)
-                        {
-                            var contentTypeEnum = System.Enum.Parse(contentTypeProp.PropertyType, args["contentType"].ToString(), true);
-                            contentTypeProp.SetValue(tmpInputField, contentTypeEnum, null);
-                        }
-                    }
-                    if (args.ContainsKey("characterLimit") && int.TryParse(args["characterLimit"].ToString(), out int tmpCharLimit))
-                    {
-                        var charLimitProp = tmpInputFieldType.GetProperty("characterLimit");
-                        charLimitProp?.SetValue(tmpInputField, tmpCharLimit, null);
-                    }
+
+                    obj = CreateTmpInputField(name, args);
                     break;
                 case "scrollview":
                 case "scrollrect":
-                    obj.AddComponent<Image>();
-                    var scrollRect = obj.AddComponent<ScrollRect>();
-                    scrollRect.horizontal = args.ContainsKey("horizontal") && bool.TryParse(args["horizontal"].ToString(), out bool h) ? h : true;
-                    scrollRect.vertical = args.ContainsKey("vertical") && bool.TryParse(args["vertical"].ToString(), out bool v) ? v : true;
-                    // Create Viewport child
-                    var viewportObj = new UnityEngine.GameObject("Viewport", typeof(RectTransform));
-                    viewportObj.transform.SetParent(obj.transform, false);
-                    var viewportMask = viewportObj.AddComponent<Mask>();
-                    viewportObj.AddComponent<Image>();
-                    scrollRect.viewport = viewportObj.GetComponent<RectTransform>();
-                    // Create Content child
-                    var contentObj = new UnityEngine.GameObject("Content", typeof(RectTransform));
-                    contentObj.transform.SetParent(viewportObj.transform, false);
-                    scrollRect.content = contentObj.GetComponent<RectTransform>();
-                    // Create Scrollbar Horizontal
-                    var hScrollbarObj = new UnityEngine.GameObject("Scrollbar Horizontal", typeof(RectTransform));
-                    hScrollbarObj.transform.SetParent(obj.transform, false);
-                    var hScrollbar = hScrollbarObj.AddComponent<Scrollbar>();
-                    hScrollbar.direction = Scrollbar.Direction.LeftToRight;
-                    scrollRect.horizontalScrollbar = hScrollbar;
-                    // Create Scrollbar Vertical
-                    var vScrollbarObj = new UnityEngine.GameObject("Scrollbar Vertical", typeof(RectTransform));
-                    vScrollbarObj.transform.SetParent(obj.transform, false);
-                    var vScrollbar = vScrollbarObj.AddComponent<Scrollbar>();
-                    vScrollbar.direction = Scrollbar.Direction.BottomToTop;
-                    scrollRect.verticalScrollbar = vScrollbar;
+                    obj = DefaultControls.CreateScrollView(new DefaultControls.Resources());
+                    obj.name = name;
                     break;
                 case "scrollbar":
-                    obj.AddComponent<Image>();
-                    var scrollbar = obj.AddComponent<Scrollbar>();
-                    if (args.ContainsKey("direction") && System.Enum.TryParse<Scrollbar.Direction>(args["direction"].ToString(), true, out var dir))
-                        scrollbar.direction = dir;
-                    scrollbar.value = 1f;
-                    scrollbar.size = 0.2f;
+                    obj = DefaultControls.CreateScrollbar(new DefaultControls.Resources());
+                    obj.name = name;
                     break;
                 case "rawimage":
-                    var rawImage = obj.AddComponent<RawImage>();
+                    obj = new UnityEngine.GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
+                    var rawImage = obj.GetComponent<RawImage>();
                     if (args.ContainsKey("texturePath") && !string.IsNullOrEmpty(args["texturePath"].ToString()))
                     {
                         string texturePath = args["texturePath"].ToString();
@@ -284,7 +122,8 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                     if (args.ContainsKey("color")) rawImage.color = ToolUtils.ParseColor(args["color"].ToString());
                     break;
                 case "canvasgroup":
-                    var canvasGroup = obj.AddComponent<CanvasGroup>();
+                    obj = new UnityEngine.GameObject(name, typeof(RectTransform), typeof(CanvasGroup));
+                    var canvasGroup = obj.GetComponent<CanvasGroup>();
                     if (args.ContainsKey("alpha") && float.TryParse(args["alpha"].ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out float alpha))
                         canvasGroup.alpha = alpha;
                     else
@@ -299,7 +138,8 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                         canvasGroup.blocksRaycasts = true;
                     break;
                 case "horizontallayoutgroup":
-                    var hLayout = obj.AddComponent<HorizontalLayoutGroup>();
+                    obj = new UnityEngine.GameObject(name, typeof(RectTransform), typeof(HorizontalLayoutGroup));
+                    var hLayout = obj.GetComponent<HorizontalLayoutGroup>();
                     if (args.ContainsKey("spacing") && float.TryParse(args["spacing"].ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out float hSpacing))
                         hLayout.spacing = hSpacing;
                     if (args.ContainsKey("padding") && !string.IsNullOrEmpty(args["padding"].ToString()))
@@ -317,7 +157,8 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                     }
                     break;
                 case "verticallayoutgroup":
-                    var vLayout = obj.AddComponent<VerticalLayoutGroup>();
+                    obj = new UnityEngine.GameObject(name, typeof(RectTransform), typeof(VerticalLayoutGroup));
+                    var vLayout = obj.GetComponent<VerticalLayoutGroup>();
                     if (args.ContainsKey("spacing") && float.TryParse(args["spacing"].ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out float vSpacing))
                         vLayout.spacing = vSpacing;
                     if (args.ContainsKey("padding") && !string.IsNullOrEmpty(args["padding"].ToString()))
@@ -335,7 +176,8 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                     }
                     break;
                 case "gridlayoutgroup":
-                    var gridLayout = obj.AddComponent<GridLayoutGroup>();
+                    obj = new UnityEngine.GameObject(name, typeof(RectTransform), typeof(GridLayoutGroup));
+                    var gridLayout = obj.GetComponent<GridLayoutGroup>();
                     if (args.ContainsKey("spacing") && !string.IsNullOrEmpty(args["spacing"].ToString()))
                     {
                         var spacingParts = args["spacing"].ToString().Split(',');
@@ -373,15 +215,14 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                     }
                     break;
                 case "mask":
-                    obj.AddComponent<Image>();
-                    obj.AddComponent<Mask>();
+                    obj = new UnityEngine.GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Mask));
                     break;
                 case "rectmask2d":
-                    obj.AddComponent<RectMask2D>();
+                    obj = new UnityEngine.GameObject(name, typeof(RectTransform), typeof(RectMask2D));
                     break;
                 default:
-                    // Default case: Panel (Image component)
-                    var defaultImage = obj.AddComponent<Image>();
+                    obj = new UnityEngine.GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                    var defaultImage = obj.GetComponent<Image>();
                     if (args.ContainsKey("color"))
                     {
                         defaultImage.color = ToolUtils.ParseColor(args["color"].ToString());
@@ -390,7 +231,13 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                     break;
             }
 
+            if (parentObj != null)
+            {
+                obj.transform.SetParent(parentObj.transform, false);
+            }
+
             var rect = obj.GetComponent<RectTransform>();
+            ApplyDefaultRect(elementType, rect);
             if (args.ContainsKey("size"))
             {
                 rect.sizeDelta = ToolUtils.ParseVector2(args["size"].ToString());
@@ -406,6 +253,236 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                 { "gameObjectPath", ToolUtils.GetGameObjectPath(obj) }
             };
             return ToolUtils.CreateSuccessResponse($"Created UI element '{name}'", extras);
+        }
+
+        static bool EnsureTmpAvailable(out string error)
+        {
+            var tmpCheck = UIHelpers.EnsureTMPForUIActions();
+            error = tmpCheck.IsAvailable ? null : tmpCheck.Message;
+            return tmpCheck.IsAvailable;
+        }
+
+        static void ApplyDefaultRect(string elementType, RectTransform rect)
+        {
+            if (rect == null)
+            {
+                return;
+            }
+
+            switch (elementType.ToLower())
+            {
+                case "button":
+                case "inputfield":
+                case "tmp_inputfield":
+                case "dropdown":
+                case "tmp_dropdown":
+                case "scrollbar":
+                    rect.sizeDelta = new Vector2(160f, 30f);
+                    break;
+                case "toggle":
+                    rect.sizeDelta = new Vector2(160f, 20f);
+                    break;
+                case "slider":
+                    rect.sizeDelta = new Vector2(160f, 20f);
+                    break;
+                case "scrollview":
+                case "scrollrect":
+                    rect.sizeDelta = new Vector2(200f, 200f);
+                    break;
+                case "text":
+                case "tmp":
+                case "tmp_text":
+                case "textmeshpro":
+                case "textmeshprougui":
+                    rect.sizeDelta = new Vector2(160f, 30f);
+                    break;
+            }
+        }
+
+        static void ApplyButtonArgs(UnityEngine.GameObject obj, Dictionary<string, object> args)
+        {
+            if (obj.TryGetComponent<Image>(out var image) && args.ContainsKey("color"))
+            {
+                image.color = ToolUtils.ParseColor(args["color"].ToString());
+            }
+
+            var textChild = obj.transform.Find("Text");
+            if (textChild != null)
+            {
+                var text = textChild.GetComponent<Text>();
+                if (text != null)
+                {
+                    text.text = args.ContainsKey("text") ? args["text"].ToString() : obj.name;
+                    if (args.ContainsKey("fontSize") && int.TryParse(args["fontSize"].ToString(), out int fontSize))
+                    {
+                        text.fontSize = fontSize;
+                    }
+
+                    if (args.ContainsKey("color"))
+                    {
+                        text.color = Color.black;
+                    }
+                }
+            }
+        }
+
+        static UnityEngine.GameObject CreateTmpInputField(string name, Dictionary<string, object> args)
+        {
+            var tmpInputFieldType = UIHelpers.GetTmpInputFieldType();
+            var root = new UnityEngine.GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            var inputField = root.AddComponent(tmpInputFieldType);
+            var image = root.GetComponent<Image>();
+            image.type = Image.Type.Simple;
+            image.color = args.ContainsKey("color") ? ToolUtils.ParseColor(args["color"].ToString()) : Color.white;
+
+            var textArea = UIHelpers.CreateChild("Text Area", root.transform, typeof(RectMask2D));
+            UIHelpers.Stretch(textArea.GetComponent<RectTransform>(), Vector2.zero, Vector2.one, new Vector2(10f, 6f), new Vector2(-10f, -7f));
+
+            var placeholder = UIHelpers.CreateChild("Placeholder", textArea.transform, typeof(CanvasRenderer));
+            var placeholderRect = placeholder.GetComponent<RectTransform>();
+            UIHelpers.Stretch(placeholderRect, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            var placeholderText = UIHelpers.AddTmpTextComponent(placeholder, args.ContainsKey("placeholder") ? args["placeholder"].ToString() : "Enter text...", new Color(0.3235294f, 0.3235294f, 0.3235294f, 0.5f), 18f, "Left");
+
+            var text = UIHelpers.CreateChild("Text", textArea.transform, typeof(CanvasRenderer));
+            var textRect = text.GetComponent<RectTransform>();
+            UIHelpers.Stretch(textRect, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            var textComponent = UIHelpers.AddTmpTextComponent(text, string.Empty, new Color(0.1960784f, 0.1960784f, 0.1960784f, 1f), 18f, "Left");
+
+            tmpInputFieldType.GetProperty("textViewport")?.SetValue(inputField, textArea.GetComponent<RectTransform>(), null);
+            tmpInputFieldType.GetProperty("textComponent")?.SetValue(inputField, textComponent, null);
+            tmpInputFieldType.GetProperty("placeholder")?.SetValue(inputField, placeholderText, null);
+
+            if (args.ContainsKey("contentType"))
+            {
+                var contentTypeProp = tmpInputFieldType.GetProperty("contentType");
+                var contentTypeEnum = Enum.Parse(contentTypeProp.PropertyType, args["contentType"].ToString(), true);
+                contentTypeProp?.SetValue(inputField, contentTypeEnum, null);
+            }
+
+            if (args.ContainsKey("characterLimit") && int.TryParse(args["characterLimit"].ToString(), out int charLimit))
+            {
+                tmpInputFieldType.GetProperty("characterLimit")?.SetValue(inputField, charLimit, null);
+            }
+
+            if (args.ContainsKey("lineType"))
+            {
+                var lineTypeProp = tmpInputFieldType.GetProperty("lineType");
+                var lineTypeEnum = Enum.Parse(lineTypeProp.PropertyType, args["lineType"].ToString(), true);
+                lineTypeProp?.SetValue(inputField, lineTypeEnum, null);
+            }
+
+            return root;
+        }
+
+        static UnityEngine.GameObject CreateTmpDropdown(string name, Dictionary<string, object> args)
+        {
+            var tmpDropdownType = UIHelpers.GetTmpDropdownType();
+            var root = new UnityEngine.GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            var dropdown = root.AddComponent(tmpDropdownType);
+            var image = root.GetComponent<Image>();
+            image.type = Image.Type.Simple;
+            image.color = args.ContainsKey("color") ? ToolUtils.ParseColor(args["color"].ToString()) : Color.white;
+
+            var label = UIHelpers.CreateChild("Label", root.transform, typeof(CanvasRenderer));
+            var labelRect = label.GetComponent<RectTransform>();
+            UIHelpers.Stretch(labelRect, Vector2.zero, Vector2.one, new Vector2(10f, 6f), new Vector2(-25f, -7f));
+            var captionText = UIHelpers.AddTmpTextComponent(label, string.Empty, new Color(0.1960784f, 0.1960784f, 0.1960784f, 1f), 18f, "Left");
+
+            var arrow = UIHelpers.CreateChild("Arrow", root.transform, typeof(CanvasRenderer), typeof(Image));
+            var arrowRect = arrow.GetComponent<RectTransform>();
+            arrowRect.anchorMin = new Vector2(1f, 0.5f);
+            arrowRect.anchorMax = new Vector2(1f, 0.5f);
+            arrowRect.pivot = new Vector2(0.5f, 0.5f);
+            arrowRect.sizeDelta = new Vector2(20f, 20f);
+            arrowRect.anchoredPosition = new Vector2(-15f, 0f);
+            arrow.GetComponent<Image>().color = new Color(0.1960784f, 0.1960784f, 0.1960784f, 1f);
+
+            var template = UIHelpers.CreateChild("Template", root.transform, typeof(CanvasRenderer), typeof(Image), typeof(ScrollRect));
+            var templateRect = template.GetComponent<RectTransform>();
+            templateRect.anchorMin = new Vector2(0f, 0f);
+            templateRect.anchorMax = new Vector2(1f, 0f);
+            templateRect.pivot = new Vector2(0.5f, 1f);
+            templateRect.anchoredPosition = new Vector2(0f, 2f);
+            templateRect.sizeDelta = new Vector2(0f, 150f);
+            template.GetComponent<Image>().color = new Color(0.9607843f, 0.9607843f, 0.9607843f, 1f);
+
+            var scrollRect = template.GetComponent<ScrollRect>();
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+            scrollRect.movementType = ScrollRect.MovementType.Clamped;
+
+            var viewport = UIHelpers.CreateChild("Viewport", template.transform, typeof(CanvasRenderer), typeof(Image), typeof(Mask));
+            UIHelpers.Stretch(viewport.GetComponent<RectTransform>(), Vector2.zero, Vector2.one, new Vector2(0f, 0f), new Vector2(-18f, 0f));
+            var viewportImage = viewport.GetComponent<Image>();
+            viewportImage.color = new Color(1f, 1f, 1f, 0.003921569f);
+            viewport.GetComponent<Mask>().showMaskGraphic = false;
+
+            var content = UIHelpers.CreateChild("Content", viewport.transform);
+            var contentRect = content.GetComponent<RectTransform>();
+            contentRect.anchorMin = new Vector2(0f, 1f);
+            contentRect.anchorMax = new Vector2(1f, 1f);
+            contentRect.pivot = new Vector2(0.5f, 1f);
+            contentRect.anchoredPosition = Vector2.zero;
+            contentRect.sizeDelta = new Vector2(0f, 28f);
+            scrollRect.viewport = viewport.GetComponent<RectTransform>();
+            scrollRect.content = contentRect;
+
+            var item = UIHelpers.CreateChild("Item", content.transform, typeof(CanvasRenderer), typeof(Toggle));
+            var itemRect = item.GetComponent<RectTransform>();
+            itemRect.anchorMin = new Vector2(0f, 0.5f);
+            itemRect.anchorMax = new Vector2(1f, 0.5f);
+            itemRect.pivot = new Vector2(0.5f, 0.5f);
+            itemRect.sizeDelta = new Vector2(0f, 20f);
+
+            var itemBackground = UIHelpers.CreateChild("Item Background", item.transform, typeof(CanvasRenderer), typeof(Image));
+            UIHelpers.Stretch(itemBackground.GetComponent<RectTransform>(), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            itemBackground.GetComponent<Image>().color = new Color(0.9607843f, 0.9607843f, 0.9607843f, 1f);
+
+            var itemCheckmark = UIHelpers.CreateChild("Item Checkmark", item.transform, typeof(CanvasRenderer), typeof(Image));
+            var checkmarkRect = itemCheckmark.GetComponent<RectTransform>();
+            checkmarkRect.anchorMin = new Vector2(0f, 0.5f);
+            checkmarkRect.anchorMax = new Vector2(0f, 0.5f);
+            checkmarkRect.pivot = new Vector2(0.5f, 0.5f);
+            checkmarkRect.sizeDelta = new Vector2(20f, 20f);
+            checkmarkRect.anchoredPosition = new Vector2(10f, 0f);
+            itemCheckmark.GetComponent<Image>().color = new Color(0.1960784f, 0.5882353f, 0.9803922f, 1f);
+
+            var itemLabel = UIHelpers.CreateChild("Item Label", item.transform, typeof(CanvasRenderer));
+            UIHelpers.Stretch(itemLabel.GetComponent<RectTransform>(), Vector2.zero, Vector2.one, new Vector2(20f, 1f), new Vector2(-10f, -2f));
+            var itemLabelText = UIHelpers.AddTmpTextComponent(itemLabel, "Option A", new Color(0.1960784f, 0.1960784f, 0.1960784f, 1f), 18f, "Left");
+
+            var itemToggle = item.GetComponent<Toggle>();
+            itemToggle.targetGraphic = itemBackground.GetComponent<Image>();
+            itemToggle.graphic = itemCheckmark.GetComponent<Image>();
+            itemToggle.isOn = true;
+
+            var scrollbar = DefaultControls.CreateScrollbar(new DefaultControls.Resources());
+            scrollbar.name = "Scrollbar";
+            scrollbar.transform.SetParent(template.transform, false);
+            var scrollbarRect = scrollbar.GetComponent<RectTransform>();
+            scrollbarRect.anchorMin = new Vector2(1f, 0f);
+            scrollbarRect.anchorMax = new Vector2(1f, 1f);
+            scrollbarRect.pivot = new Vector2(1f, 1f);
+            scrollbarRect.sizeDelta = new Vector2(20f, 0f);
+            scrollbarRect.anchoredPosition = Vector2.zero;
+            scrollRect.verticalScrollbar = scrollbar.GetComponent<Scrollbar>();
+            scrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
+
+            tmpDropdownType.GetProperty("template")?.SetValue(dropdown, templateRect, null);
+            tmpDropdownType.GetProperty("captionText")?.SetValue(dropdown, captionText, null);
+            tmpDropdownType.GetProperty("itemText")?.SetValue(dropdown, itemLabelText, null);
+            template.SetActive(false);
+
+            if (args.ContainsKey("options") && args["options"] is System.Collections.IList options)
+            {
+                UIHelpers.SetTmpDropdownOptions(dropdown, options);
+            }
+            else
+            {
+                UIHelpers.SetTmpDropdownOptions(dropdown, new List<string> { "Option A", "Option B", "Option C" });
+            }
+
+            return root;
         }
     }
 }

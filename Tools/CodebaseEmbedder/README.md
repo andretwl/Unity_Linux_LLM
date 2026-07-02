@@ -10,6 +10,7 @@ uv run --extra test pytest -q
 uv run codebase-embedder status --root ../..
 uv run codebase-embedder scan --root ../..
 uv run codebase-embedder index --root ../.. --no-qdrant
+uv run codebase-embedder index --root ../.. --reuse-artifacts --use-vector-cache --timings-json ../../.codebase-index/benchmarks/index-cache.json
 uv run codebase-embedder query --root ../.. --local "where is qdrant rag search implemented"
 uv run codebase-embedder audit --root ../.. --script Assets/Scripts/Runtime/NPCDialogue/QdrantRAGService.cs --scenario localai-llmunity
 uv run codebase-embedder audit --root ../.. --scene Assets/Scenes/NPCDialoguePrototype.unity --scenario localai-llmunity --local
@@ -66,3 +67,41 @@ The `query` command now prints a short workflow header before ranked results, an
 - `results`
 
 Qdrant collection: `unity_linux_llm_codebase_v1`.
+
+## Efficiency Benchmarking
+
+The CLI supports machine-readable timing reports for `status`, `scan`, `index`, `query`, and `audit`:
+
+```bash
+cd Tools/CodebaseEmbedder
+env UV_CACHE_DIR=/tmp/uv-cache UV_TOOL_DIR=/tmp/uv-tools \
+  uv run codebase-embedder scan --root ../.. --profile runtime \
+  --timings-json ../../.codebase-index/benchmarks/scan-runtime.json
+```
+
+For faster repeated indexing during development, build artifacts once and reuse cached vectors for unchanged records:
+
+```bash
+cd Tools/CodebaseEmbedder
+env UV_CACHE_DIR=/tmp/uv-cache UV_TOOL_DIR=/tmp/uv-tools \
+  uv run codebase-embedder index --root ../.. --profile runtime \
+  --reuse-artifacts --use-vector-cache --batch-size 64 \
+  --collection unity_linux_llm_codebase_efficiency_v1 \
+  --timings-json ../../.codebase-index/benchmarks/index-cache.json
+```
+
+LocalAI benchmark helpers:
+
+```bash
+python3 scripts/benchmark_localai_backends.py \
+  --base-url http://127.0.0.1:8080/v1 \
+  --embedding-model nomic-embed-text-v1.5 \
+  --skip-chat \
+  --out ../../.codebase-index/benchmarks/localai-embedding-smoke.jsonl
+
+python3 scripts/benchmark_embeddings.py \
+  --chunks ../../.codebase-index/chunks.jsonl \
+  --model nomic-embed-text-v1.5 \
+  --batch-sizes 1,4,8,16,32,64 \
+  --out ../../.codebase-index/benchmarks/embedding-throughput.json
+```

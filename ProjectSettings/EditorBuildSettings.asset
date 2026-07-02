@@ -8,9 +8,6 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/NPCDialoguePrototype.unity
     guid: a2ee64be8a829337ba9b1b62d8d4f756
-  - enabled: 1
-    path: Assets/LLMUnity/Samples/RAG/RAGAndLLM_Scene.unity
-    guid: a2e5c3a0f1c1b523db4bcd5e83d0e1c9
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings: {fileID: 11400000, guid: 4bbc03df5ffe229688932655ea58f66b, type: 2}

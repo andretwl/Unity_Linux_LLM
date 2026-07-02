@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using EditorAttributes;
 using LLMUnity;
 using UnityEngine;
 using UnityEngine.Events;
@@ -12,17 +13,25 @@ namespace NPCSystem
     [DefaultExecutionOrder(-1500)]
     public class NPCDialogueManager : MonoBehaviour
     {
+        [Title("LLMUnity References")]
+        [HelpBox("The active scene currently uses direct LocalAI HTTP when Use Remote Server is enabled. Keep LLMUnity references assigned for local RAG and compatibility, but avoid making direct LocalAI depend on local LLMAgent startup.", MessageMode.Log, drawAbove: true)]
+        [Required]
         [Header("LLM Reference")]
         public LLM llm;
 
+        [Required]
         [Header("LLM Agent")]
         public LLMAgent llmAgent;
 
+        [Title("Local RAG")]
         [Header("RAG Reference")]
         public RAG rag;
+        [FilePath(true, "rag")]
         public string ragEmbeddingPath = "RAG/NPCDialogues.rag";
 
+        [Title("Qdrant RAG")]
         [Header("Qdrant RAG Reference")]
+        [ShowField(nameof(useQdrantRag))]
         public QdrantRAGService qdrantRag;
         public bool useQdrantRag = false;
 
@@ -32,24 +41,32 @@ namespace NPCSystem
         [Header("Evidence & Game State")]
         public NPCEvidenceState evidenceState;
 
+        [Title("Direct LocalAI HTTP")]
         [Header("Remote LLM Configuration")]
         public bool useRemoteServer = false;
+        [ShowField(nameof(useRemoteServer))]
         public string remoteHost = "localhost";
+        [ShowField(nameof(useRemoteServer))]
         public int remotePort = 11435;
+        [Dropdown(nameof(_cachedModelNames))]
         public string remoteModel = "default-llm";
 
-        [Header("Cognee Memory Reference")]
-        public GladeAgenticAI.Core.Memory.CogneeMemoryService cogneeMemory;
-        public bool useCogneeMemory = false;
+        [SerializeField, HideInInspector]
+        string[] _cachedModelNames = new string[] { "default-llm" };
 
+        [Title("Embedding Backend")]
         [Header("Embedding Backend")]
         public bool forceRemoteEmbedder = false;
+        [ShowField(nameof(forceRemoteEmbedder))]
         public string remoteEmbeddingHost = "localhost";
+        [ShowField(nameof(forceRemoteEmbedder))]
         public int remoteEmbeddingPort = 8080;
 
+        [Title("NPC Profiles")]
         [Header("NPC Profiles")]
         public NPCProfile[] profiles = Array.Empty<NPCProfile>();
 
+        [Title("Dialogue Settings")]
         [Header("Settings")]
         public bool persistHistory = true;
         public bool enableRAG = true;
@@ -57,6 +74,13 @@ namespace NPCSystem
         public int maxHistoryPerNPC = 20;
         public bool enablePreloadedLoraSwitching = false;
 
+        [ShowInInspector]
+        string DirectLocalAiEndpointPreview => $"http://{remoteHost}:{remotePort}/v1/chat/completions";
+
+        [ShowInInspector]
+        string ActiveProfilePreview => currentProfile == null ? "<none>" : currentProfile.GetDisplayName();
+
+        [Title("Events")]
         [Header("Events")]
         public UnityEvent<string> onNPCChanged = new UnityEvent<string>();
         public UnityEvent<string> onResponseStart = new UnityEvent<string>();
@@ -118,6 +142,7 @@ namespace NPCSystem
             }
         }
 
+        [Button("Auto Assign Dialogue References")]
         void AutoAssignReferencesIfNeeded()
         {
             if (llmAgent == null)
@@ -135,11 +160,6 @@ namespace NPCSystem
                 rag = FindAnyObjectByType<RAG>(FindObjectsInactive.Include);
             }
             
-            if (useCogneeMemory && cogneeMemory == null)
-            {
-                cogneeMemory = FindAnyObjectByType<GladeAgenticAI.Core.Memory.CogneeMemoryService>(FindObjectsInactive.Include);
-            }
-
             if (useQdrantRag && qdrantRag == null)
             {
                 qdrantRag = FindAnyObjectByType<QdrantRAGService>(FindObjectsInactive.Include);
@@ -179,6 +199,7 @@ namespace NPCSystem
             }
         }
 
+        [Button("Validate Dialogue References")]
         void ValidateReferences()
         {
             if (llm == null)
@@ -190,6 +211,58 @@ namespace NPCSystem
             if (rag == null)
                 Logger.Log(NPCFlowStage.ConfigurationValidation, NPCFlowStatus.Warning, NPCFlowLogLevel.Warning,
                     "RAG reference not set. Prompt-only mode will be used.", source: nameof(NPCDialogueManager));
+        }
+
+        [Button("Fetch Models from LocalAI")]
+        void FetchAvailableModelsFromLocalAI()
+        {
+            if (!useRemoteServer)
+            {
+                UnityEngine.Debug.LogWarning("[NPC] Remote server is not enabled. Enable Use Remote Server first.");
+                return;
+            }
+
+            string url = $"http://{remoteHost}:{remotePort}/v1/models";
+            UnityEngine.Debug.Log($"[NPC] Fetching models from {url}...");
+
+            try
+            {
+                var handler = new System.Net.Http.HttpClientHandler();
+                using (var client = new System.Net.Http.HttpClient(handler))
+                {
+                    client.Timeout = System.TimeSpan.FromSeconds(10);
+                    var responseTask = client.GetAsync(url);
+                    var responseMsg = responseTask.GetAwaiter().GetResult();
+                    string response = responseMsg.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+
+                    UnityEngine.Debug.Log($"[NPC] Raw response ({response.Length} chars): {response.Substring(0, Mathf.Min(response.Length, 300))}");
+
+                    var wrapper = UnityEngine.JsonUtility.FromJson<LocalAIModelsResponse>(response);
+                    if (wrapper != null && wrapper.data != null && wrapper.data.Length > 0)
+                    {
+                        _cachedModelNames = System.Array.ConvertAll(wrapper.data, m => m.id);
+                        string modelList = string.Join(", ", _cachedModelNames);
+                        UnityEngine.Debug.Log($"[NPC] Found {_cachedModelNames.Length} model(s): {modelList}");
+                        Logger.Log(NPCFlowStage.EditorWorkflow, NPCFlowStatus.Success, NPCFlowLogLevel.Info,
+                            $"Found {_cachedModelNames.Length} model(s): {modelList}",
+                            source: nameof(NPCDialogueManager));
+
+#if UNITY_EDITOR
+                        UnityEditor.EditorUtility.SetDirty(this);
+                        UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+#endif
+                    }
+                    else
+                    {
+                        string errorDetail = wrapper == null ? "JsonUtility returned null" : $"data array is empty or null (object={wrapper.@object})";
+                        UnityEngine.Debug.LogError($"[NPC] Failed to parse models response. {errorDetail}");
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                UnityEngine.Debug.LogError($"[NPC] Failed to fetch models from {url}: {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
+            }
         }
 
         void BuildProfileIndex()
@@ -398,7 +471,14 @@ namespace NPCSystem
             List<OpenAIMessage> messages = new List<OpenAIMessage>();
             string sysPrompt = NPCProfilePromptComposer.BuildSystemPrompt(profile);
             if (string.IsNullOrWhiteSpace(sysPrompt)) sysPrompt = "You are a helpful assistant.";
-            
+
+            // Inject the authenticated player name so NPCs can personalise responses
+            string playerName = AuthNetworkBridge.ActivePlayerName;
+            if (!string.IsNullOrEmpty(playerName) && !string.Equals(playerName, "Player", StringComparison.OrdinalIgnoreCase))
+            {
+                sysPrompt += $"\n\nThe player who is speaking to you is named '{playerName}'. Address them by name naturally when appropriate.";
+            }
+
             messages.Add(new OpenAIMessage { role = "system", content = sysPrompt + "\n" + prompt });
 
             if (_historyByNpc.TryGetValue(slug, out var history))
@@ -558,7 +638,6 @@ namespace NPCSystem
         {
             using var scope = NPCFlowScope.Start(Logger, NPCFlowStage.ContextRetrieval, source: nameof(NPCDialogueManager), requestId: reqId, npcSlug: profile?.GetNpcSlug());
             string ragKnowledge = string.Empty;
-            string cogneeKnowledge = string.Empty;
 
             try
             {
@@ -617,49 +696,22 @@ namespace NPCSystem
                 scope.Error(ex, "Failed during ContextRetrieval.");
             }
 
-            if (useCogneeMemory && cogneeMemory != null && profile != null)
-            {
-                try
-                {
-                    string cogneeResult = await cogneeMemory.SearchMemoryAsync(playerMessage);
-                    if (!string.IsNullOrWhiteSpace(cogneeResult) && cogneeResult != "[]" && cogneeResult != "{}")
-                    {
-                        // In a real scenario we might parse JSON, but we'll include the raw or string result here
-                        cogneeKnowledge = cogneeResult;
-                    }
-                }
-                catch (Exception e)
-                {
-                    Logger.Log(NPCFlowStage.CogneeSearch, NPCFlowStatus.Fallback, NPCFlowLogLevel.Warning,
-                        $"Cognee search failed: {e.Message}",
-                        source: nameof(NPCDialogueManager), requestId: reqId, npcSlug: profile?.GetNpcSlug(),
-                        data: new Dictionary<string, object>
-                        {
-                            ["exceptionType"] = e.GetType().Name,
-                            ["exceptionMessage"] = e.Message
-                        });
-                }
-            }
-
-            if (string.IsNullOrWhiteSpace(ragKnowledge) && string.IsNullOrWhiteSpace(cogneeKnowledge))
+            if (string.IsNullOrWhiteSpace(ragKnowledge))
             {
                 scope.Skipped("No retrieval context found.", new Dictionary<string, object>
                 {
                     ["qdrantEnabled"] = useQdrantRag && qdrantRag != null,
-                    ["localRagEnabled"] = enableRAG && rag != null,
-                    ["cogneeEnabled"] = useCogneeMemory && cogneeMemory != null
+                    ["localRagEnabled"] = enableRAG && rag != null
                 });
                 return playerMessage;
             }
 
             string combinedKnowledge = $"Relevant knowledge for {profile.GetDisplayName()}:\n";
             if (!string.IsNullOrWhiteSpace(ragKnowledge)) combinedKnowledge += $"{ragKnowledge}\n";
-            if (!string.IsNullOrWhiteSpace(cogneeKnowledge)) combinedKnowledge += $"Additional Context: {cogneeKnowledge}\n";
 
             scope.Success("Retrieval context added to prompt.", new Dictionary<string, object>
             {
                 ["ragKnowledgeLength"] = ragKnowledge.Length,
-                ["cogneeKnowledgeLength"] = cogneeKnowledge.Length,
                 ["ragCategory"] = profile.GetRagCategory()
             });
 
@@ -687,25 +739,6 @@ namespace NPCSystem
             {
                 await llmAgent.AddUserMessage(playerMessage);
                 await llmAgent.AddAssistantMessage(response);
-            }
-
-            if (useCogneeMemory && cogneeMemory != null)
-            {
-                try
-                {
-                    await cogneeMemory.AddMemoryAsync(profile.GetNpcSlug(), $"Player: {playerMessage}\nNPC: {response}");
-                }
-                catch (Exception e)
-                {
-                    Logger.Log(NPCFlowStage.CogneeWrite, NPCFlowStatus.Fallback, NPCFlowLogLevel.Warning,
-                        $"Failed to add memory to Cognee: {e.Message}",
-                        source: nameof(NPCDialogueManager), npcSlug: profile.GetNpcSlug(),
-                        data: new Dictionary<string, object>
-                        {
-                            ["exceptionType"] = e.GetType().Name,
-                            ["exceptionMessage"] = e.Message
-                        });
-                }
             }
 
             if (!persistHistory) return;
@@ -1046,17 +1079,10 @@ namespace NPCSystem
         {
             if (Application.isPlaying) return;
 
-            // LocalAI OpenAI-compatible mode is handled by SendToLocalAIAsync(), not by LLMUnity remote mode.
-
             // Discover optional service references without auto-adding or destroying scene components.
             if (qdrantRag == null)
             {
                 qdrantRag = GetComponent<QdrantRAGService>();
-            }
-
-            if (cogneeMemory == null)
-            {
-                cogneeMemory = GetComponent<GladeAgenticAI.Core.Memory.CogneeMemoryService>();
             }
         }
 #endif
@@ -1087,5 +1113,19 @@ namespace NPCSystem
     public class OpenAIResponse
     {
         public OpenAIResponseChoice[] choices;
+    }
+
+    [Serializable]
+    public class LocalAIModelEntry
+    {
+        public string id;
+        public string @object;
+    }
+
+    [Serializable]
+    public class LocalAIModelsResponse
+    {
+        public string @object;
+        public LocalAIModelEntry[] data;
     }
 }

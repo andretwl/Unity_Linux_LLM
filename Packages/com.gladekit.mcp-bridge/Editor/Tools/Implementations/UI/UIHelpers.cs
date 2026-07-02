@@ -12,9 +12,24 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
 {
     internal static class UIHelpers
     {
+        public static Type GetTmpTextType()
+        {
+            return Type.GetType("TMPro.TextMeshProUGUI, Unity.TextMeshPro");
+        }
+
+        public static Type GetTmpInputFieldType()
+        {
+            return Type.GetType("TMPro.TMP_InputField, Unity.TextMeshPro");
+        }
+
+        public static Type GetTmpDropdownType()
+        {
+            return Type.GetType("TMPro.TMP_Dropdown, Unity.TextMeshPro");
+        }
+
         public static bool IsTextMeshProAvailable()
         {
-            return System.Type.GetType("TMPro.TextMeshProUGUI, Unity.TextMeshPro") != null;
+            return GetTmpTextType() != null;
         }
 
         /// <summary>
@@ -87,7 +102,7 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                 return false;
             }
 
-            var tmpType = System.Type.GetType("TMPro.TextMeshProUGUI, Unity.TextMeshPro");
+            var tmpType = GetTmpTextType();
             if (tmpType == null)
             {
                 UnityEngine.Debug.LogError("[GladeAI] TMP type not found even though TMP check passed.");
@@ -139,6 +154,227 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                     }
                 }
             }
+        }
+
+        public static void TrySetLegacyTextProperties(Text textComponent, Dictionary<string, object> args)
+        {
+            if (textComponent == null || args == null)
+            {
+                return;
+            }
+
+            if (args.ContainsKey("text"))
+            {
+                textComponent.text = args["text"].ToString();
+            }
+
+            if (args.ContainsKey("color"))
+            {
+                textComponent.color = ToolUtils.ParseColor(args["color"].ToString());
+            }
+
+            if (args.ContainsKey("fontSize") && int.TryParse(args["fontSize"].ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int size))
+            {
+                textComponent.fontSize = size;
+            }
+
+            if (args.ContainsKey("alignment") && Enum.TryParse(args["alignment"].ToString(), true, out TextAnchor alignment))
+            {
+                textComponent.alignment = alignment;
+            }
+        }
+
+        public static UnityEngine.GameObject CreateChild(string name, UnityEngine.Transform parent, params Type[] componentTypes)
+        {
+            var types = new Type[(componentTypes?.Length ?? 0) + 1];
+            types[0] = typeof(RectTransform);
+            for (int i = 0; i < componentTypes?.Length; i++)
+            {
+                types[i + 1] = componentTypes[i];
+            }
+
+            var child = new UnityEngine.GameObject(name, types);
+            child.transform.SetParent(parent, false);
+            return child;
+        }
+
+        public static void Stretch(RectTransform rect, Vector2 anchorMin, Vector2 anchorMax, Vector2 offsetMin, Vector2 offsetMax)
+        {
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.offsetMin = offsetMin;
+            rect.offsetMax = offsetMax;
+        }
+
+        public static Component AddTmpTextComponent(UnityEngine.GameObject obj, string text, Color color, float fontSize, string alignment = null)
+        {
+            var tmpType = GetTmpTextType();
+            if (tmpType == null)
+            {
+                return null;
+            }
+
+            var tmpComponent = obj.AddComponent(tmpType);
+            var props = new Dictionary<string, object>
+            {
+                ["text"] = text,
+                ["color"] = $"{color.r.ToString(CultureInfo.InvariantCulture)},{color.g.ToString(CultureInfo.InvariantCulture)},{color.b.ToString(CultureInfo.InvariantCulture)},{color.a.ToString(CultureInfo.InvariantCulture)}",
+                ["fontSize"] = fontSize.ToString(CultureInfo.InvariantCulture)
+            };
+
+            if (!string.IsNullOrEmpty(alignment))
+            {
+                props["alignment"] = alignment;
+            }
+
+            TrySetTmpTextProperties(tmpComponent, props);
+            return tmpComponent;
+        }
+
+        public static Component GetTextLikeComponent(UnityEngine.GameObject obj)
+        {
+            if (obj == null)
+            {
+                return null;
+            }
+
+            var tmpType = GetTmpTextType();
+            if (tmpType != null)
+            {
+                var tmpComponent = obj.GetComponent(tmpType);
+                if (tmpComponent != null)
+                {
+                    return tmpComponent;
+                }
+            }
+
+            return obj.GetComponent<Text>();
+        }
+
+        public static void SetTextLikeComponent(Component component, string text)
+        {
+            if (component == null)
+            {
+                return;
+            }
+
+            if (component is Text legacyText)
+            {
+                legacyText.text = text;
+                return;
+            }
+
+            var textProp = component.GetType().GetProperty("text");
+            textProp?.SetValue(component, text, null);
+        }
+
+        public static string GetTextLikeComponentValue(Component component)
+        {
+            if (component == null)
+            {
+                return string.Empty;
+            }
+
+            if (component is Text legacyText)
+            {
+                return legacyText.text;
+            }
+
+            var textProp = component.GetType().GetProperty("text");
+            return textProp?.GetValue(component)?.ToString() ?? string.Empty;
+        }
+
+        public static bool HasObjectReference(Component component, string propertyName)
+        {
+            if (component == null)
+            {
+                return false;
+            }
+
+            var prop = component.GetType().GetProperty(propertyName);
+            if (prop != null)
+            {
+                return prop.GetValue(component) != null;
+            }
+
+            var field = component.GetType().GetField(propertyName);
+            return field != null && field.GetValue(component) != null;
+        }
+
+        public static int GetListCount(Component component, string propertyName)
+        {
+            if (component == null)
+            {
+                return 0;
+            }
+
+            var prop = component.GetType().GetProperty(propertyName);
+            var list = prop?.GetValue(component) as System.Collections.IList;
+            return list?.Count ?? 0;
+        }
+
+        public static void SetTmpDropdownOptions(Component tmpDropdown, System.Collections.IList options)
+        {
+            if (tmpDropdown == null || options == null)
+            {
+                return;
+            }
+
+            var dropdownType = tmpDropdown.GetType();
+            var optionsProp = dropdownType.GetProperty("options");
+            var optionsList = optionsProp?.GetValue(tmpDropdown);
+            if (optionsList == null)
+            {
+                return;
+            }
+
+            var clearMethod = optionsList.GetType().GetMethod("Clear");
+            var addMethod = optionsList.GetType().GetMethod("Add");
+            var optionType = optionsList.GetType().GetGenericArguments()[0];
+            clearMethod?.Invoke(optionsList, null);
+
+            foreach (var option in options)
+            {
+                var optionData = Activator.CreateInstance(optionType);
+                optionType.GetProperty("text")?.SetValue(optionData, option?.ToString() ?? string.Empty, null);
+                addMethod?.Invoke(optionsList, new[] { optionData });
+            }
+
+            dropdownType.GetMethod("RefreshShownValue")?.Invoke(tmpDropdown, null);
+        }
+
+        public static List<string> GetDropdownOptions(Component dropdown)
+        {
+            var result = new List<string>();
+            if (dropdown == null)
+            {
+                return result;
+            }
+
+            if (dropdown is Dropdown legacyDropdown)
+            {
+                foreach (var option in legacyDropdown.options)
+                {
+                    result.Add(option.text);
+                }
+
+                return result;
+            }
+
+            var optionsProp = dropdown.GetType().GetProperty("options");
+            var optionsList = optionsProp?.GetValue(dropdown) as System.Collections.IEnumerable;
+            if (optionsList == null)
+            {
+                return result;
+            }
+
+            foreach (var option in optionsList)
+            {
+                var textProp = option.GetType().GetProperty("text");
+                result.Add(textProp?.GetValue(option)?.ToString() ?? string.Empty);
+            }
+
+            return result;
         }
 
         public static void CollectUiChildrenJson(UnityEngine.Transform parent, StringBuilder sb, int depth)

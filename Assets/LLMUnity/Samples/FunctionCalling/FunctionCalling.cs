@@ -293,25 +293,7 @@ namespace LLMUnitySamples
 
         async Task<string> RecallMemoryAsync(string query)
         {
-            if (npcDialogueManager == null || npcDialogueManager.cogneeMemory == null)
-            {
-                return $"[MemoryRecall] Cognee memory service is unavailable. {GetNpcDisplayName()} tries to recall past conversations but only remembers a foggy silence.";
-            }
-
-            try
-            {
-                string result = await npcDialogueManager.cogneeMemory.SearchMemoryAsync(query);
-                if (string.IsNullOrEmpty(result))
-                {
-                    return $"{GetNpcDisplayName()} searches their memory banks for '{TrimForQuote(query)}' but finds nothing specific. They react to the user with a nostalgic, uncertain feeling.";
-                }
-                return $"{GetNpcDisplayName()} recalls a past memory/connection relating to '{TrimForQuote(query)}': '{result.Trim()}'. Use this recalled memory to reply contextually.";
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[FunctionCalling] Error during MemoryRecall: {ex.Message}");
-                return $"{GetNpcDisplayName()} tries to remember '{TrimForQuote(query)}' but gets a mental block (Error: {ex.Message}).";
-            }
+            return $"{GetNpcDisplayName()} tries to recall past conversations about '{TrimForQuote(query)}' but the long-term memory service is not currently connected. They respond based on what they know now.";
         }
 
         async Task<string> QueryCodebaseKnowledgeAsync(string query)
@@ -451,7 +433,6 @@ namespace LLMUnitySamples
             string category = profile != null ? profile.GetRagCategory() : "unknown";
             bool qdrantEnabled = npcDialogueManager.useQdrantRag && npcDialogueManager.qdrantRag != null;
             bool ragEnabled = npcDialogueManager.enableRAG && npcDialogueManager.rag != null;
-            bool cogneeEnabled = npcDialogueManager.useCogneeMemory && npcDialogueManager.cogneeMemory != null;
             string messageHint = string.IsNullOrWhiteSpace(message) ? "general dialogue" : $"player topic '{TrimForQuote(message)}'";
 
             List<string> routes = new List<string>();
@@ -462,10 +443,6 @@ namespace LLMUnitySamples
             if (ragEnabled)
             {
                 routes.Add($"local RAG category {category}");
-            }
-            if (cogneeEnabled)
-            {
-                routes.Add("Cognee memory graph");
             }
             if (routes.Count == 0)
             {
@@ -526,7 +503,6 @@ namespace LLMUnitySamples
             MaybeAddFeature(features, llmAgent != null && llmAgent.gameObject.name == DedicatedAgentName, "dedicated function-calling agent");
             MaybeAddFeature(features, llmAgent != null && llmAgent.llm != null && llmAgent.llm.gameObject.name == DedicatedLlmName, "dedicated function-calling LLM");
             MaybeAddFeature(features, npcDialogueManager != null && npcDialogueManager.useQdrantRag && npcDialogueManager.qdrantRag != null, $"Qdrant {npcDialogueManager.qdrantRag.collectionName}");
-            MaybeAddFeature(features, npcDialogueManager != null && npcDialogueManager.useCogneeMemory, "Cognee memory");
             if (features.Count == 0)
             {
                 features.Add("basic dialogue scene");

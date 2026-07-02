@@ -1,3 +1,4 @@
+using EditorAttributes;
 using UnityEngine;
 
 namespace NPCSystem
@@ -5,11 +6,16 @@ namespace NPCSystem
     [CreateAssetMenu(fileName = "NPCProfile", menuName = "NPC Dialogue/NPC Profile")]
     public class NPCProfile : ScriptableObject
     {
+        [Title("Identity")]
+        [HelpBox("NPC profile assets drive prompt construction, local knowledge paths, history persistence, and optional LoRA selection.", MessageMode.Log, drawAbove: true)]
+        [OnValueChanged(nameof(RefreshInspectorPreview))]
         [Header("Identity")]
         public string npcSlug = "npc";
+
         public string displayName = "NPC";
         public Texture2D portraitTexture;
 
+        [Title("Personality")]
         [Header("Personality")]
         [TextArea(4, 12)]
         public string systemPrompt = "You are a helpful in-game NPC.";
@@ -30,6 +36,7 @@ namespace NPCSystem
         public string[] preferredActionFunctions = new string[0];
         public string[] forbiddenActionFunctions = new string[0];
 
+        [Title("Sampling")]
         [Header("Sampling")]
         [Range(0f, 2f)] public float temperature = 0.7f;
         [Range(0f, 1f)] public float topP = 0.9f;
@@ -38,20 +45,57 @@ namespace NPCSystem
         [Range(0f, 2f)] public float repeatPenalty = 1.1f;
         public int maxTokens = 150;
 
+        [Title("Knowledge")]
         [Header("Knowledge")]
         public string ragCategory = "";
         public int ragResults = 3;
         [Tooltip("Path relative to StreamingAssets, e.g. NPCs/butler/knowledge.md")]
+        [FilePath(true, "md")]
+        [OnValueChanged(nameof(NormalizeProfilePaths))]
         public string knowledgeSourcePath = "";
 
+        [Title("LoRA")]
         [Header("LoRA")]
         [Tooltip("Path relative to StreamingAssets, e.g. NPCs/butler/adapter.gguf")]
+        [FilePath(true, "gguf")]
+        [OnValueChanged(nameof(NormalizeProfilePaths))]
         public string loraAdapterPath = "";
         [Range(0f, 1f)] public float loraWeight = 0.8f;
 
+        [Title("History")]
         [Header("History")]
         [Tooltip("Path relative to Application.persistentDataPath, e.g. NPCDialogue/butler.json")]
+        [OnValueChanged(nameof(NormalizeProfilePaths))]
         public string historySaveFile = "";
+
+        [SerializeField, ReadOnly]
+        string inspectorPreview = "Not validated yet.";
+
+        [ShowInInspector]
+        string ResolvedSlugPreview => GetNpcSlug();
+
+        [ShowInInspector]
+        string ResolvedKnowledgePathPreview => GetKnowledgeSourcePath();
+
+        [ShowInInspector]
+        string ResolvedHistoryFilePreview => GetHistorySaveFile();
+
+        [Button("Normalize Profile Paths")]
+        void NormalizeProfilePaths()
+        {
+            knowledgeSourcePath = NormalizeRelativePath(knowledgeSourcePath);
+            loraAdapterPath = NormalizeRelativePath(loraAdapterPath);
+            historySaveFile = NormalizeRelativePath(historySaveFile);
+            RefreshInspectorPreview();
+        }
+
+        [Button("Validate Profile Configuration")]
+        void RefreshInspectorPreview()
+        {
+            inspectorPreview = HasValidNpcSlug() && HasDisplayName() && HasSystemPrompt() && HasValidMaxTokens() && HasValidRagResults()
+                ? $"Profile '{GetDisplayName()}' resolves to slug '{GetNpcSlug()}' with knowledge '{GetKnowledgeSourcePath()}'."
+                : "Profile has invalid required values. Check slug, display name, prompt, max tokens, and RAG results.";
+        }
 
         public string GetNpcSlug()
         {
@@ -90,6 +134,21 @@ namespace NPCSystem
             return string.IsNullOrWhiteSpace(historySaveFile)
                 ? $"NPCDialogue/{GetNpcSlug()}.json"
                 : historySaveFile.Trim().Replace('\\', '/');
+        }
+
+        bool HasValidNpcSlug() => !string.IsNullOrWhiteSpace(GetNpcSlug());
+
+        bool HasDisplayName() => !string.IsNullOrWhiteSpace(GetDisplayName());
+
+        bool HasSystemPrompt() => !string.IsNullOrWhiteSpace(systemPrompt);
+
+        bool HasValidMaxTokens() => maxTokens > 0;
+
+        bool HasValidRagResults() => ragResults > 0;
+
+        static string NormalizeRelativePath(string path)
+        {
+            return string.IsNullOrWhiteSpace(path) ? string.Empty : path.Trim().Replace('\\', '/');
         }
     }
 }

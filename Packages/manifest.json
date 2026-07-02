@@ -27,6 +27,7 @@
     "com.unity.ugui": "2.5.0",
     "com.unity.ui.test-framework": "6.5.0",
     "com.unity.visualscripting": "1.9.11",
+    "com.v0lt.editor-attributes": "https://github.com/v0lt13/EditorAttributes.git",
     "com.unity.modules.accessibility": "1.0.0",
     "com.unity.modules.adaptiveperformance": "1.0.0",
     "com.unity.modules.ai": "1.0.0",

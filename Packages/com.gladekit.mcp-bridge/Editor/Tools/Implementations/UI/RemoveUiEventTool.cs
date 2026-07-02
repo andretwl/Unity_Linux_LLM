@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEditor;
 using GladeAgenticAI.Core.Tools;
 
 #if GLADE_UGUI
@@ -9,6 +10,26 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
     public class RemoveUiEventTool : ITool
     {
         public string Name => "remove_ui_event";
+
+        static bool ClearPersistentCalls(Component component, string propertyPath)
+        {
+            if (component == null)
+            {
+                return false;
+            }
+
+            var serializedObject = new SerializedObject(component);
+            var eventProperty = serializedObject.FindProperty(propertyPath);
+            var callsProperty = eventProperty?.FindPropertyRelative("m_PersistentCalls.m_Calls");
+            if (callsProperty == null)
+            {
+                return false;
+            }
+
+            callsProperty.arraySize = 0;
+            serializedObject.ApplyModifiedProperties();
+            return true;
+        }
 
         public string Execute(Dictionary<string, object> args)
         {
@@ -44,7 +65,8 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                         {
                             if (removeAll)
                             {
-                                button.onClick.RemoveAllListeners();
+                                success = ClearPersistentCalls(button, "m_OnClick");
+                                if (!success) errorMsg = "Failed to clear Button.onClick";
                             }
                             else
                             {
@@ -54,11 +76,9 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                                 {
                                     return ToolUtils.CreateErrorResponse("targetGameObjectPath and methodName are required when removeAll=false");
                                 }
-                                // Remove specific listener - Unity doesn't have direct API, so we remove all and re-add others
-                                // For now, just remove all
-                                button.onClick.RemoveAllListeners();
+                                success = ClearPersistentCalls(button, "m_OnClick");
+                                if (!success) errorMsg = "Failed to clear Button.onClick";
                             }
-                            success = true;
                         }
                         else
                         {
@@ -68,50 +88,65 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                     case "onvaluechanged":
                         if (obj.TryGetComponent<Toggle>(out var toggle))
                         {
-                            if (removeAll) toggle.onValueChanged.RemoveAllListeners();
-                            success = true;
+                            success = ClearPersistentCalls(toggle, "m_OnValueChanged");
                         }
                         else if (obj.TryGetComponent<Slider>(out var slider))
                         {
-                            if (removeAll) slider.onValueChanged.RemoveAllListeners();
-                            success = true;
+                            success = ClearPersistentCalls(slider, "m_OnValueChanged");
+                        }
+                        else if (obj.TryGetComponent<InputField>(out var inputValueField))
+                        {
+                            success = ClearPersistentCalls(inputValueField, "m_OnValueChanged");
+                        }
+                        else if (obj.GetComponent(UIHelpers.GetTmpInputFieldType()) is Component tmpInputValueField)
+                        {
+                            success = ClearPersistentCalls(tmpInputValueField, "m_OnValueChanged");
                         }
                         else
                         {
-                            errorMsg = "GameObject does not have a Toggle or Slider component";
+                            errorMsg = "GameObject does not have a Toggle, Slider, InputField, or TMP_InputField component";
                         }
                         break;
                     case "onendedit":
                         if (obj.TryGetComponent<InputField>(out var inputField))
                         {
-                            if (removeAll) inputField.onEndEdit.RemoveAllListeners();
-                            success = true;
+                            success = ClearPersistentCalls(inputField, "m_OnEndEdit");
+                        }
+                        else if (obj.GetComponent(UIHelpers.GetTmpInputFieldType()) is Component tmpInputField)
+                        {
+                            success = ClearPersistentCalls(tmpInputField, "m_OnEndEdit");
                         }
                         else
                         {
-                            errorMsg = "GameObject does not have an InputField component";
+                            errorMsg = "GameObject does not have an InputField or TMP_InputField component";
                         }
                         break;
                     case "onsubmit":
                         if (obj.TryGetComponent<InputField>(out var inputField2))
                         {
-                            if (removeAll) inputField2.onSubmit.RemoveAllListeners();
-                            success = true;
+                            success = ClearPersistentCalls(inputField2, "m_OnSubmit");
+                        }
+                        else if (obj.GetComponent(UIHelpers.GetTmpInputFieldType()) is Component tmpInputField2)
+                        {
+                            success = ClearPersistentCalls(tmpInputField2, "m_OnSubmit");
                         }
                         else
                         {
-                            errorMsg = "GameObject does not have an InputField component";
+                            errorMsg = "GameObject does not have an InputField or TMP_InputField component";
                         }
                         break;
                     case "onvaluechangedint":
                         if (obj.TryGetComponent<Dropdown>(out var dropdown))
                         {
-                            if (removeAll) dropdown.onValueChanged.RemoveAllListeners();
-                            success = true;
+                            success = ClearPersistentCalls(dropdown, "m_OnValueChanged");
+                        }
+                        else if (obj.GetComponent(UIHelpers.GetTmpDropdownType()) is Component tmpDropdown)
+                        {
+                            success = ClearPersistentCalls(tmpDropdown, "m_OnValueChanged");
                         }
                         else
                         {
-                            errorMsg = "GameObject does not have a Dropdown component";
+                            errorMsg = "GameObject does not have a Dropdown or TMP_Dropdown component";
                         }
                         break;
                     default:

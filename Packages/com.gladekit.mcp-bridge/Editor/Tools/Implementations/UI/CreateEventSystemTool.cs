@@ -4,6 +4,10 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using GladeAgenticAI.Core.Tools;
 
+#if GLADE_INPUT_SYSTEM
+using UnityEngine.InputSystem.UI;
+#endif
+
 #if GLADE_UGUI
 namespace GladeAgenticAI.Core.Tools.Implementations.UI
 {
@@ -21,7 +25,13 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
 
             UnityEngine.GameObject obj = new UnityEngine.GameObject("EventSystem");
             obj.AddComponent<EventSystem>();
+
+#if ENABLE_INPUT_SYSTEM && GLADE_INPUT_SYSTEM
+            obj.AddComponent<InputSystemUIInputModule>();
+#else
             obj.AddComponent<StandaloneInputModule>();
+#endif
+
             Undo.RegisterCreatedObjectUndo(obj, "Create EventSystem");
             
             var extras = new Dictionary<string, object>

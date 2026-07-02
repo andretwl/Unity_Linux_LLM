@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from codebase_embedder.cli import embed_records_with_cache, write_timing_report
 from codebase_embedder.config import CodebaseEmbedderConfig
 from codebase_embedder.indexer import build_index
 from codebase_embedder.query import build_query_response, format_query_workflow, lexical_query
@@ -87,3 +88,49 @@ def test_format_query_workflow_mentions_mcp_for_scene_questions():
 
     assert "scene_integration" in text
     assert "gladekit_mcp_scene_hierarchy" in text
+
+
+def test_write_timing_report_creates_machine_readable_json(tmp_path: Path):
+    path = tmp_path / "timings" / "scan.json"
+    cfg = CodebaseEmbedderConfig(project_root=tmp_path, collection_name="benchmark_collection", collection_profile="runtime")
+
+    write_timing_report(
+        path,
+        command="scan",
+        config=cfg,
+        timings={"build_index": 0.125},
+        counts={"records": 3, "chunks": 2},
+        extra={"cache_hits": 1},
+    )
+
+    data = json.loads(path.read_text())
+    assert data["command"] == "scan"
+    assert data["collection"] == "benchmark_collection"
+    assert data["profile"] == "runtime"
+    assert data["counts"] == {"chunks": 2, "records": 3}
+    assert data["timings_seconds"]["build_index"] == 0.125
+    assert data["cache_hits"] == 1
+
+
+def test_embed_records_with_cache_skips_unchanged_records(tmp_path: Path):
+    records = [
+        IndexRecord("type", "type:A", "same text"),
+        IndexRecord("type", "type:B", "new text"),
+    ]
+    calls: list[list[str]] = []
+
+    class FakeEmbeddingClient:
+        model = "fake-embedder"
+
+        def embed(self, texts: list[str]) -> list[list[float]]:
+            calls.append(texts)
+            return [[float(len(text)), 0.0] for text in texts]
+
+    first_vectors, first_stats = embed_records_with_cache(records, FakeEmbeddingClient(), tmp_path, 2, batch_size=2, use_cache=True)
+    second_vectors, second_stats = embed_records_with_cache(records, FakeEmbeddingClient(), tmp_path, 2, batch_size=2, use_cache=True)
+
+    assert first_vectors == second_vectors
+    assert first_stats["cache_misses"] == 2
+    assert second_stats["cache_hits"] == 2
+    assert second_stats["cache_misses"] == 0
+    assert calls == [["same text", "new text"]]

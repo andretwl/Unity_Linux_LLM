@@ -1,0 +1,21 @@
+services:
+  postgres-auth:
+    image: postgres:16
+    container_name: unity-linux-llm-auth-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: unity_linux_llm_auth
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - player_auth_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d unity_linux_llm_auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  player_auth_postgres_data:

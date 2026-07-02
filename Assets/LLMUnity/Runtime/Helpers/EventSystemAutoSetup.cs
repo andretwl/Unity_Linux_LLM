@@ -33,7 +33,10 @@ namespace LLMUnity
                 if (oldModule != null) DestroyImmediate(oldModule);
 
                 // Add new module if not present
-                if (eventSystem.GetComponent(inputSystemModuleType) == null) eventSystem.gameObject.AddComponent(inputSystemModuleType);
+                Component inputModule = eventSystem.GetComponent(inputSystemModuleType);
+                if (inputModule == null) inputModule = eventSystem.gameObject.AddComponent(inputSystemModuleType);
+
+                EnsureDefaultActions(inputModule);
             }
             else
             {
@@ -59,6 +62,14 @@ namespace LLMUnity
             // Try to find InputSystemUIInputModule type
             Type type = Type.GetType("UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
             return type;
+        }
+
+        private void EnsureDefaultActions(Component inputModule)
+        {
+            if (inputModule == null) return;
+
+            MethodInfo assignDefaultActions = inputModule.GetType().GetMethod("AssignDefaultActions", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            assignDefaultActions?.Invoke(inputModule, null);
         }
     }
 }

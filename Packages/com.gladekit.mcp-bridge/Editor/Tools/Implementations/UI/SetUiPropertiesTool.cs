@@ -15,14 +15,6 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
 
         public string Execute(Dictionary<string, object> args)
         {
-            // CRITICAL: All UI actions require TextMeshPro. Check before doing anything.
-            var tmpCheck = UIHelpers.EnsureTMPForUIActions();
-            if (!tmpCheck.IsAvailable)
-            {
-                // TMP not available - user must install it explicitly first
-                return ToolUtils.CreateErrorResponse(tmpCheck.Message);
-            }
-
             string gameObjectPath = args.ContainsKey("gameObjectPath") ? args["gameObjectPath"].ToString() : "";
             if (string.IsNullOrEmpty(gameObjectPath))
             {
@@ -48,7 +40,7 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
             }
 
             // Only TMP text components are supported - no regular Text components
-            var tmpType = System.Type.GetType("TMPro.TextMeshProUGUI, Unity.TextMeshPro");
+            var tmpType = UIHelpers.GetTmpTextType();
             if (tmpType != null)
             {
                 var tmpComponent = obj.GetComponent(tmpType);
@@ -56,6 +48,10 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                 {
                     UIHelpers.TrySetTmpTextProperties(tmpComponent, args);
                 }
+            }
+            if (obj.TryGetComponent<Text>(out var legacyText))
+            {
+                UIHelpers.TrySetLegacyTextProperties(legacyText, args);
             }
             if (obj.TryGetComponent<Image>(out var image))
             {
@@ -131,8 +127,29 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                 }
             }
             // Only TMP_Dropdown is supported - regular Dropdown is not handled
-            // TMP_Dropdown
-            var tmpDropdownType = System.Type.GetType("TMPro.TMP_Dropdown, Unity.TextMeshPro");
+            if (obj.TryGetComponent<Dropdown>(out var legacyDropdown))
+            {
+                if (args.ContainsKey("options") && args["options"] is System.Collections.IList optionsList)
+                {
+                    legacyDropdown.ClearOptions();
+                    var legacyOptions = new List<Dropdown.OptionData>();
+                    foreach (var option in optionsList)
+                    {
+                        legacyOptions.Add(new Dropdown.OptionData(option?.ToString() ?? string.Empty));
+                    }
+
+                    legacyDropdown.AddOptions(legacyOptions);
+                }
+
+                if (args.ContainsKey("value") && int.TryParse(args["value"].ToString(), out int dropdownValue))
+                {
+                    legacyDropdown.value = dropdownValue;
+                }
+
+                legacyDropdown.RefreshShownValue();
+            }
+
+            var tmpDropdownType = UIHelpers.GetTmpDropdownType();
             if (tmpDropdownType != null)
             {
                 var tmpDropdown = obj.GetComponent(tmpDropdownType);
@@ -140,46 +157,62 @@ namespace GladeAgenticAI.Core.Tools.Implementations.UI
                 {
                     if (args.ContainsKey("options") && args["options"] is System.Collections.IList tmpOptionsList)
                     {
-                        var optionsProp = tmpDropdownType.GetProperty("options");
-                        if (optionsProp != null)
-                        {
-                            var optionsList = optionsProp.GetValue(tmpDropdown);
-                            var clearMethod = optionsList.GetType().GetMethod("Clear");
-                            clearMethod?.Invoke(optionsList, null);
-                            var addMethod = optionsList.GetType().GetMethod("Add");
-                            foreach (var opt in tmpOptionsList)
-                            {
-                                var optionData = System.Activator.CreateInstance(optionsList.GetType().GetGenericArguments()[0]);
-                                var textProp = optionData.GetType().GetProperty("text");
-                                textProp?.SetValue(optionData, opt.ToString(), null);
-                                addMethod?.Invoke(optionsList, new[] { optionData });
-                            }
-                        }
+                        UIHelpers.SetTmpDropdownOptions(tmpDropdown, tmpOptionsList);
                     }
                     if (args.ContainsKey("value") && int.TryParse(args["value"].ToString(), out int tmpDropdownValue))
                     {
                         var valueProp = tmpDropdownType.GetProperty("value");
                         valueProp?.SetValue(tmpDropdown, tmpDropdownValue, null);
                     }
+
+                    tmpDropdownType.GetMethod("RefreshShownValue")?.Invoke(tmpDropdown, null);
                 }
             }
             // Only TMP_InputField is supported - regular InputField is not handled
-            // TMP_InputField
-            var tmpInputFieldType = System.Type.GetType("TMPro.TMP_InputField, Unity.TextMeshPro");
+            if (obj.TryGetComponent<InputField>(out var legacyInputField))
+            {
+                if (args.ContainsKey("text"))
+                {
+                    legacyInputField.text = args["text"].ToString();
+                }
+
+                if (args.ContainsKey("placeholder") && legacyInputField.placeholder != null)
+                {
+                    UIHelpers.SetTextLikeComponent(legacyInputField.placeholder as Component, args["placeholder"].ToString());
+                }
+
+                if (args.ContainsKey("contentType"))
+                {
+                    legacyInputField.contentType = (InputField.ContentType)Enum.Parse(typeof(InputField.ContentType), args["contentType"].ToString(), true);
+                }
+
+                if (args.ContainsKey("characterLimit") && int.TryParse(args["characterLimit"].ToString(), out int legacyCharLimit))
+                {
+                    legacyInputField.characterLimit = legacyCharLimit;
+                }
+
+                if (args.ContainsKey("lineType"))
+                {
+                    legacyInputField.lineType = (InputField.LineType)Enum.Parse(typeof(InputField.LineType), args["lineType"].ToString(), true);
+                }
+            }
+
+            var tmpInputFieldType = UIHelpers.GetTmpInputFieldType();
             if (tmpInputFieldType != null)
             {
                 var tmpInputField = obj.GetComponent(tmpInputFieldType);
                 if (tmpInputField != null)
                 {
+                    if (args.ContainsKey("text"))
+                    {
+                        tmpInputFieldType.GetProperty("text")?.SetValue(tmpInputField, args["text"].ToString(), null);
+                    }
+
                     if (args.ContainsKey("placeholder") && !string.IsNullOrEmpty(args["placeholder"].ToString()))
                     {
                         var placeholderProp = tmpInputFieldType.GetProperty("placeholder");
-                        var placeholder = placeholderProp?.GetValue(tmpInputField);
-                        if (placeholder != null)
-                        {
-                            var textProp = placeholder.GetType().GetProperty("text");
-                            textProp?.SetValue(placeholder, args["placeholder"].ToString(), null);
-                        }
+                        var placeholder = placeholderProp?.GetValue(tmpInputField) as Component;
+                        UIHelpers.SetTextLikeComponent(placeholder, args["placeholder"].ToString());
                     }
                     if (args.ContainsKey("contentType"))
                     {
