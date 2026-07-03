@@ -59,7 +59,8 @@ ProjectSettings/Packages/
 Assets/StreamingAssets/LlamaLib-v2.0.5/
 Assets/StreamingAssets/LlamaLib-v2.0.5.meta
 
-# Upstream package docs, samples, and tests kept out of repo-local baseline
+# Upstream package docs, samples, examples, and tests kept out of repo-local baseline
+Assets/TextMesh Pro/Examples & Extras/
 Assets/LLMUnity/CHANGELOG.md
 Assets/LLMUnity/CHANGELOG.md.meta
 Assets/LLMUnity/CHANGELOG.release.md
