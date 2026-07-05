@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
@@ -10,9 +10,9 @@ using System.Reflection;
 [InitializeOnLoad]
 public class ReadmeEditor : Editor
 {
-    static string s_ShowedReadmeSessionStateName = "ReadmeEditor.showedReadme";
+    const string s_ShowedReadmeSessionStateName = "ReadmeEditor.showedReadme";
     
-    static string s_ReadmeSourceDirectory = "Assets/TutorialInfo";
+    const string s_ReadmeSourceDirectory = "Assets/TutorialInfo";
 
     const float k_Space = 16f;
 

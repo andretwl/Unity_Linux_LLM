@@ -96,7 +96,7 @@ namespace NPCSystem
             await ProbeAsync();
         }
 
-        public async Task<NPCBackendReadinessSnapshot> ProbeAsync()
+        public async Task<NPCBackendReadinessSnapshot> ProbeAsync(bool probeLocalAi = true)
         {
             AutoAssignReferences();
 
@@ -106,13 +106,33 @@ namespace NPCSystem
                 ["authProbeUrl"] = AuthProbePreview,
                 ["localAiProbeUrl"] = LocalAiProbePreview,
                 ["requireAuthBackend"] = requireAuthBackend,
-                ["requireLocalAiBackend"] = requireLocalAiBackend
+                ["requireLocalAiBackend"] = requireLocalAiBackend && probeLocalAi
             });
+
+            var authResult = await ProbeEndpointAsync("AuthBackend", AuthProbePreview, allowHttpErrorAsReachable: true);
+            NPCBackendProbeResult localAiResult;
+
+            if (probeLocalAi)
+            {
+                localAiResult = await ProbeEndpointAsync("LocalAI", LocalAiProbePreview, allowHttpErrorAsReachable: false);
+            }
+            else
+            {
+                localAiResult = new NPCBackendProbeResult
+                {
+                    backendName = "LocalAI",
+                    url = LocalAiProbePreview,
+                    reachable = true,
+                    responseCode = 0,
+                    durationMs = 0,
+                    status = "LocalAI probing deferred until post-login."
+                };
+            }
 
             var snapshot = new NPCBackendReadinessSnapshot
             {
-                auth = await ProbeEndpointAsync("AuthBackend", AuthProbePreview, allowHttpErrorAsReachable: true),
-                localAi = await ProbeEndpointAsync("LocalAI", LocalAiProbePreview, allowHttpErrorAsReachable: false)
+                auth = authResult,
+                localAi = localAiResult
             };
 
             LastSnapshot = snapshot;
@@ -120,7 +140,7 @@ namespace NPCSystem
             lastAuthBackendStatus = snapshot.auth.status;
             lastLocalAiBackendStatus = snapshot.localAi.status;
 
-            bool healthy = snapshot.AllRequiredBackendsReachable(requireAuthBackend, requireLocalAiBackend);
+            bool healthy = snapshot.AllRequiredBackendsReachable(requireAuthBackend, requireLocalAiBackend && probeLocalAi);
             lastReadinessStatus = healthy
                 ? "Required multiplayer dialogue backends are reachable."
                 : "One or more required multiplayer dialogue backends are unreachable.";

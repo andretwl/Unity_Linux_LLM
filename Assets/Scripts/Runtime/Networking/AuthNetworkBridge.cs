@@ -155,6 +155,21 @@ namespace NPCSystem
 
         void HandleAuthSuccess(string username)
         {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            if (string.IsNullOrWhiteSpace(hostAddress) || hostAddress == "127.0.0.1" || hostAddress == "localhost")
+            {
+                try
+                {
+                    Uri uri = new Uri(Application.absoluteURL);
+                    if (uri.Host != "localhost" && uri.Host != "127.0.0.1")
+                    {
+                        hostAddress = uri.Host;
+                    }
+                }
+                catch {}
+            }
+#endif
+
             _authenticatedPlayerName = username?.Trim() ?? "";
             ActivePlayerName = _authenticatedPlayerName;
             ResolvedNetworkStartupMode resolvedMode = ResolveStartupMode();
@@ -173,6 +188,16 @@ namespace NPCSystem
                     ["resolvedMode"] = resolvedMode.ToString()
                 });
             lastBridgeStatus = $"Auth success for {_authenticatedPlayerName}; resolved mode {resolvedMode}.";
+
+            // Initialize dialogue system on demand to be memory smart!
+            var bootstrapper = FindAnyObjectByType<NPCDialogueBootstrapper>(FindObjectsInactive.Include);
+            if (bootstrapper != null)
+            {
+                _logger?.Log(NPCFlowStage.SceneBootstrap, NPCFlowStatus.Start, NPCFlowLogLevel.Info,
+                    "Triggering on-demand dialogue and RAG system initialization.",
+                    source: nameof(AuthNetworkBridge));
+                _ = bootstrapper.InitializeOnDemandAsync();
+            }
 
             if (resolvedMode == ResolvedNetworkStartupMode.Host)
                 StartHostAndRegisterPlayerName();

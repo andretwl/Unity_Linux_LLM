@@ -2,15 +2,10 @@
   "$schema": "https://opencode.ai/config.json",
   "instructions": ["AGENTS.md"],
   "mcp": {
-    "filesystem": {
+    "gladekit-unity": {
       "type": "local",
-      "command": ["mcp-server-filesystem", "/mnt/data/Projects_SSD"],
+      "command": ["uvx", "gladekit-mcp"],
       "enabled": true
-    },
-    "qdrant": {
-      "type": "local",
-      "command": ["qdrant-mcp", "--transport=stdio"],
-      "enabled": true 
     }
   },
   "provider": {

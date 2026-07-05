@@ -1,4 +1,4 @@
-#if !UNITY_SERVER
+#if !UNITY_SERVER && GLADE_UGUI
 using System;
 using System.Collections;
 using System.Collections.Generic;

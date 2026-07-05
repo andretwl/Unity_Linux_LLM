@@ -44,7 +44,8 @@ namespace NPCSystem
         [Header("Startup")]
         public bool initializeOnStart = true;
         public bool configureNetworkTransport = false;
-        public bool initializeDialogueManager = true;
+        [Tooltip("If true, initializes the dialogue manager immediately during scene start. Set to false to delay initialization until after player login (recommended for WebGL memory-smart start).")]
+        public bool initializeDialogueManager = false;
         public bool verifyBackendsDuringInitialization = true;
         public bool initializeNetworkBridge = true;
         public bool validateAfterInitialization = true;
@@ -139,7 +140,8 @@ namespace NPCSystem
                     case NPCSceneInitializationPhase.BackendReadiness:
                         if (verifyBackendsDuringInitialization && backendReadiness != null)
                         {
-                            await backendReadiness.ProbeAsync();
+                            bool probeLocalAi = initializeDialogueManager && (dialogueManager != null && dialogueManager.initializeOnStart);
+                            await backendReadiness.ProbeAsync(probeLocalAi);
                         }
                         break;
                     case NPCSceneInitializationPhase.NetworkBridge:

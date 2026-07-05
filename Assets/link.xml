@@ -1,0 +1,5 @@
+<linker>
+  <assembly fullname="Unity.Entities" preserve="all" />
+  <assembly fullname="Unity.CharacterController" preserve="all" />
+  <assembly fullname="Assembly-CSharp" preserve="all" />
+</linker>

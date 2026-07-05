@@ -259,6 +259,7 @@ GameObject:
   - component: {fileID: 39745290}
   - component: {fileID: 39745289}
   - component: {fileID: 39745288}
+  - component: {fileID: 39745291}
   m_Layer: 5
   m_Name: StopButton
   m_TagString: Untagged
@@ -380,6 +381,15 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 39745286}
   m_CullTransparentMesh: 1
+--- !u!1652712579 &39745291
+MultiplayerRolesData:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 39745286}
+  m_GameObjectRolesMask: 1
+  m_ComponentsRolesMasks: []
 --- !u!1 &49585172
 GameObject:
   m_ObjectHideFlags: 0
@@ -1574,6 +1584,7 @@ GameObject:
   - component: {fileID: 283994681}
   - component: {fileID: 283994680}
   - component: {fileID: 283994679}
+  - component: {fileID: 283994682}
   m_Layer: 5
   m_Name: PlayerInput
   m_TagString: Untagged
@@ -1708,6 +1719,15 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 283994677}
   m_CullTransparentMesh: 1
+--- !u!1652712579 &283994682
+MultiplayerRolesData:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 283994677}
+  m_GameObjectRolesMask: 1
+  m_ComponentsRolesMasks: []
 --- !u!1 &312228596
 GameObject:
   m_ObjectHideFlags: 0
@@ -1717,6 +1737,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 312228597}
+  - component: {fileID: 312228598}
   m_Layer: 0
   m_Name: GroupingAttributes
   m_TagString: Untagged
@@ -1745,6 +1766,15 @@ Transform:
   - {fileID: 2049787531}
   m_Father: {fileID: 1815105669}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1652712579 &312228598
+MultiplayerRolesData:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 312228596}
+  m_GameObjectRolesMask: 1
+  m_ComponentsRolesMasks: []
 --- !u!1 &315192539
 GameObject:
   m_ObjectHideFlags: 0
@@ -1891,6 +1921,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 318702490}
+  - component: {fileID: 318702491}
   m_Layer: 0
   m_Name: DropdownAttributes
   m_TagString: Untagged
@@ -1921,6 +1952,15 @@ Transform:
   - {fileID: 946993956}
   m_Father: {fileID: 1815105669}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1652712579 &318702491
+MultiplayerRolesData:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 318702489}
+  m_GameObjectRolesMask: 1
+  m_ComponentsRolesMasks: []
 --- !u!1 &328274892
 GameObject:
   m_ObjectHideFlags: 0
@@ -2060,7 +2100,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &408113102
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2106,6 +2146,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 415876841}
+  - component: {fileID: 415876842}
   m_Layer: 0
   m_Name: ConditionalAttributes
   m_TagString: Untagged
@@ -2132,6 +2173,15 @@ Transform:
   - {fileID: 1178147972}
   m_Father: {fileID: 1815105669}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1652712579 &415876842
+MultiplayerRolesData:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 415876840}
+  m_GameObjectRolesMask: 1
+  m_ComponentsRolesMasks: []
 --- !u!1 &419902614
 GameObject:
   m_ObjectHideFlags: 0
@@ -2404,6 +2454,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 482030914}
+  - component: {fileID: 482030915}
   m_Layer: 0
   m_Name: NumericalAttributes
   m_TagString: Untagged
@@ -2432,6 +2483,15 @@ Transform:
   - {fileID: 1518720892}
   m_Father: {fileID: 1815105669}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1652712579 &482030915
+MultiplayerRolesData:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 482030913}
+  m_GameObjectRolesMask: 1
+  m_ComponentsRolesMasks: []
 --- !u!1 &489627711
 GameObject:
   m_ObjectHideFlags: 0
@@ -2478,17 +2538,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa13969832e95e24c8be96d2f50718aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCSystem.NPCDialogueUIController
-  dialogueManager: {fileID: 1778380623}
-  networkBridge: {fileID: 1471440990}
+  dialogueManager: {fileID: 0}
+  networkBridge: {fileID: 0}
   legacyKnowledgeBaseController: {fileID: 0}
-  characterSelect: {fileID: 1821864875}
-  playerInput: {fileID: 283994679}
-  aiText: {fileID: 681685488}
-  stopButton: {fileID: 39745288}
-  butlerImage: {fileID: 574317512}
-  maidImage: {fileID: 961591108}
-  chefImage: {fileID: 718663248}
-  notebookController: {fileID: 489627716}
+  characterSelect: {fileID: 0}
+  playerInput: {fileID: 0}
+  aiText: {fileID: 0}
+  stopButton: {fileID: 0}
+  butlerImage: {fileID: 0}
+  maidImage: {fileID: 0}
+  chefImage: {fileID: 0}
+  notebookController: {fileID: 0}
 --- !u!114 &489627716
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2501,25 +2561,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09548caa4451badddbccea93bbdaf442, type: 3}
   m_Name: 
   m_EditorClassIdentifier: NPCSystem.Runtime::NPCSystem.NotebookUIController
-  dialogueManager: {fileID: 1778380623}
-  networkBridge: {fileID: 1471440990}
-  notesButton: {fileID: 1568690080}
-  mapButton: {fileID: 692572909}
-  solveButton: {fileID: 1023571710}
-  helpButton: {fileID: 1696547302}
-  submitButton: {fileID: 964505547}
-  notebookImage: {fileID: 828313583}
-  notesPanel: {fileID: 1301879205}
-  solvePanel: {fileID: 1260794225}
-  helpPanel: {fileID: 1385587314}
-  mapImage: {fileID: 964460963}
-  successImage: {fileID: 1723006218}
-  failText: {fileID: 1626244059}
-  answer1: {fileID: 1290124570}
-  answer2: {fileID: 504847329}
-  answer3: {fileID: 1278063795}
-  notesText1: {fileID: 1927269720}
-  notesText2: {fileID: 1839907271}
+  dialogueManager: {fileID: 0}
+  networkBridge: {fileID: 0}
+  notesButton: {fileID: 0}
+  mapButton: {fileID: 0}
+  solveButton: {fileID: 0}
+  helpButton: {fileID: 0}
+  submitButton: {fileID: 0}
+  notebookImage: {fileID: 0}
+  notesPanel: {fileID: 0}
+  solvePanel: {fileID: 0}
+  helpPanel: {fileID: 0}
+  mapImage: {fileID: 0}
+  successImage: {fileID: 0}
+  failText: {fileID: 0}
+  answer1: {fileID: 0}
+  answer2: {fileID: 0}
+  answer3: {fileID: 0}
+  notesText1: {fileID: 0}
+  notesText2: {fileID: 0}
   correctAnswer1: Professor Pluot
   correctAnswer2: Living Room
   correctAnswer3: A Hollow Bible
@@ -2542,7 +2602,6 @@ GameObject:
   m_Component:
   - component: {fileID: 495266241}
   - component: {fileID: 495266240}
-  - component: {fileID: 495266239}
   - component: {fileID: 495266242}
   - component: {fileID: 495266243}
   m_Layer: 0
@@ -2552,18 +2611,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &495266239
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 495266238}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b497c215f3eac256944ec4998d1a271, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: '::'
 --- !u!114 &495266240
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4439,6 +4486,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 785017185}
+  - component: {fileID: 785017186}
   m_Layer: 0
   m_Name: MiscellaneousAttributes
   m_TagString: Untagged
@@ -4473,6 +4521,15 @@ Transform:
   - {fileID: 1210106893}
   m_Father: {fileID: 1815105669}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1652712579 &785017186
+MultiplayerRolesData:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 785017184}
+  m_GameObjectRolesMask: 1
+  m_ComponentsRolesMasks: []
 --- !u!1 &805977037
 GameObject:
   m_ObjectHideFlags: 0
@@ -5426,7 +5483,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
-  m_VertexColorAlwaysGammaSpace: 0
+  m_VertexColorAlwaysGammaSpace: 1
   m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
@@ -5445,7 +5502,6 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 964853999}
   - {fileID: 39745287}
   - {fileID: 1821864874}
   - {fileID: 283994678}
@@ -5478,7 +5534,9 @@ MultiplayerRolesData:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 898411685}
   m_GameObjectRolesMask: 1
-  m_ComponentsRolesMasks: []
+  m_ComponentsRolesMasks:
+  - m_Object: {fileID: 898411688}
+    m_RolesMask: 1
 --- !u!1 &904299430
 GameObject:
   m_ObjectHideFlags: 0
@@ -5490,6 +5548,7 @@ GameObject:
   - component: {fileID: 904299431}
   - component: {fileID: 904299433}
   - component: {fileID: 904299432}
+  - component: {fileID: 904299434}
   m_Layer: 5
   m_Name: Placeholder
   m_TagString: Untagged
@@ -5560,6 +5619,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 904299430}
   m_CullTransparentMesh: 1
+--- !u!1652712579 &904299434
+MultiplayerRolesData:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 904299430}
+  m_GameObjectRolesMask: 1
+  m_ComponentsRolesMasks:
+  - m_Object: {fileID: 904299433}
+    m_RolesMask: 1
 --- !u!1 &906013490
 GameObject:
   m_ObjectHideFlags: 0
@@ -6516,81 +6586,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 964505545}
   m_CullTransparentMesh: 1
---- !u!1 &964853998
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 964853999}
-  - component: {fileID: 964854001}
-  - component: {fileID: 964854000}
-  m_Layer: 5
-  m_Name: BlurImage
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &964853999
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 964853998}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 898411689}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &964854000
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 964853998}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.47843137}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &964854001
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 964853998}
-  m_CullTransparentMesh: 1
 --- !u!1 &978683443
 GameObject:
   m_ObjectHideFlags: 0
@@ -6958,6 +6953,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1044862505}
+  - component: {fileID: 1044862506}
   m_Layer: 0
   m_Name: DecorativeAttributes
   m_TagString: Untagged
@@ -6993,6 +6989,15 @@ Transform:
   - {fileID: 541850198}
   m_Father: {fileID: 1815105669}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1652712579 &1044862506
+MultiplayerRolesData:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1044862504}
+  m_GameObjectRolesMask: 1
+  m_ComponentsRolesMasks: []
 --- !u!1 &1052457245
 GameObject:
   m_ObjectHideFlags: 0
@@ -7239,6 +7244,7 @@ GameObject:
   - component: {fileID: 1080196652}
   - component: {fileID: 1080196654}
   - component: {fileID: 1080196653}
+  - component: {fileID: 1080196655}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -7307,6 +7313,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1080196651}
   m_CullTransparentMesh: 1
+--- !u!1652712579 &1080196655
+MultiplayerRolesData:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1080196651}
+  m_GameObjectRolesMask: 1
+  m_ComponentsRolesMasks:
+  - m_Object: {fileID: 1080196654}
+    m_RolesMask: 1
 --- !u!1 &1097852136
 GameObject:
   m_ObjectHideFlags: 0
@@ -7432,7 +7449,7 @@ MonoBehaviour:
     connectAddress: 127.0.0.1
     listenAddress: 0.0.0.0
     port: 11474
-    useWebSockets: 0
+    useWebSockets: 1
     webSocketPath: /npc-dialogue
     autoStartMode: 0
   configureOnAwake: 1
@@ -7453,7 +7470,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Transports.UTP.UnityTransport
   m_ProtocolType: 0
-  m_UseWebSockets: 0
+  m_UseWebSockets: 1
   m_UseEncryption: 0
   m_MaxPacketQueueSize: 128
   m_MaxPayloadSize: 6144
@@ -8003,6 +8020,7 @@ GameObject:
   - component: {fileID: 1205281770}
   - component: {fileID: 1205281772}
   - component: {fileID: 1205281771}
+  - component: {fileID: 1205281773}
   m_Layer: 5
   m_Name: AuthPanel
   m_TagString: Untagged
@@ -8068,6 +8086,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1205281769}
   m_CullTransparentMesh: 1
+--- !u!1652712579 &1205281773
+MultiplayerRolesData:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1205281769}
+  m_GameObjectRolesMask: 1
+  m_ComponentsRolesMasks:
+  - m_Object: {fileID: 1205281772}
+    m_RolesMask: 1
 --- !u!1 &1210106892
 GameObject:
   m_ObjectHideFlags: 0
@@ -8171,6 +8200,7 @@ GameObject:
   - component: {fileID: 1233479277}
   - component: {fileID: 1233479279}
   - component: {fileID: 1233479278}
+  - component: {fileID: 1233479280}
   m_Layer: 5
   m_Name: Text (Legacy)
   m_TagString: Untagged
@@ -8239,6 +8269,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1233479276}
   m_CullTransparentMesh: 1
+--- !u!1652712579 &1233479280
+MultiplayerRolesData:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1233479276}
+  m_GameObjectRolesMask: 1
+  m_ComponentsRolesMasks:
+  - m_Object: {fileID: 1233479279}
+    m_RolesMask: 1
 --- !u!1 &1240395351
 GameObject:
   m_ObjectHideFlags: 0
@@ -9447,6 +9488,7 @@ GameObject:
   - component: {fileID: 1351714794}
   - component: {fileID: 1351714796}
   - component: {fileID: 1351714797}
+  - component: {fileID: 1351714798}
   m_Layer: 5
   m_Name: AuthUI
   m_TagString: Untagged
@@ -9548,6 +9590,15 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   lastBridgeStatus: Idle
+--- !u!1652712579 &1351714798
+MultiplayerRolesData:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1351714793}
+  m_GameObjectRolesMask: 1
+  m_ComponentsRolesMasks: []
 --- !u!1 &1355047461
 GameObject:
   m_ObjectHideFlags: 0
@@ -9611,6 +9662,7 @@ GameObject:
   - component: {fileID: 1355862041}
   - component: {fileID: 1355862043}
   - component: {fileID: 1355862042}
+  - component: {fileID: 1355862044}
   m_Layer: 5
   m_Name: Arrow
   m_TagString: Untagged
@@ -9675,6 +9727,15 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1355862040}
   m_CullTransparentMesh: 1
+--- !u!1652712579 &1355862044
+MultiplayerRolesData:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1355862040}
+  m_GameObjectRolesMask: 1
+  m_ComponentsRolesMasks: []
 --- !u!1 &1385587314
 GameObject:
   m_ObjectHideFlags: 0
@@ -10814,6 +10875,7 @@ GameObject:
   - component: {fileID: 1568690082}
   - component: {fileID: 1568690081}
   - component: {fileID: 1568690080}
+  - component: {fileID: 1568690083}
   m_Layer: 5
   m_Name: NotesButton
   m_TagString: Untagged
@@ -10923,6 +10985,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1568690078}
   m_CullTransparentMesh: 1
+--- !u!1652712579 &1568690083
+MultiplayerRolesData:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1568690078}
+  m_GameObjectRolesMask: 1
+  m_ComponentsRolesMasks:
+  - m_Object: {fileID: 1568690082}
+    m_RolesMask: 1
 --- !u!1 &1583479000
 GameObject:
   m_ObjectHideFlags: 0
@@ -10981,6 +11054,7 @@ GameObject:
   - component: {fileID: 1597061037}
   - component: {fileID: 1597061036}
   - component: {fileID: 1597061040}
+  - component: {fileID: 1597061041}
   m_Layer: 3
   m_Name: Ground
   m_TagString: Untagged
@@ -11091,6 +11165,38 @@ MultiplayerRolesData:
   m_GameObject: {fileID: 1597061035}
   m_GameObjectRolesMask: 1
   m_ComponentsRolesMasks: []
+--- !u!114 &1597061041
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1597061035}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshSurface
+  m_SerializedVersion: 0
+  m_AgentTypeID: 0
+  m_CollectObjects: 0
+  m_Size: {x: 10, y: 10, z: 10}
+  m_Center: {x: 0, y: 2, z: 0}
+  m_LayerMask:
+    serializedVersion: 2
+    m_Bits: 8
+  m_UseGeometry: 0
+  m_DefaultArea: 0
+  m_GenerateLinks: 0
+  m_IgnoreNavMeshAgent: 1
+  m_IgnoreNavMeshObstacle: 1
+  m_OverrideTileSize: 0
+  m_TileSize: 256
+  m_OverrideVoxelSize: 0
+  m_VoxelSize: 0.16666667
+  m_MinRegionArea: 2
+  m_NavMeshData: {fileID: 23800000, guid: ad3d6163128a57e56823886b8dbc2ed3, type: 2}
+  m_BuildHeightMesh: 0
 --- !u!1 &1613795626
 GameObject:
   m_ObjectHideFlags: 0
@@ -12207,6 +12313,7 @@ MonoBehaviour:
   enableRAG: 1
   rebuildRagFromKnowledgeIfMissing: 1
   maxHistoryPerNPC: 20
+  initializeOnStart: 0
   lastBackendStatus: Idle
   onNPCChanged:
     m_PersistentCalls:
@@ -12311,8 +12418,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCSystem.NPCDialogueBootstrapper
   dialogueManager: {fileID: 1778380623}
-  autoSelectDefaultNPC: 0
-  defaultNpcSlug: 
+  autoSelectDefaultNPC: 1
+  defaultNpcSlug: buttler
+  initializeOnStart: 0
 --- !u!114 &1778380626
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12396,7 +12504,7 @@ MonoBehaviour:
   qdrantRag: {fileID: 1778380628}
   localAiHost: localhost
   localAiPort: 8080
-  localAiModel: llama-3.2-3b-instruct:q8_0
+  localAiModel: llama-3.1-8b-q4-k-m
   lastValidationStatus: 'References assigned. LocalAI preview: http://localhost:8080/v1'
 --- !u!1652712579 &1778380632
 MultiplayerRolesData:
@@ -13009,7 +13117,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1815105669
 Transform:
   m_ObjectHideFlags: 0
@@ -13053,6 +13161,7 @@ GameObject:
   - component: {fileID: 1821864877}
   - component: {fileID: 1821864876}
   - component: {fileID: 1821864875}
+  - component: {fileID: 1821864878}
   m_Layer: 5
   m_Name: Dropdown
   m_TagString: Untagged
@@ -13179,6 +13288,15 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1821864873}
   m_CullTransparentMesh: 1
+--- !u!1652712579 &1821864878
+MultiplayerRolesData:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1821864873}
+  m_GameObjectRolesMask: 1
+  m_ComponentsRolesMasks: []
 --- !u!1 &1839907269
 GameObject:
   m_ObjectHideFlags: 0
@@ -13336,6 +13454,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1862527440}
+  - component: {fileID: 1862527441}
   m_Layer: 0
   m_Name: ButtonAttributes
   m_TagString: Untagged
@@ -13362,6 +13481,15 @@ Transform:
   - {fileID: 810182244}
   m_Father: {fileID: 1815105669}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1652712579 &1862527441
+MultiplayerRolesData:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1862527439}
+  m_GameObjectRolesMask: 1
+  m_ComponentsRolesMasks: []
 --- !u!1 &1873244317
 GameObject:
   m_ObjectHideFlags: 0
@@ -15219,6 +15347,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2127035642}
   - component: {fileID: 2127035643}
+  - component: {fileID: 2127035644}
   m_Layer: 5
   m_Name: AuthContent
   m_TagString: Untagged
@@ -15279,6 +15408,15 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!1652712579 &2127035644
+MultiplayerRolesData:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2127035641}
+  m_GameObjectRolesMask: 1
+  m_ComponentsRolesMasks: []
 --- !u!1 &2146225735
 GameObject:
   m_ObjectHideFlags: 0

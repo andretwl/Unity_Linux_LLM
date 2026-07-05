@@ -92,9 +92,17 @@ namespace NPCSystem
             ResolveReferences();
             if (dialogueManager != null)
             {
-                await dialogueManager.InitializeAsync();
-                CaptureBaselineState();
-                UpdateNotebookStateLocal();
+                if (dialogueManager.isInitialized)
+                {
+                    CaptureBaselineState();
+                    UpdateNotebookStateLocal();
+                }
+                else if (dialogueManager.initializeOnStart)
+                {
+                    await dialogueManager.InitializeAsync();
+                    CaptureBaselineState();
+                    UpdateNotebookStateLocal();
+                }
             }
         }
 

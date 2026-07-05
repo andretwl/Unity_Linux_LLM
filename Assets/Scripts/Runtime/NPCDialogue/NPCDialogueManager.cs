@@ -63,6 +63,8 @@ namespace NPCSystem
         public bool enableRAG = true;
         public bool rebuildRagFromKnowledgeIfMissing = true;
         public int maxHistoryPerNPC = 20;
+        [Tooltip("If true, dialogue systems initialize on Start. If false, they are initialized on-demand (e.g., after player login success).")]
+        public bool initializeOnStart = false;
 
         [ShowInInspector]
         string DirectLocalAiEndpointPreview => $"http://{remoteHost}:{remotePort}/v1/chat/completions";
@@ -110,7 +112,10 @@ namespace NPCSystem
 
         void Start()
         {
-            _ = InitializeAsync();
+            if (initializeOnStart)
+            {
+                _ = InitializeAsync();
+            }
         }
 
         public Task InitializeAsync()
@@ -124,6 +129,39 @@ namespace NPCSystem
 
         async Task InitializeInternalAsync()
         {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            if (!string.IsNullOrWhiteSpace(remoteHost) && (remoteHost == "localhost" || remoteHost == "127.0.0.1"))
+            {
+                try
+                {
+                    Uri pageUri = new Uri(Application.absoluteURL);
+                    if (pageUri.Host != "localhost" && pageUri.Host != "127.0.0.1")
+                    {
+                        remoteHost = pageUri.Host;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[NPCDialogueManager] Failed to dynamically resolve remoteHost: {ex.Message}");
+                }
+            }
+            if (!string.IsNullOrWhiteSpace(remoteEmbeddingHost) && (remoteEmbeddingHost == "localhost" || remoteEmbeddingHost == "127.0.0.1"))
+            {
+                try
+                {
+                    Uri pageUri = new Uri(Application.absoluteURL);
+                    if (pageUri.Host != "localhost" && pageUri.Host != "127.0.0.1")
+                    {
+                        remoteEmbeddingHost = pageUri.Host;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[NPCDialogueManager] Failed to dynamically resolve remoteEmbeddingHost: {ex.Message}");
+                }
+            }
+#endif
+
             using var scope = NPCFlowScope.Start(Logger, NPCFlowStage.SceneBootstrap, source: nameof(NPCDialogueManager));
             try
             {

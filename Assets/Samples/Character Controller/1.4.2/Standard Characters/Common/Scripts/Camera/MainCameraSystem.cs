@@ -6,11 +6,12 @@ public partial class MainCameraSystem : SystemBase
 {
     protected override void OnUpdate()
     {
-        if (MainGameObjectCamera.Instance != null && SystemAPI.HasSingleton<MainEntityCamera>())
+        if (MainGameObjectCamera.Instance != null)
         {
-            Entity mainEntityCameraEntity = SystemAPI.GetSingletonEntity<MainEntityCamera>();
-            LocalToWorld targetLocalToWorld = SystemAPI.GetComponent<LocalToWorld>(mainEntityCameraEntity);
-            MainGameObjectCamera.Instance.transform.SetPositionAndRotation(targetLocalToWorld.Position, targetLocalToWorld.Rotation);
+            foreach (var targetLocalToWorld in SystemAPI.Query<RefRO<LocalToWorld>>().WithAll<MainEntityCamera>())
+            {
+                MainGameObjectCamera.Instance.transform.SetPositionAndRotation(targetLocalToWorld.ValueRO.Position, targetLocalToWorld.ValueRO.Rotation);
+            }
         }
     }
 }

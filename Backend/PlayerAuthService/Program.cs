@@ -12,7 +12,19 @@ builder.Services.AddSingleton(_ =>
     return NpgsqlDataSource.Create(connectionString);
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
+
+app.UseCors("AllowAll");
 
 int sessionHours = Math.Max(1, builder.Configuration.GetValue("Auth:SessionHours", 12));
 int rememberedSessionDays = Math.Max(1, builder.Configuration.GetValue("Auth:RememberedSessionDays", 30));

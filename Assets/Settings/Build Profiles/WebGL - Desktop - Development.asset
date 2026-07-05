@@ -1,5 +1,58 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-7359466382192024224
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 15009, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: Graphics Settings
+  m_EditorClassIdentifier: UnityEditor.dll::UnityEditor.Build.Profile.BuildProfileGraphicsSettings
+  m_LightmapStripping: 0
+  m_LightmapKeepPlain: 1
+  m_LightmapKeepDirCombined: 1
+  m_LightmapKeepDynamicPlain: 1
+  m_LightmapKeepDynamicDirCombined: 1
+  m_LightmapKeepShadowMask: 1
+  m_LightmapKeepSubtractive: 1
+  m_FogStripping: 0
+  m_FogKeepLinear: 1
+  m_FogKeepExp: 1
+  m_FogKeepExp2: 1
+  m_InstancingStripping: 0
+  m_BrgStripping: 0
+  m_LogWhenShaderIsCompiled: 0
+  m_CameraRelativeLightCulling: 1
+  m_CameraRelativeShadowCulling: 1
+  m_VideoShadersIncludeMode: 2
+  m_AlwaysIncludedShaders:
+  - {fileID: 7, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 15104, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 15105, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 15106, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 10753, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 10770, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 10783, guid: 0000000000000000f000000000000000, type: 0}
+  m_LightProbeOutsideHullStrategy: 0
+  m_GraphicsStateCollection: {fileID: 0}
+  m_CollectionStartupAction: 0
+  m_TraceSavePath: TracedCollection
+  m_TraceSendToEditor: 1
+  m_AdditionalWarmupCollections: []
+  m_WarmupAsync: 1
+  m_WarmupProgressivelyLimit: -1
+  m_EnableCacheMissTracing: 0
+  m_CacheMissCollectionPath: CacheMissCollection
+  m_PreloadedShaders: []
+  m_PreloadShadersBatchTimeLimit: -1
+  m_ShaderBuildSettings:
+    keywordDeclarationOverrides: []
+    defines: []
+    numInternalDefines: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22,7 +75,7 @@ MonoBehaviour:
   m_AdditionalPlatformBuildSettings: []
   m_OverrideGlobalSceneList: 0
   m_Scenes: []
-  m_HasScriptingDefines: 0
+  m_HasScriptingDefines: 1
   m_ScriptingDefines: []
   m_PlayerSettingsYaml:
     m_Settings:
@@ -43,7 +96,7 @@ MonoBehaviour:
     - line: '|   cursorHotspot: {x: 0, y: 0}'
     - line: '|   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b:
         0.1254902, a: 1}'
-    - line: '|   m_ShowUnitySplashScreen: 1'
+    - line: '|   m_ShowUnitySplashScreen: 0'
     - line: '|   m_ShowUnitySplashLogo: 1'
     - line: '|   m_SplashScreenOverlayOpacity: 1'
     - line: '|   m_SplashScreenAnimation: 1'
@@ -77,7 +130,7 @@ MonoBehaviour:
     - line: '|   m_SpriteBatchMaxVertexCount: 65535'
     - line: '|   m_SpriteBatchVertexThreshold: 300'
     - line: '|   m_MTRendering: 1'
-    - line: '|   mipStripping: 0'
+    - line: '|   mipStripping: 1'
     - line: '|   numberOfMipsStripped: 0'
     - line: '|   numberOfMipsStrippedPerMipmapLimitGroup: {}'
     - line: '|   m_StackTraceTypes: 010000000100000001000000010000000100000001000000'
@@ -123,7 +176,7 @@ MonoBehaviour:
     - line: '|   submitAnalytics: 1'
     - line: '|   usePlayerLog: 1'
     - line: '|   dedicatedServerOptimizations: 1'
-    - line: '|   bakeCollisionMeshes: 0'
+    - line: '|   bakeCollisionMeshes: 1'
     - line: '|   forceSingleInstance: 0'
     - line: '|   useFlipModelSwapchain: 1'
     - line: '|   resizableWindow: 0'
@@ -175,7 +228,11 @@ MonoBehaviour:
     - line: '|   visionOSBundleVersion: 1.0'
     - line: '|   tvOSBundleVersion: 1.0'
     - line: '|   bundleVersion: 0.1.0'
-    - line: '|   preloadedAssets: []'
+    - line: '|   preloadedAssets:'
+    - line: '|   - {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b,
+        type: 3}'
+    - line: '|   - {fileID: 11400000, guid: 4bbc03df5ffe229688932655ea58f66b, type:
+        2}'
     - line: '|   metroInputSource: 0'
     - line: '|   wsaTransparentSwapchain: 0'
     - line: '|   xboxOneDisableKinectGpuReservation: 1'
@@ -218,7 +275,7 @@ MonoBehaviour:
     - line: '|   CreateWallpaper: 0'
     - line: '|   androidSplitApplicationBinary: 0'
     - line: '|   keepLoadedShadersAlive: 0'
-    - line: '|   StripUnusedMeshComponents: 0'
+    - line: '|   StripUnusedMeshComponents: 1'
     - line: '|   strictShaderVariantMatching: 0'
     - line: '|   VertexChannelCompressionMask: 4054'
     - line: '|   iPhoneSdkVersion: 988'
@@ -557,6 +614,9 @@ MonoBehaviour:
     - line: '|   - m_BuildTarget: Standalone'
     - line: '|     m_StaticBatching: 1'
     - line: '|     m_DynamicBatching: 0'
+    - line: '|   - m_BuildTarget: WebGL'
+    - line: '|     m_StaticBatching: 1'
+    - line: '|     m_DynamicBatching: 0'
     - line: '|   m_BuildTargetShaderSettings: []'
     - line: '|   m_BuildTargetGraphicsJobs:'
     - line: '|   - m_BuildTarget: WebGLSupport'
@@ -569,6 +629,9 @@ MonoBehaviour:
     - line: '|   - m_BuildTarget: AndroidPlayer'
     - line: '|     m_APIs: 150000000b000000'
     - line: '|     m_Automatic: 0'
+    - line: '|   - m_BuildTarget: WebGLSupport'
+    - line: '|     m_APIs: 0b000000'
+    - line: '|     m_Automatic: 1'
     - line: '|   m_DefaultShaderChunkSizeInMB: 16'
     - line: '|   m_DefaultShaderChunkCount: 0'
     - line: '|   openGLRequireES31: 0'
@@ -585,10 +648,16 @@ MonoBehaviour:
     - line: '|     m_EncodingQuality: 1'
     - line: '|   - serializedVersion: 2'
     - line: '|     m_BuildTarget: WebGL'
-    - line: '|     m_EncodingQuality: 1'
-    - line: '|   m_BuildTargetGroupHDRCubemapEncodingQuality: []'
+    - line: '|     m_EncodingQuality: 0'
+    - line: '|   m_BuildTargetGroupHDRCubemapEncodingQuality:'
+    - line: '|   - serializedVersion: 2'
+    - line: '|     m_BuildTarget: WebGL'
+    - line: '|     m_EncodingQuality: 0'
     - line: '|   m_BuildTargetGroupLightmapSettings: []'
-    - line: '|   m_BuildTargetGroupLoadStoreDebugModeSettings: []'
+    - line: '|   m_BuildTargetGroupLoadStoreDebugModeSettings:'
+    - line: '|   - m_BuildTarget: WebGL'
+    - line: '|     m_DebugModeEnabled: 0'
+    - line: '|     m_IsEditorOnly: 0'
     - line: '|   m_BuildTargetNormalMapEncoding:'
     - line: '|   - m_BuildTarget: Android'
     - line: '|     m_Encoding: 1'
@@ -598,7 +667,7 @@ MonoBehaviour:
     - line: '|     m_Formats: 03000000'
     - line: '|   - serializedVersion: 3'
     - line: '|     m_BuildTarget: WebGL'
-    - line: '|     m_Formats: 05000000'
+    - line: '|     m_Formats: 03000000'
     - line: '|   playModeTestRunnerEnabled: 0'
     - line: '|   runPlayModeTestAsEditModeTest: 0'
     - line: '|   actionOnDotNetUnhandledException: 1'
@@ -838,36 +907,37 @@ MonoBehaviour:
     - line: '|   splashScreenBackgroundSourcePortrait: {instanceID: 0}'
     - line: '|   blurSplashScreenBackground: 1'
     - line: '|   spritePackerPolicy: '
-    - line: '|   webGLMemorySize: 32'
+    - line: '|   webGLMemorySize: 512'
     - line: '|   webGLExceptionSupport: 1'
     - line: '|   webGLNameFilesAsHashes: 0'
-    - line: '|   webGLShowDiagnostics: 0'
+    - line: '|   webGLShowDiagnostics: 1'
     - line: '|   webGLDataCaching: 0'
-    - line: '|   webGLDebugSymbols: 0'
+    - line: '|   webGLDebugSymbols: 2'
     - line: '|   webGLEmscriptenArgs: '
     - line: '|   webGLModulesDirectory: '
     - line: '|   webGLTemplate: APPLICATION:Default'
     - line: '|   webGLAnalyzeBuildSize: 0'
     - line: '|   webGLUseEmbeddedResources: 0'
-    - line: '|   webGLCompressionFormat: 1'
+    - line: '|   webGLCompressionFormat: 2'
     - line: '|   webGLWasmArithmeticExceptions: 0'
     - line: '|   webGLLinkerTarget: 1'
     - line: '|   webGLThreadsSupport: 0'
     - line: '|   webGLDecompressionFallback: 0'
-    - line: '|   webGLInitialMemorySize: 96'
+    - line: '|   webGLInitialMemorySize: 512'
     - line: '|   webGLMaximumMemorySize: 2048'
     - line: '|   webGLMemoryGrowthMode: 2'
     - line: '|   webGLMemoryLinearGrowthStep: 16'
-    - line: '|   webGLMemoryGeometricGrowthStep: 0.2'
-    - line: '|   webGLMemoryGeometricGrowthCap: 96'
+    - line: '|   webGLMemoryGeometricGrowthStep: 2'
+    - line: '|   webGLMemoryGeometricGrowthCap: 512'
     - line: '|   webGLPowerPreference: 2'
     - line: '|   webGLWebAssemblyTable: 1'
     - line: '|   webGLWebAssemblyBigInt: 1'
     - line: '|   webGLCloseOnQuit: 0'
     - line: '|   webWasm2023: 1'
-    - line: '|   webEnableSubmoduleStrippingCompatibility: 0'
+    - line: '|   webEnableSubmoduleStrippingCompatibility: 1'
     - line: '|   scriptingDefineSymbols:'
     - line: '|     Standalone: GLADE_AI_NAVIGATION;GLADE_INPUT_SYSTEM;GLADE_UGUI;SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY'
+    - line: '|     WebGL: SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY'
     - line: '|   additionalCompilerArguments: {}'
     - line: '|   platformArchitecture: {}'
     - line: '|   scriptingBackend:'
@@ -879,10 +949,11 @@ MonoBehaviour:
     - line: '|     WebGL: 1'
     - line: '|   il2cppLTOMode: {}'
     - line: '|   il2cppStacktraceInformation: {}'
-    - line: '|   managedStrippingLevel: {}'
+    - line: '|   managedStrippingLevel:'
+    - line: '|     WebGL: 3'
     - line: '|   incrementalIl2cppBuild: {}'
     - line: '|   suppressCommonWarnings: 1'
-    - line: '|   allowUnsafeCode: 0'
+    - line: '|   allowUnsafeCode: 1'
     - line: '|   useDeterministicCompilation: 1'
     - line: '|   additionalIl2CppArgs: '
     - line: '|   scriptingRuntimeVersion: 1'
@@ -1002,8 +1073,8 @@ MonoBehaviour:
     - rid: 6195600750679687171
       type: {class: WebGLPlatformSettings, ns: UnityEditor.WebGL, asm: UnityEditor.WebGL.Extensions}
       data:
-        m_Development: 1
-        m_ConnectProfiler: 0
+        m_Development: 0
+        m_ConnectProfiler: 1
         m_BuildWithDeepProfilingSupport: 0
         m_BuildWithCodeCoverage: 0
         m_AllowDebugging: 0
@@ -1020,4 +1091,20 @@ MonoBehaviour:
         m_CodeOptimization: 0
         m_WebGLClientBrowserPath: 
         m_WebGLClientBrowserType: 0
-        m_WebGLTextureSubtarget: 1
+        m_WebGLTextureSubtarget: 0
+--- !u!114 &8398576080938655598
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 15010, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: Quality Settings
+  m_EditorClassIdentifier: UnityEditor.dll::UnityEditor.Build.Profile.BuildProfileQualitySettings
+  m_DefaultQualityLevel: Mobile
+  m_QualityLevels:
+  - Mobile
+  - PC

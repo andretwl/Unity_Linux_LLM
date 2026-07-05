@@ -2,6 +2,7 @@
     "name": "NPCSystem.Runtime",
     "rootNamespace": "NPCSystem",
     "references": [
+        "Unity.Entities",
         "GladeAgenticAI.Core",
         "Unity.InputSystem",
         "Unity.Collections",

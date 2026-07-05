@@ -11,14 +11,32 @@ services:
     environment:
       - SERVER_PORT=11474
       - SERVER_ADDRESS=0.0.0.0
+      - USE_WEBSOCKETS=true
     # Bind-mount the server build so you can iterate without rebuilding.
     # Read-write: Unity needs to write to _Data/ for logs and config.
     volumes:
-      - ../Builds/Server:/server
+      - ../Builds/ServerWS2:/server
     restart: unless-stopped
     stop_grace_period: 30s
     logging:
       driver: json-file
       options:
         max-size: "50m"
+        max-file: "3"
+
+  npc-webgl-client:
+    image: nginx:alpine
+    container_name: npc-webgl-client
+    ports:
+      - "8085:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ../Builds/WebGL_client/LinuxWebGLWS:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
         max-file: "3"

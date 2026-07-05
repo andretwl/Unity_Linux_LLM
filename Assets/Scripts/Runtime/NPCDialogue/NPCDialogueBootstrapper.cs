@@ -10,8 +10,16 @@ namespace NPCSystem
         public bool autoSelectDefaultNPC = true;
         public string defaultNpcSlug = "";
 
+        [Header("Startup Mode")]
+        [Tooltip("If true, dialogue systems initialize on Start. If false, they can be initialized on-demand (e.g., after player login success).")]
+        public bool initializeOnStart = false;
+
         void Awake()
         {
+            // Force a static reference path to AOTGenericPreservation to prevent its virtual OnUpdate
+            // and critical AOT generic method instantiations from being stripped by IL2CPP's optimizer.
+            AOTGenericPreservation.Reference();
+
             NPCFlowLogger logger = NPCFlowLogger.FindOrCreate();
             if (dialogueManager == null)
             {
@@ -30,6 +38,22 @@ namespace NPCSystem
 
         async void Start()
         {
+            if (initializeOnStart)
+            {
+                await InitializeOnDemandAsync();
+            }
+        }
+
+        private Task _onDemandInitTask;
+
+        public Task InitializeOnDemandAsync()
+        {
+            _onDemandInitTask ??= InitializeOnDemandInternalAsync();
+            return _onDemandInitTask;
+        }
+
+        async Task InitializeOnDemandInternalAsync()
+        {
             NPCFlowLogger logger = NPCFlowLogger.FindOrCreate();
             if (dialogueManager == null)
             {
@@ -38,9 +62,23 @@ namespace NPCSystem
                 return;
             }
 
+            // Perform post-login LocalAI readiness probe
+            var backendReadiness = FindAnyObjectByType<NPCBackendReadinessService>(FindObjectsInactive.Include);
+            if (backendReadiness != null)
+            {
+                await backendReadiness.ProbeAsync(probeLocalAi: true);
+            }
+
             await dialogueManager.InitializeAsync();
             logger.Log(NPCFlowStage.SceneBootstrap, NPCFlowStatus.Success, NPCFlowLogLevel.Info,
-                "Dialogue manager initialized from bootstrapper.", source: nameof(NPCDialogueBootstrapper));
+                "Dialogue manager initialized from bootstrapper on demand.", source: nameof(NPCDialogueBootstrapper));
+
+            // Initialize dialogue network bridge to sync baseline status post-login
+            var bridge = FindAnyObjectByType<NPCDialogueNetworkBridge>(FindObjectsInactive.Include);
+            if (bridge != null)
+            {
+                await bridge.InitializeAsync();
+            }
 
             if (!autoSelectDefaultNPC || dialogueManager.currentProfile != null)
             {

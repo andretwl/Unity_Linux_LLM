@@ -186,6 +186,26 @@ namespace NPCSystem
 
         public async Task<PlayerAuthSessionResponse> InitializeAsync()
         {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            if (!string.IsNullOrWhiteSpace(serviceBaseUrl) && (serviceBaseUrl.Contains("localhost") || serviceBaseUrl.Contains("127.0.0.1")))
+            {
+                try
+                {
+                    Uri pageUri = new Uri(Application.absoluteURL);
+                    if (pageUri.Host != "localhost" && pageUri.Host != "127.0.0.1")
+                    {
+                        UriBuilder authUriBuilder = new UriBuilder(serviceBaseUrl);
+                        authUriBuilder.Host = pageUri.Host;
+                        serviceBaseUrl = authUriBuilder.ToString().TrimEnd('/');
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[PlayerAuthService] Failed to dynamically resolve serviceBaseUrl: {ex.Message}");
+                }
+            }
+#endif
+
             if (_initialized)
                 return IsAuthenticated ? CurrentSession : null;
 

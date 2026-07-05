@@ -20,7 +20,6 @@ public static class NPCDialogueBuild
             target = BuildTarget.StandaloneLinux64,
             subtarget = (int)StandaloneBuildSubtarget.Server,
             options = BuildOptions.CompressWithLz4HC
-                | BuildOptions.EnableHeadlessMode
                 | BuildOptions.ShowBuiltPlayer
         };
 
@@ -30,7 +29,6 @@ public static class NPCDialogueBuild
         defines.target = BuildTarget.StandaloneLinux64;
         defines.subtarget = (int)StandaloneBuildSubtarget.Server;
         defines.options = BuildOptions.CompressWithLz4HC
-            | BuildOptions.EnableHeadlessMode
             | BuildOptions.ShowBuiltPlayer;
 
         BuildReport report = BuildPipeline.BuildPlayer(defines);
@@ -56,6 +54,25 @@ public static class NPCDialogueBuild
 
         BuildReport report = BuildPipeline.BuildPlayer(options);
         HandleBuildReport(report, "Client");
+    }
+
+    // WebGL build for web client
+    [MenuItem("Build/WebGL")]
+    public static void BuildWebGL()
+    {
+        string outputPath = Path.GetFullPath(Path.Combine(
+            Application.dataPath, "..", "Builds", "WebGL_client", "LinuxWebGLWS"));
+
+        var options = new BuildPlayerOptions
+        {
+            scenes = GetEnabledScenes(),
+            locationPathName = outputPath,
+            target = BuildTarget.WebGL,
+            options = BuildOptions.None
+        };
+
+        BuildReport report = BuildPipeline.BuildPlayer(options);
+        HandleBuildReport(report, "WebGL");
     }
 
     // Both
@@ -100,5 +117,10 @@ public static class NPCDialogueBuild
     public static void PerformClientBuild()
     {
         BuildClient();
+    }
+
+    public static void PerformWebGLBuild()
+    {
+        BuildWebGL();
     }
 }

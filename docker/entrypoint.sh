@@ -9,12 +9,16 @@ SERVER_ADDRESS="${SERVER_ADDRESS:-0.0.0.0}"
 # Locate the server binary — try common names
 if [ -f "/server/LinuxDedicatedServer.x86_64" ]; then
     SERVER_BINARY="/server/LinuxDedicatedServer.x86_64"
+elif [ -f "/server/ServerWS.x86_64" ]; then
+    SERVER_BINARY="/server/ServerWS.x86_64"
 elif [ -f "/server/NPCServer.x86_64" ]; then
     SERVER_BINARY="/server/NPCServer.x86_64"
 elif [ -f "/server/Linux.x86_64" ]; then
     SERVER_BINARY="/server/Linux.x86_64"
 elif [ -f "/server/Server.x86_64" ]; then
     SERVER_BINARY="/server/Server.x86_64"
+elif ls /server/*.x86_64 1>/dev/null 2>&1; then
+    SERVER_BINARY="$(ls /server/*.x86_64 | head -n 1)"
 else
     echo "ERROR: No server binary found in /server/"
     echo "Bind-mount or COPY your Unity dedicated server build to /server/."
@@ -23,12 +27,19 @@ else
     exit 1
 fi
 
+USE_WEBSOCKETS="${USE_WEBSOCKETS:-false}"
+EXTRA_ARGS=""
+if [ "$USE_WEBSOCKETS" = "true" ]; then
+    EXTRA_ARGS="-npc-websockets"
+fi
+
 echo "=== NPC Dedicated Server Container ==="
-echo "Binary:  $SERVER_BINARY"
-echo "Port:    $SERVER_PORT"
-echo "Address: $SERVER_ADDRESS"
-echo "LLM:     localhost:8080  (embeddings, via host networking)"
-echo "         localhost:11435 (chat,     via host networking)"
+echo "Binary:     $SERVER_BINARY"
+echo "Port:       $SERVER_PORT"
+echo "Address:    $SERVER_ADDRESS"
+echo "WebSockets: $USE_WEBSOCKETS"
+echo "LLM:        localhost:8080  (embeddings, via host networking)"
+echo "            localhost:11435 (chat,     via host networking)"
 echo "======================================"
 
 # Start server in background so we can trap signals.
@@ -40,6 +51,7 @@ echo "======================================"
     -npc-server \
     -port "$SERVER_PORT" \
     -address "$SERVER_ADDRESS" \
+    $EXTRA_ARGS \
     -logFile /dev/stdout &
 SERVER_PID=$!
 

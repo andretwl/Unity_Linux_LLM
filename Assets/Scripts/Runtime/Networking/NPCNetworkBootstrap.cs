@@ -137,6 +137,12 @@ namespace NPCSystem
                     NPCFlowLogger.FindOrCreate()?.Log(NPCFlowStage.ConfigurationValidation, NPCFlowStatus.Success, NPCFlowLogLevel.Info,
                         "CLI override applied: autoStartMode = Server.", source: nameof(NPCNetworkBootstrap));
                 }
+                else if (arg == "-npc-websockets")
+                {
+                    transportConfig.useWebSockets = true;
+                    NPCFlowLogger.FindOrCreate()?.Log(NPCFlowStage.ConfigurationValidation, NPCFlowStatus.Success, NPCFlowLogLevel.Info,
+                        "CLI override applied: useWebSockets = true.", source: nameof(NPCNetworkBootstrap));
+                }
                 else if (arg == "-npc-host")
                 {
                     transportConfig.autoStartMode = NPCNetworkAutoStartMode.Host;
@@ -235,6 +241,9 @@ namespace NPCSystem
             }
 
             transportConfig.NormalizeInPlace();
+#if UNITY_WEBGL && !UNITY_EDITOR
+            transportConfig.useWebSockets = true;
+#endif
             if (!transportConfig.TryValidate(out string errorMessage))
             {
                 NPCFlowLogger.FindOrCreate()?.Log(NPCFlowStage.ConfigurationValidation, NPCFlowStatus.Error, NPCFlowLogLevel.Error,

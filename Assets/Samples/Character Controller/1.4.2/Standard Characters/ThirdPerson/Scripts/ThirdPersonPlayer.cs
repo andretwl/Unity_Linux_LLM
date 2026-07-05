@@ -1,3 +1,4 @@
+#pragma warning disable UAC1001
 using System;
 using Unity.Entities;
 using Unity.Mathematics;

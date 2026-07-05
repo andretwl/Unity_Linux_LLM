@@ -18,12 +18,16 @@ public partial struct FixedTickSystem : ISystem
             Entity singletonEntity = state.EntityManager.CreateEntity();
             state.EntityManager.AddComponentData(singletonEntity, new Singleton());
         }
+        state.RequireForUpdate<Singleton>();
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        ref Singleton singleton = ref SystemAPI.GetSingletonRW<Singleton>().ValueRW;
-        singleton.Tick++;
+        if (SystemAPI.HasSingleton<Singleton>())
+        {
+            ref Singleton singleton = ref SystemAPI.GetSingletonRW<Singleton>().ValueRW;
+            singleton.Tick++;
+        }
     }
 }
