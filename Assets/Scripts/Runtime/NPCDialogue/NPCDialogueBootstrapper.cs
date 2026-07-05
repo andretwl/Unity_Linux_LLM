@@ -16,10 +16,6 @@ namespace NPCSystem
 
         void Awake()
         {
-            // Force a static reference path to AOTGenericPreservation to prevent its virtual OnUpdate
-            // and critical AOT generic method instantiations from being stripped by IL2CPP's optimizer.
-            AOTGenericPreservation.Reference();
-
             NPCFlowLogger logger = NPCFlowLogger.FindOrCreate();
             if (dialogueManager == null)
             {

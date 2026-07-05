@@ -103,12 +103,14 @@ namespace NPCSystem
             if (sceneLogger != null)
             {
                 _instance = sceneLogger;
+                _instance.ApplyPlatformLoggingOverrides();
                 return _instance;
             }
 
             var loggerObject = new GameObject("NPCFlowLogger");
             DontDestroyOnLoad(loggerObject);
             _instance = loggerObject.AddComponent<NPCFlowLogger>();
+            _instance.ApplyPlatformLoggingOverrides();
             _instance.Log(NPCFlowStage.SceneBootstrap, NPCFlowStatus.Warning, NPCFlowLogLevel.Warning,
                 "Auto-created fallback NPCFlowLogger. Add an explicit scene logger for Inspector-controlled settings.",
                 source: nameof(NPCFlowLogger));
@@ -152,10 +154,11 @@ namespace NPCSystem
 
             try
             {
+                ApplyPlatformLoggingOverrides();
                 PrepareEvent(flowEvent);
                 AddToRingBuffer(flowEvent);
                 if (logToUnityConsole) WriteUnityConsole(flowEvent);
-                if (logToJsonlFile) WriteJsonLine(flowEvent);
+                if (logToJsonlFile && SupportsPersistentFileLogging(Application.platform)) WriteJsonLine(flowEvent);
             }
             catch (Exception ex)
             {
@@ -246,6 +249,21 @@ namespace NPCSystem
                 includeTextSnippets || includeRawTextPayloads,
                 maxSnippetChars
             );
+        }
+
+        void ApplyPlatformLoggingOverrides()
+        {
+            if (SupportsPersistentFileLogging(Application.platform))
+            {
+                return;
+            }
+
+            logToJsonlFile = false;
+        }
+
+        public static bool SupportsPersistentFileLogging(RuntimePlatform platform)
+        {
+            return platform != RuntimePlatform.WebGLPlayer;
         }
 
         void PrepareEvent(NPCFlowEvent flowEvent)

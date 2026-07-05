@@ -78,6 +78,17 @@ namespace NPCSystem
         async void Start()
         {
             if (!initializeOnStart) return;
+            if (ShouldDeferInitializationForWebGL())
+            {
+                flowLogger = flowLogger != null ? flowLogger : NPCFlowLogger.FindOrCreate();
+                flowLogger.Log(
+                    NPCFlowStage.SceneBootstrap,
+                    NPCFlowStatus.Skipped,
+                    NPCFlowLogLevel.Info,
+                    "Deferred automatic scene initialization for WebGL startup to avoid browser bootstrap instability. Call InitializeSceneAsync after the page finishes loading and the player is ready.",
+                    source: nameof(NPCSceneInitializationController));
+                return;
+            }
             await InitializeSceneAsync();
         }
 
@@ -91,6 +102,11 @@ namespace NPCSystem
         {
             _initializationTask ??= InitializeSceneInternalAsync();
             return _initializationTask;
+        }
+
+        bool ShouldDeferInitializationForWebGL()
+        {
+            return Application.platform == RuntimePlatform.WebGLPlayer;
         }
 
         async Task InitializeSceneInternalAsync()

@@ -1,6 +1,9 @@
 using System;
 using System.IO;
+using Process = System.Diagnostics.Process;
+using ProcessStartInfo = System.Diagnostics.ProcessStartInfo;
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
@@ -60,6 +63,8 @@ public static class NPCDialogueBuild
     [MenuItem("Build/WebGL")]
     public static void BuildWebGL()
     {
+        ApplyWebGLReleaseSettings();
+
         string outputPath = Path.GetFullPath(Path.Combine(
             Application.dataPath, "..", "Builds", "WebGL_client", "LinuxWebGLWS"));
 
@@ -72,6 +77,7 @@ public static class NPCDialogueBuild
         };
 
         BuildReport report = BuildPipeline.BuildPlayer(options);
+        EnsureLinuxDockerReadableArtifacts(outputPath, report.summary.result == BuildResult.Succeeded);
         HandleBuildReport(report, "WebGL");
     }
 
@@ -122,5 +128,64 @@ public static class NPCDialogueBuild
     public static void PerformWebGLBuild()
     {
         BuildWebGL();
+    }
+
+    static void ApplyWebGLReleaseSettings()
+    {
+        var target = NamedBuildTarget.WebGL;
+
+        EditorUserBuildSettings.development = false;
+        EditorUserBuildSettings.connectProfiler = false;
+        EditorUserBuildSettings.allowDebugging = false;
+
+        PlayerSettings.SetIl2CppCodeGeneration(target, Il2CppCodeGeneration.OptimizeSize);
+        PlayerSettings.SetManagedStrippingLevel(target, ManagedStrippingLevel.High);
+        PlayerSettings.stripUnusedMeshComponents = true;
+
+        PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Brotli;
+        PlayerSettings.WebGL.dataCaching = true;
+        PlayerSettings.WebGL.debugSymbolMode = WebGLDebugSymbolMode.Off;
+        PlayerSettings.WebGL.exceptionSupport = WebGLExceptionSupport.None;
+        PlayerSettings.WebGL.maximumMemorySize = 4096;
+        UnityEditor.WebGL.UserBuildSettings.codeOptimization = UnityEditor.WebGL.WasmCodeOptimization.DiskSizeLTO;
+
+        Debug.Log("[NPCBuild] Applied WebGL release settings: development off, profiler off, Brotli on, debug symbols off, exception support off, max memory 4096 MB.");
+    }
+
+    static void EnsureLinuxDockerReadableArtifacts(string outputPath, bool buildSucceeded)
+    {
+        if (!buildSucceeded || !Directory.Exists(outputPath)) return;
+
+        if (Application.platform != RuntimePlatform.LinuxEditor)
+        {
+            return;
+        }
+
+        try
+        {
+            using var chmod = Process.Start(new ProcessStartInfo
+            {
+                FileName = "chmod",
+                Arguments = $"-R a+rX \"{outputPath}\"",
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+
+            chmod?.WaitForExit();
+            if (chmod is { ExitCode: 0 })
+            {
+                Debug.Log($"[NPCBuild] Normalized WebGL artifact permissions for Docker hosting: {outputPath}");
+                return;
+            }
+
+            string error = chmod?.StandardError.ReadToEnd() ?? "unknown chmod error";
+            Debug.LogWarning($"[NPCBuild] Failed to normalize WebGL artifact permissions: {error}");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"[NPCBuild] Failed to normalize WebGL artifact permissions: {ex.Message}");
+        }
     }
 }
