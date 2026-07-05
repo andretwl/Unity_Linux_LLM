@@ -112,7 +112,14 @@ namespace NPCSystem
 
         void ResolveReferences()
         {
-            authPanel = authPanel != null ? authPanel : FindObject("Canvas/AuthPanel");
+            if (authPanel == null)
+            {
+                authPanel = FindObject("AuthPanel");
+                if (authPanel == null)
+                {
+                    authPanel = FindObject("Canvas/AuthPanel");
+                }
+            }
             Transform root = authPanel != null ? authPanel.transform : null;
 
             authTitle = authTitle != null ? authTitle : FindChildComponent<TMP_Text>(root, "AuthContent/AuthTitle");
@@ -353,6 +360,18 @@ namespace NPCSystem
             if (rememberToggle != null) rememberToggle.interactable = enabled && !_isRegisterMode;
             if (submitButton != null) submitButton.interactable = enabled;
             if (switchModeButton != null) switchModeButton.interactable = enabled;
+        }
+
+        public void ClosePanel()
+        {
+            if (authPanel != null)
+            {
+                authPanel.SetActive(false);
+            }
+            else
+            {
+                gameObject.SetActive(false);
+            }
         }
 
         static void NormalizeTextRect(TMP_Text label, Vector2 size, Vector2 anchoredPosition, Vector2 anchor, TextAlignmentOptions alignment)

@@ -189,14 +189,32 @@ namespace NPCSystem
                 });
             lastBridgeStatus = $"Auth success for {_authenticatedPlayerName}; resolved mode {resolvedMode}.";
 
-            // Initialize dialogue system on demand to be memory smart!
-            var bootstrapper = FindAnyObjectByType<NPCDialogueBootstrapper>(FindObjectsInactive.Include);
-            if (bootstrapper != null)
+            // Initialize dialogue UI and backend system on demand to be memory smart!
+            var uiController = FindAnyObjectByType<NPCDialogueUIController>(FindObjectsInactive.Include);
+            if (uiController != null)
             {
+                GameObject gameplayCanvas = uiController.GetGameplayCanvas();
+                if (gameplayCanvas != null)
+                {
+                    gameplayCanvas.SetActive(true);
+                }
+
                 _logger?.Log(NPCFlowStage.SceneBootstrap, NPCFlowStatus.Start, NPCFlowLogLevel.Info,
-                    "Triggering on-demand dialogue and RAG system initialization.",
+                    "Triggering on-demand dialogue UI and backend system initialization.",
                     source: nameof(AuthNetworkBridge));
-                await bootstrapper.InitializeOnDemandAsync();
+                await uiController.InitializeOnDemandAsync();
+            }
+            else
+            {
+                // Headless fallback
+                var bootstrapper = FindAnyObjectByType<NPCDialogueBootstrapper>(FindObjectsInactive.Include);
+                if (bootstrapper != null)
+                {
+                    _logger?.Log(NPCFlowStage.SceneBootstrap, NPCFlowStatus.Start, NPCFlowLogLevel.Info,
+                        "Triggering on-demand backend dialogue system initialization (headless fallback).",
+                        source: nameof(AuthNetworkBridge));
+                    await bootstrapper.InitializeOnDemandAsync();
+                }
             }
 
             if (resolvedMode == ResolvedNetworkStartupMode.Host)
@@ -258,7 +276,20 @@ namespace NPCSystem
 
         void CloseAuthUI()
         {
-            GameObject panel = GameObject.Find("Canvas/AuthPanel");
+#if !UNITY_SERVER
+            if (authController != null)
+            {
+                authController.ClosePanel();
+                return;
+            }
+#endif
+
+            GameObject panel = GameObject.Find("AuthPanel");
+            if (panel == null)
+            {
+                panel = GameObject.Find("Canvas/AuthPanel");
+            }
+
             if (panel != null)
             {
                 panel.SetActive(false);

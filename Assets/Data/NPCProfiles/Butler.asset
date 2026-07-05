@@ -44,7 +44,7 @@ MonoBehaviour:
   sarcasm: 0.7
   canGivePuzzleHints: 1
   canAccuseSuspects: 1
-  canRevealSecrets: 0
+  canRevealSecrets: 1
   preferredActionFunctions:
   - PuzzleHint
   - RelationshipPulse
@@ -63,3 +63,4 @@ MonoBehaviour:
   loraAdapterPath: NPCs/butler/adapter.gguf
   loraWeight: 0.8
   historySaveFile: NPCDialogue/butler.json
+  inspectorPreview: Profile 'Butler' resolves to slug 'butler' with knowledge 'NPCs/butler/knowledge.md'.

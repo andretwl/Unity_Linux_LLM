@@ -42,8 +42,8 @@ MonoBehaviour:
   suspicion: 0.75
   helpfulness: 0.45
   sarcasm: 0.35
-  canGivePuzzleHints: 1
-  canAccuseSuspects: 0
+  canGivePuzzleHints: 0
+  canAccuseSuspects: 1
   canRevealSecrets: 0
   preferredActionFunctions:
   - SceneFocus
@@ -51,7 +51,6 @@ MonoBehaviour:
   - RelationshipPulse
   forbiddenActionFunctions:
   - Weather
-  - CodebaseKnowledge
   temperature: 0.82
   topP: 0.9
   minP: 0.04
@@ -64,3 +63,4 @@ MonoBehaviour:
   loraAdapterPath: NPCs/chef/adapter.gguf
   loraWeight: 0.8
   historySaveFile: NPCDialogue/chef.json
+  inspectorPreview: Profile 'Chef' resolves to slug 'chef' with knowledge 'NPCs/chef/knowledge.md'.

@@ -31,15 +31,48 @@ namespace NPCSystem
         [Header("Notebook / Panels")]
         public NotebookUIController notebookController;
 
+        [Header("Exit and Startup")]
+        public Button exitButton;
+        [Tooltip("If true, UI and dialogue systems initialize on Start. If false, they initialize deferred post-login.")]
+        public bool initializeOnStart = false;
+
+        private System.Threading.Tasks.Task _onDemandInitTask;
         bool _listenersBound;
         bool _managerBound;
         bool _readyForInput;
         List<NPCProfile> _profiles = new List<NPCProfile>();
 
+        void Awake()
+        {
+            ResolveReferences();
+        }
+
         async void Start()
         {
+            if (initializeOnStart)
+            {
+                await InitializeOnDemandAsync();
+            }
+            else
+            {
+                GameObject gameplayCanvas = GetGameplayCanvas();
+                if (gameplayCanvas != null)
+                {
+                    gameplayCanvas.SetActive(false);
+                }
+            }
+        }
+
+        public System.Threading.Tasks.Task InitializeOnDemandAsync()
+        {
+            _onDemandInitTask ??= InitializeOnDemandInternalAsync();
+            return _onDemandInitTask;
+        }
+
+        async System.Threading.Tasks.Task InitializeOnDemandInternalAsync()
+        {
             NPCFlowLogger.FindOrCreate().Log(NPCFlowStage.SceneBootstrap, NPCFlowStatus.Start,
-                NPCFlowLogLevel.Debug, "NPCDialogueUIController starting.",
+                NPCFlowLogLevel.Debug, "NPCDialogueUIController starting on demand.",
                 source: nameof(NPCDialogueUIController));
 
             ResolveReferences();
@@ -47,26 +80,70 @@ namespace NPCSystem
             SetInputEnabled(false);
             BindUiListeners();
 
-            if (networkBridge == null && dialogueManager == null)
+            // Enforce that the bootstrapper completes its initialization first
+            var bootstrapper = FindAnyObjectByType<NPCDialogueBootstrapper>(FindObjectsInactive.Include);
+            if (bootstrapper != null)
             {
-                NPCFlowLogger.FindOrCreate().Log(NPCFlowStage.SceneBootstrap, NPCFlowStatus.Error,
-                    NPCFlowLogLevel.Error, "Neither NPCDialogueManager nor NPCDialogueNetworkBridge is available.",
-                    source: nameof(NPCDialogueUIController));
-                return;
+                await bootstrapper.InitializeOnDemandAsync();
             }
-
-            if (networkBridge != null)
-                await networkBridge.InitializeAsync();
             else
-                await dialogueManager.InitializeAsync();
+            {
+                if (networkBridge == null && dialogueManager == null)
+                {
+                    NPCFlowLogger.FindOrCreate().Log(NPCFlowStage.SceneBootstrap, NPCFlowStatus.Error,
+                        NPCFlowLogLevel.Error, "Neither NPCDialogueManager nor NPCDialogueNetworkBridge is available.",
+                        source: nameof(NPCDialogueUIController));
+                    return;
+                }
+
+                if (networkBridge != null)
+                    await networkBridge.InitializeAsync();
+                else
+                    await dialogueManager.InitializeAsync();
+            }
 
             BindRuntimeEvents();
             PopulateDropdown();
             await SyncDropdownToCurrentProfileAsync();
 
             NPCFlowLogger.FindOrCreate().Log(NPCFlowStage.SceneBootstrap, NPCFlowStatus.Success,
-                NPCFlowLogLevel.Debug, "NPCDialogueUIController ready.",
+                NPCFlowLogLevel.Debug, "NPCDialogueUIController ready and initialized.",
                 source: nameof(NPCDialogueUIController));
+        }
+
+        public GameObject GetGameplayCanvas()
+        {
+            if (characterSelect != null)
+            {
+                Canvas canvas = characterSelect.GetComponentInParent<Canvas>(true);
+                if (canvas != null)
+                {
+                    return canvas.gameObject;
+                }
+            }
+
+            // Robust fallback searching active and inactive canvases across loaded scenes
+            var canvases = Resources.FindObjectsOfTypeAll<Canvas>();
+            foreach (var canvas in canvases)
+            {
+                if (canvas.gameObject.name == "Canvas" && canvas.gameObject.scene.isLoaded)
+                {
+                    return canvas.gameObject;
+                }
+            }
+            return GameObject.Find("Canvas");
+        }
+
+        void OnExitPressed()
+        {
+            NPCFlowLogger.FindOrCreate().Log(NPCFlowStage.UIInput, NPCFlowStatus.Success, NPCFlowLogLevel.Info,
+                "UI exit pressed. Exiting game/play mode.", source: nameof(NPCDialogueUIController));
+
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
         }
 
         void OnDestroy()
@@ -111,6 +188,7 @@ namespace NPCSystem
             chefImage = chefImage != null ? chefImage : FindComponent<RawImage>("Canvas/ChefImage");
 
             notebookController = notebookController != null ? notebookController : FindAnyObjectByType<NotebookUIController>(FindObjectsInactive.Include);
+            exitButton = exitButton != null ? exitButton : FindComponent<Button>("Canvas/ExitButton");
         }
 
         void DisableLegacyController()
@@ -132,6 +210,7 @@ namespace NPCSystem
                 playerInput.onValueChanged.AddListener(OnValueChanged);
             }
             if (stopButton != null) stopButton.onClick.AddListener(OnStopPressed);
+            if (exitButton != null) exitButton.onClick.AddListener(OnExitPressed);
             _listenersBound = true;
         }
 
@@ -146,6 +225,7 @@ namespace NPCSystem
                 playerInput.onValueChanged.RemoveListener(OnValueChanged);
             }
             if (stopButton != null) stopButton.onClick.RemoveListener(OnStopPressed);
+            if (exitButton != null) exitButton.onClick.RemoveListener(OnExitPressed);
             _listenersBound = false;
         }
 

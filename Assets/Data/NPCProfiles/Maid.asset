@@ -43,8 +43,8 @@ MonoBehaviour:
   helpfulness: 0.9
   sarcasm: 0.1
   canGivePuzzleHints: 1
-  canAccuseSuspects: 0
-  canRevealSecrets: 0
+  canAccuseSuspects: 1
+  canRevealSecrets: 1
   preferredActionFunctions:
   - Emotion
   - MemoryRecall
@@ -63,3 +63,4 @@ MonoBehaviour:
   loraAdapterPath: NPCs/maid/adapter.gguf
   loraWeight: 0.8
   historySaveFile: NPCDialogue/maid.json
+  inspectorPreview: Profile 'Maid' resolves to slug 'maid' with knowledge 'NPCs/maid/knowledge.md'.
