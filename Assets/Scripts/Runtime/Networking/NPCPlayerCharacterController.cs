@@ -151,6 +151,13 @@ namespace NPCSystem
             if (!IsOwner || motor == null)
                 return;
 
+            // Tab toggles between UI mode (cursor free, movement locked) and gameplay
+            if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
+            {
+                SetUIActive(!IsInUIMode);
+                return;
+            }
+
             motor.MoveInput = inputHandler != null ? inputHandler.MoveInput : Vector2.zero;
             motor.SprintInput = inputHandler != null && inputHandler.SprintHeld;
         }

@@ -85,7 +85,7 @@ namespace NPCSystem
 
         [Dropdown(nameof(_cachedModelNames))]
         [HideProperty]
-        public string remoteModel = "default-llm";
+        public string remoteModel = "llama-3.2-3b-instruct:q8_0";
 
         [SerializeField, HideInInspector]
         string[] _cachedModelNames = new string[] { "default-llm" };
@@ -303,7 +303,6 @@ namespace NPCSystem
                     evidenceState,
                     remoteHost,
                     remotePort,
-                    remoteModel,
                     Profiles
                 );
 
@@ -395,6 +394,7 @@ namespace NPCSystem
             {
                 chatClient.host = remoteHost;
                 chatClient.port = remotePort;
+                chatClient.model = remoteModel;
             }
         }
 

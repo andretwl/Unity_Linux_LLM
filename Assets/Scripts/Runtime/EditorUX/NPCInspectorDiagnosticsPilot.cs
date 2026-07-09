@@ -41,7 +41,7 @@ namespace NPCSystem.EditorUX
         int localAiPort = 8080;
 
         [SerializeField, HideProperty]
-        string localAiModel = "llama32-unity-blended-20260707-q4_k_m";
+        string localAiModel = "default-llm";
 
         [FoldoutGroup("Diagnostics Status", true, nameof(lastValidationStatus))]
         [SerializeField]

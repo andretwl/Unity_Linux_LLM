@@ -229,7 +229,6 @@ namespace NPCSystem
             );
             if (uiController != null)
             {
-                NPCPlayerCharacterController.RequestUIActive();
                 GameObject gameplayCanvas = uiController.GetGameplayCanvas();
                 if (gameplayCanvas != null)
                 {

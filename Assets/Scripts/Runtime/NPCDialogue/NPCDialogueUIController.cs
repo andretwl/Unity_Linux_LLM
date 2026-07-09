@@ -232,7 +232,11 @@ namespace NPCSystem
             {
                 _readyForInput = true;
                 SetInputEnabled(true);
-                NPCPlayerCharacterController.RequestUIActive();
+                if (playerInput != null)
+                {
+                    playerInput.Select();
+                    playerInput.ActivateInputField();
+                }
             }
 
             NPCFlowLogger

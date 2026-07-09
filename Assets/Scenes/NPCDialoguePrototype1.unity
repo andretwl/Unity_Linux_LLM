@@ -10903,6 +10903,8 @@ MonoBehaviour:
   remotePort: 8080
   remoteModel: llama-3.2-3b-instruct:q8_0
   _cachedModelNames:
+  - llama32-qdrant-safe-20260706-ckpt100-q4_k_m
+  - qwen2.5-1.5b-instruct-q4-k-m
   - embeddinggemma-300m
   - llama-3.2-3b-instruct:q4_k_m
   - llama-3.2-3b-instruct:q8_0
@@ -10917,8 +10919,6 @@ MonoBehaviour:
   - nomic-embed-text-v1.5
   - gemma-4-e2b-it
   - llama-3.1-8b-q4-k-m-vulkan
-  - llama32-qdrant-safe-20260706-ckpt100-q4_k_m
-  - qwen2.5-1.5b-instruct-q4-k-m
   remoteEmbeddingHost: 127.0.0.1
   remoteEmbeddingPort: 8080
   profiles:
@@ -11009,7 +11009,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: NPCSystem.Runtime::NPCSystem.QdrantRAGService
   qdrantUrl: http://localhost:6333
-  collectionName: unity_linux_llm_codebase_experiment_v1
+  collectionName: unity_linux_llm_codebase_v1
   embedder: {fileID: 1778380633}
   inspectorStatus: 'Logged Qdrant configuration: http://localhost:6333/collections/unity_linux_llm_codebase_v1/points/search'
 --- !u!114 &1778380629

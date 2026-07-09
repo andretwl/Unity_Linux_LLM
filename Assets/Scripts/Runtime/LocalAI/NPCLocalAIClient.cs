@@ -14,7 +14,7 @@ namespace NPCSystem
         public string host = "127.0.0.1";
         public int port = 8080;
         public string apiKey = "";
-        public string model = "llama32-unity-blended-20260707-q4_k_m";
+        public string model = "default-llm";
 
         [Header("Generation Parameters")]
         public float temperature = 0.2f;

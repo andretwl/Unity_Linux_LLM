@@ -29,7 +29,6 @@ namespace NPCSystem
         NPCEvidenceState _evidenceState;
         string _remoteHost;
         int _remotePort;
-        string _remoteModel;
         NPCProfile[] _profiles;
 
         // ────────────────────────────────────────────── Events ────
@@ -55,7 +54,6 @@ namespace NPCSystem
             NPCEvidenceState evidenceState,
             string remoteHost,
             int remotePort,
-            string remoteModel,
             NPCProfile[] profiles
         )
         {
@@ -66,7 +64,6 @@ namespace NPCSystem
             _evidenceState = evidenceState;
             _remoteHost = remoteHost ?? "localhost";
             _remotePort = remotePort;
-            _remoteModel = remoteModel;
             _profiles = profiles;
         }
 
@@ -122,14 +119,12 @@ namespace NPCSystem
         }
 
         /// <summary>
-        /// Sync remote-endpoint config at runtime (called after init if the
-        /// Manager updates remoteHost/remotePort/remoteModel values).
+        /// Sync remote-endpoint host/port at runtime (model is owned by Manager and synced to chatClient).
         /// </summary>
-        public void SyncRemoteConfig(string host, int port, string model)
+        public void SyncRemoteConfig(string host, int port)
         {
             _remoteHost = host;
             _remotePort = port;
-            _remoteModel = model;
         }
 
         // ─────────────────────────────────────── Dialogue Flow ────
@@ -254,6 +249,12 @@ namespace NPCSystem
         string DirectLocalAiEndpointPreview =>
             $"http://{_remoteHost}:{_remotePort}/v1/chat/completions";
 
+        /// <summary>Model name is owned by NPCDialogueManager and synced to chatClient.</summary>
+        string ResolvedModelName =>
+            _chatClient != null && !string.IsNullOrWhiteSpace(_chatClient.model)
+                ? _chatClient.model.Trim()
+                : "llama-3.2-3b-instruct:q8_0";
+
         async Task<string> SendToLocalAIAsync(
             NPCProfile profile,
             string playerMessage,
@@ -317,14 +318,6 @@ namespace NPCSystem
 
             if (_chatClient != null)
             {
-                string modelName = string.IsNullOrWhiteSpace(_remoteModel)
-                    ? "default-llm"
-                    : _remoteModel.Trim();
-                if (_chatClient.model != modelName)
-                {
-                    _chatClient.model = modelName;
-                }
-
                 dialogueMessage = await _chatClient.ChatAsync(
                     messages.ToArray(),
                     profile != null ? profile.temperature : (float?)null
