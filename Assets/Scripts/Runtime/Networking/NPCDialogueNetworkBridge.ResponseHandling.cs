@@ -164,12 +164,12 @@ namespace NPCSystem
             {
                 requestId = _activeRequestId,
                 npcSlug =
-                    DialogueManager != null && DialogueManager.currentProfile != null
-                        ? DialogueManager.currentProfile.GetNpcSlug()
+                    _dialogueManager != null && _dialogueManager.currentProfile != null
+                        ? _dialogueManager.currentProfile.GetNpcSlug()
                         : _localSelectedNpcSlug,
                 displayName =
-                    DialogueManager != null && DialogueManager.currentProfile != null
-                        ? DialogueManager.currentProfile.GetDisplayName()
+                    _dialogueManager != null && _dialogueManager.currentProfile != null
+                        ? _dialogueManager.currentProfile.GetDisplayName()
                     : currentProfile != null ? currentProfile.GetDisplayName()
                     : string.Empty,
                 content = NPCFlowTextSanitizer.CleanDialogueText(content),

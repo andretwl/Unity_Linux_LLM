@@ -62,5 +62,6 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "Unity_Linux_LLM.slnx"
+    "dotnet.defaultSolution": "Unity_Linux_LLM.slnx",
+    "datadog.ust.environment.setup.focusedName": "production"
 }

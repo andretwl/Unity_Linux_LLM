@@ -280,13 +280,13 @@ namespace NPCSystem.Tests
             var dialogueObject = new GameObject("DialogueManager");
             var manager = dialogueObject.AddComponent<NPCDialogueManager>();
             var profile = ScriptableObject.CreateInstance<NPCProfile>();
-            profile.npcSlug = "test-npc";
-            profile.displayName = "Test NPC";
+            profile.NpcSlug = "test-npc";
+            profile.DisplayName = "Test NPC";
             profile.systemPrompt = "Test";
             profile.maxTokens = 64;
             profile.ragResults = 1;
             profile.historySaveFile = "NPCDialogue/test.json";
-            manager.profiles = new[] { profile };
+            manager.Profiles = new[] { profile };
 
             try
             {
@@ -389,8 +389,8 @@ namespace NPCSystem.Tests
 
             var itemObject = new GameObject("Item_Ledger");
             var item = itemObject.AddComponent<NPCTransferableItem>();
-            item.itemId = "evidence-ledger";
-            item.displayName = "Evidence Ledger";
+            item.ItemId = "evidence-ledger";
+            item.DisplayName = "Evidence Ledger";
 
             var avatarObject = new GameObject("Avatar");
             var avatar = avatarObject.AddComponent<NPCPlayerNetworkAvatar>();
@@ -429,8 +429,8 @@ namespace NPCSystem.Tests
 
             var itemObject = new GameObject("Item_Ledger");
             var item = itemObject.AddComponent<NPCTransferableItem>();
-            item.itemId = "evidence-ledger";
-            item.displayName = "Evidence Ledger";
+            item.ItemId = "evidence-ledger";
+            item.DisplayName = "Evidence Ledger";
 
             var avatarObject = new GameObject("Avatar");
             var avatar = avatarObject.AddComponent<NPCPlayerNetworkAvatar>();

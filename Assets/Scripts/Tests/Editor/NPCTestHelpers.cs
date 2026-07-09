@@ -73,8 +73,8 @@ namespace NPCSystem.Tests
         public static NPCProfile CreateMinimalProfile(string slug, string displayName)
         {
             var profile = ScriptableObject.CreateInstance<NPCProfile>();
-            profile.npcSlug = slug;
-            profile.displayName = displayName;
+            profile.NpcSlug = slug;
+            profile.DisplayName = displayName;
             profile.systemPrompt = "You are a helpful NPC.";
             profile.maxTokens = 64;
             profile.ragResults = 1;

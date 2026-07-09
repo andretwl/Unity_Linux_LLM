@@ -14,9 +14,13 @@ namespace NPCSystem
     public partial class NPCDialogueNetworkBridge : NetworkBehaviour
     {
         [FormerlySerializedAs("DialogueManager")]
-        public NPCDialogueManager DialogueManager;
+        [SerializeField]
+        NPCDialogueManager _dialogueManager;
+        /// <summary>Public accessor (used by tests).</summary>
+        public NPCDialogueManager DialogueManager { get => _dialogueManager; set => _dialogueManager = value; }
         [FormerlySerializedAs("SessionManager")]
-        public NPCNetworkSessionManager SessionManager;
+        [SerializeField]
+        NPCNetworkSessionManager _sessionManager;
 
         [FormerlySerializedAs("onNPCChanged")]
         public UnityEvent<string> OnNpcChanged = new UnityEvent<string>();
@@ -84,16 +88,16 @@ namespace NPCSystem
         public async Task InitializeAsync()
         {
             ResolveReferences();
-            if (DialogueManager != null)
+            if (_dialogueManager != null)
             {
-                if (DialogueManager.IsInitialized)
+                if (_dialogueManager.IsInitialized)
                 {
                     CaptureBaselineState();
                     UpdateNotebookStateLocal();
                 }
                 else
                 {
-                    await DialogueManager.InitializeAsync();
+                    await _dialogueManager.InitializeAsync();
                     CaptureBaselineState();
                     UpdateNotebookStateLocal();
                 }
@@ -124,17 +128,17 @@ namespace NPCSystem
                 || IsServer
             )
             {
-                if (SessionManager != null && NetworkManager != null)
+                if (_sessionManager != null && NetworkManager != null)
                 {
-                    SessionManager.SetSelectedNpcSlug(
+                    _sessionManager.SetSelectedNpcSlug(
                         NetworkManager.LocalClientId,
                         selection.npcSlug
                     );
                 }
 
-                if (DialogueManager != null)
+                if (_dialogueManager != null)
                 {
-                    await DialogueManager.SwitchToNPCAsync(selection.npcSlug);
+                    await _dialogueManager.SwitchToNPCAsync(selection.npcSlug);
                     UpdateNotebookStateLocal();
                 }
                 return;
@@ -169,7 +173,7 @@ namespace NPCSystem
                 || IsServer
             )
             {
-                DialogueManager?.SendMessage(request.playerMessage);
+                _dialogueManager?.SendMessage(request.playerMessage);
                 return;
             }
 
@@ -192,7 +196,7 @@ namespace NPCSystem
                 || IsServer
             )
             {
-                DialogueManager?.CancelRequests();
+                _dialogueManager?.CancelRequests();
                 return;
             }
 
@@ -203,19 +207,19 @@ namespace NPCSystem
 
         void ResolveReferences()
         {
-            if (DialogueManager == null)
+            if (_dialogueManager == null)
             {
-                DialogueManager = FindAnyObjectByType<NPCDialogueManager>(
+                _dialogueManager = FindAnyObjectByType<NPCDialogueManager>(
                     FindObjectsInactive.Include
                 );
             }
 
-            if (SessionManager == null)
+            if (_sessionManager == null)
             {
-                SessionManager = GetComponent<NPCNetworkSessionManager>();
-                if (SessionManager == null)
+                _sessionManager = GetComponent<NPCNetworkSessionManager>();
+                if (_sessionManager == null)
                 {
-                    SessionManager = FindAnyObjectByType<NPCNetworkSessionManager>(
+                    _sessionManager = FindAnyObjectByType<NPCNetworkSessionManager>(
                         FindObjectsInactive.Include
                     );
                 }
@@ -224,27 +228,27 @@ namespace NPCSystem
 
         void BindManagerEvents()
         {
-            if (_eventsBound || DialogueManager == null)
+            if (_eventsBound || _dialogueManager == null)
                 return;
 
-            DialogueManager.OnNpcChanged.AddListener(HandleManagerNpcChanged);
-            DialogueManager.OnResponseStart.AddListener(HandleManagerResponseStart);
-            DialogueManager.OnResponseUpdated.AddListener(HandleManagerResponseUpdated);
-            DialogueManager.OnResponseComplete.AddListener(HandleManagerResponseComplete);
-            DialogueManager.OnError.AddListener(HandleManagerError);
+            _dialogueManager.OnNpcChanged.AddListener(HandleManagerNpcChanged);
+            _dialogueManager.OnResponseStart.AddListener(HandleManagerResponseStart);
+            _dialogueManager.OnResponseUpdated.AddListener(HandleManagerResponseUpdated);
+            _dialogueManager.OnResponseComplete.AddListener(HandleManagerResponseComplete);
+            _dialogueManager.OnError.AddListener(HandleManagerError);
             _eventsBound = true;
         }
 
         void UnbindManagerEvents()
         {
-            if (!_eventsBound || DialogueManager == null)
+            if (!_eventsBound || _dialogueManager == null)
                 return;
 
-            DialogueManager.OnNpcChanged.RemoveListener(HandleManagerNpcChanged);
-            DialogueManager.OnResponseStart.RemoveListener(HandleManagerResponseStart);
-            DialogueManager.OnResponseUpdated.RemoveListener(HandleManagerResponseUpdated);
-            DialogueManager.OnResponseComplete.RemoveListener(HandleManagerResponseComplete);
-            DialogueManager.OnError.RemoveListener(HandleManagerError);
+            _dialogueManager.OnNpcChanged.RemoveListener(HandleManagerNpcChanged);
+            _dialogueManager.OnResponseStart.RemoveListener(HandleManagerResponseStart);
+            _dialogueManager.OnResponseUpdated.RemoveListener(HandleManagerResponseUpdated);
+            _dialogueManager.OnResponseComplete.RemoveListener(HandleManagerResponseComplete);
+            _dialogueManager.OnError.RemoveListener(HandleManagerError);
             _eventsBound = false;
         }
 
@@ -272,10 +276,10 @@ namespace NPCSystem
                 $"Client {clientId} disconnected. Clearing queued work and session state."
             );
             RemoveQueuedRequestsForClient(clientId);
-            SessionManager?.ClearClientSession(clientId);
+            _sessionManager?.ClearClientSession(clientId);
             if (_activeClientId.HasValue && _activeClientId.Value == clientId)
             {
-                DialogueManager?.CancelRequests();
+                _dialogueManager?.CancelRequests();
                 _activeClientId = null;
                 _activeRequestId = string.Empty;
                 TryProcessNextQueuedRequest();
@@ -301,7 +305,7 @@ namespace NPCSystem
             ResolveReferences();
             selection.SanitizeInPlace();
 
-            if (SessionManager == null || DialogueManager == null)
+            if (_sessionManager == null || _dialogueManager == null)
             {
                 SendErrorToClient(senderClientId, "Dialogue network bridge is not configured.");
                 return;
@@ -314,7 +318,7 @@ namespace NPCSystem
             }
 
             EnsureClientSessionSeeded(senderClientId);
-            SessionManager.SetSelectedNpcSlug(senderClientId, selection.npcSlug);
+            _sessionManager.SetSelectedNpcSlug(senderClientId, selection.npcSlug);
             LogRoutingEvent(
                 senderClientId,
                 string.Empty,
@@ -338,12 +342,12 @@ namespace NPCSystem
             }
 
             ApplySessionStateToManager(senderClientId);
-            await DialogueManager.SwitchToNPCAsync(selection.npcSlug);
+            await _dialogueManager.SwitchToNPCAsync(selection.npcSlug);
             SendNpcChangedToClient(
                 senderClientId,
                 selection.npcSlug,
-                DialogueManager.currentProfile != null
-                    ? DialogueManager.currentProfile.GetDisplayName()
+                _dialogueManager.currentProfile != null
+                    ? _dialogueManager.currentProfile.GetDisplayName()
                     : selection.npcSlug
             );
             SendNotebookStateToClient(senderClientId, BuildNotebookStateMessage());
@@ -366,7 +370,7 @@ namespace NPCSystem
             ResolveReferences();
             request.SanitizeInPlace();
 
-            if (SessionManager == null || DialogueManager == null)
+            if (_sessionManager == null || _dialogueManager == null)
             {
                 SendErrorToClient(senderClientId, "Dialogue network bridge is not configured.");
                 return;
@@ -375,7 +379,7 @@ namespace NPCSystem
             EnsureClientSessionSeeded(senderClientId);
 
             if (
-                !SessionManager.TryGetSelectedNpcSlug(senderClientId, out string selectedNpcSlug)
+                !_sessionManager.TryGetSelectedNpcSlug(senderClientId, out string selectedNpcSlug)
                 || string.IsNullOrWhiteSpace(selectedNpcSlug)
             )
             {
@@ -395,7 +399,7 @@ namespace NPCSystem
                 }
             );
 
-            if (_activeClientId.HasValue || DialogueManager.IsResponding)
+            if (_activeClientId.HasValue || _dialogueManager.IsResponding)
             {
                 EnqueueDialogueRequest(senderClientId, request);
                 return;
@@ -412,7 +416,7 @@ namespace NPCSystem
                 && _activeClientId.Value == rpcParams.Receive.SenderClientId
             )
             {
-                DialogueManager?.CancelRequests();
+                _dialogueManager?.CancelRequests();
                 _activeClientId = null;
                 _activeRequestId = string.Empty;
                 TryProcessNextQueuedRequest();
@@ -572,8 +576,8 @@ namespace NPCSystem
                     message,
                     source: nameof(NPCDialogueNetworkBridge),
                     requestId: requestId,
-                    npcSlug: DialogueManager != null && DialogueManager.currentProfile != null
-                        ? DialogueManager.currentProfile.GetNpcSlug()
+                    npcSlug: _dialogueManager != null && _dialogueManager.currentProfile != null
+                        ? _dialogueManager.currentProfile.GetNpcSlug()
                         : _localSelectedNpcSlug,
                     data: data
                 );
@@ -596,8 +600,8 @@ namespace NPCSystem
                     {
                         ["clientId"] = clientId,
                         ["playerName"] =
-                            SessionManager != null
-                                ? SessionManager.GetPlayerDisplayName(clientId)
+                            _sessionManager != null
+                                ? _sessionManager.GetPlayerDisplayName(clientId)
                                 : string.Empty,
                     }
                 );

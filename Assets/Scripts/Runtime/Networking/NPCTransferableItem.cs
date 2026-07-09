@@ -21,19 +21,41 @@ namespace NPCSystem
 
         [Header("Identity")]
         [FormerlySerializedAs("itemId")]
-        public string ItemId = "evidence-ledger";
+        [SerializeField]
+        string _itemId = "evidence-ledger";
+        public string ItemId
+        {
+            get => (itemIdValue.Value.Length > 0) ? itemIdValue.Value.ToString() : _itemId;
+            set => _itemId = value;
+        }
+
         [FormerlySerializedAs("displayName")]
-        public string DisplayName = "Evidence Ledger";
+        [SerializeField]
+        string _displayName = "Evidence Ledger";
+        public string DisplayName
+        {
+            get => (displayNameValue.Value.Length > 0) ? displayNameValue.Value.ToString() : _displayName;
+            set => _displayName = value;
+        }
+
         [FormerlySerializedAs("initialNpcHolderSlug")]
-        public string InitialNpcHolderSlug = "butler";
+        [FormerlySerializedAs("InitialNpcHolderSlug")]
+        [SerializeField]
+        string _initialNpcHolderSlug = "butler";
 
         [Header("Follow")]
         [FormerlySerializedAs("playerHoldOffset")]
-        public Vector3 PlayerHoldOffset = new Vector3(0f, 1.1f, 0.8f);
+        [FormerlySerializedAs("PlayerHoldOffset")]
+        [SerializeField]
+        Vector3 _playerHoldOffset = new Vector3(0f, 1.1f, 0.8f);
         [FormerlySerializedAs("npcHoldOffset")]
-        public Vector3 NpcHoldOffset = new Vector3(0.65f, 1.1f, 0f);
+        [FormerlySerializedAs("NpcHoldOffset")]
+        [SerializeField]
+        Vector3 _npcHoldOffset = new Vector3(0.65f, 1.1f, 0f);
         [FormerlySerializedAs("followSharpness")]
-        public float FollowSharpness = 20f;
+        [FormerlySerializedAs("FollowSharpness")]
+        [SerializeField]
+        float _followSharpness = 20f;
 
         [HideInInspector]
         public readonly NetworkVariable<FixedString64Bytes> itemIdValue =
@@ -64,10 +86,6 @@ namespace NPCSystem
                 NetworkVariableWritePermission.Server
             );
 
-        public string ItemId =>
-            (itemIdValue.Value.Length > 0) ? itemIdValue.Value.ToString() : ItemId;
-        public string DisplayName =>
-            (displayNameValue.Value.Length > 0) ? displayNameValue.Value.ToString() : DisplayName;
         public bool IsHeldByPlayer => _holderType.Value == (int)HolderType.Player;
         public bool IsHeldByNpc => _holderType.Value == (int)HolderType.Npc;
 
@@ -77,7 +95,7 @@ namespace NPCSystem
             DisplayName = string.IsNullOrWhiteSpace(DisplayName)
                 ? "Evidence Ledger"
                 : DisplayName.Trim();
-            InitialNpcHolderSlug = NormalizeId(InitialNpcHolderSlug, "butler");
+            _initialNpcHolderSlug = NormalizeId(_initialNpcHolderSlug, "butler");
         }
 
         public override void OnNetworkSpawn()
@@ -119,9 +137,9 @@ namespace NPCSystem
                 return;
             }
 
-            Vector3 offset = IsHeldByNpc ? NpcHoldOffset : PlayerHoldOffset;
+            Vector3 offset = IsHeldByNpc ? _npcHoldOffset : _playerHoldOffset;
             Vector3 targetPosition = target.position + target.rotation * offset;
-            float t = 1f - Mathf.Exp(-FollowSharpness * Time.deltaTime);
+            float t = 1f - Mathf.Exp(-_followSharpness * Time.deltaTime);
             transform.position = Vector3.Lerp(transform.position, targetPosition, t);
         }
 
@@ -154,7 +172,7 @@ namespace NPCSystem
                 return;
             }
 
-            string normalizedNpcSlug = NormalizeId(npcSlug, InitialNpcHolderSlug);
+            string normalizedNpcSlug = NormalizeId(npcSlug, _initialNpcHolderSlug);
             _holderType.Value = (int)HolderType.Npc;
             _npcHolderSlug.Value = new FixedString64Bytes(normalizedNpcSlug);
             if (!NetworkObject.IsOwnedByServer)

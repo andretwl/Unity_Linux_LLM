@@ -29,8 +29,8 @@ namespace NPCSystem
             "RAG Services",
             true,
             nameof(LocalRag),
-            nameof(RagEmbeddingPath),
-            nameof(UseQdrantRag),
+            nameof(_ragEmbeddingPath),
+            nameof(_useQdrantRag),
             nameof(QdrantRag)
         )]
         [SerializeField]
@@ -41,15 +41,18 @@ namespace NPCSystem
         public NPCLocalRAG LocalRag;
 
         [FilePath(true, "rag")]
+        [FormerlySerializedAs("RagEmbeddingPath")]
+        [FormerlySerializedAs("ragEmbeddingPath")]
         [SerializeField, HideProperty]
-        public string RagEmbeddingPath = "RAG/NPCDialogues.rag";
+        string _ragEmbeddingPath = "RAG/NPCDialogues.rag";
 
         [SerializeField, HideProperty]
         [FormerlySerializedAs("useQdrantRag")]
-        public bool UseQdrantRag = false;
+        [FormerlySerializedAs("UseQdrantRag")]
+        bool _useQdrantRag = false;
 
         [FormerlySerializedAs("qdrantRag")]
-        [SerializeField, HideProperty, ShowField(nameof(UseQdrantRag))]
+        [SerializeField, HideProperty, ShowField(nameof(_useQdrantRag))]
         public QdrantRAGService QdrantRag;
 
         [FoldoutGroup("Game Systems", true, nameof(ActionPlanner), nameof(EvidenceState))]
@@ -75,28 +78,34 @@ namespace NPCSystem
         [FoldoutGroup(
             "LLM Configuration",
             true,
-            nameof(RemoteHost),
-            nameof(RemotePort),
-            nameof(RemoteModel),
-            nameof(RemoteEmbeddingHost),
-            nameof(RemoteEmbeddingPort)
+            nameof(_remoteHost),
+            nameof(_remotePort),
+            nameof(_remoteModel),
+            nameof(_remoteEmbeddingHost),
+            nameof(_remoteEmbeddingPort)
         )]
         [SerializeField]
         EditorAttributes.Void llmConfigGroup;
 
         [HideProperty]
         [FormerlySerializedAs("remoteHost")]
-        public string RemoteHost = "localhost";
+        [FormerlySerializedAs("RemoteHost")]
+        [SerializeField]
+        string _remoteHost = "localhost";
 
         [ShowField(nameof(enableRemoteServer))]
         [HideProperty, Suffix("port")]
         [FormerlySerializedAs("remotePort")]
-        public int RemotePort = 11435;
+        [FormerlySerializedAs("RemotePort")]
+        [SerializeField]
+        int _remotePort = 11435;
 
         [Dropdown(nameof(_cachedModelNames))]
         [HideProperty]
         [FormerlySerializedAs("remoteModel")]
-        public string RemoteModel = "llama-3.2-3b-instruct:q8_0";
+        [FormerlySerializedAs("RemoteModel")]
+        [SerializeField]
+        string _remoteModel = "llama-3.2-3b-instruct:q8_0";
 
         [SerializeField, HideInInspector]
         string[] _cachedModelNames = new string[] { "default-llm" };
@@ -104,52 +113,58 @@ namespace NPCSystem
         [ShowField(nameof(enableRemoteServer))]
         [HideProperty, Suffix("port")]
         [FormerlySerializedAs("remoteEmbeddingHost")]
-        public string RemoteEmbeddingHost = "localhost";
+        [FormerlySerializedAs("RemoteEmbeddingHost")]
+        [SerializeField]
+        string _remoteEmbeddingHost = "localhost";
 
         [ShowField(nameof(enableRemoteServer))]
         [HideProperty, Suffix("port")]
         [FormerlySerializedAs("remoteEmbeddingPort")]
-        public int RemoteEmbeddingPort = 8080;
+        [FormerlySerializedAs("RemoteEmbeddingPort")]
+        [SerializeField]
+        int _remoteEmbeddingPort = 8080;
 
         [FoldoutGroup(
             "Dialogue Settings",
             true,
-            nameof(profiles),
-            nameof(PersistHistory),
-            nameof(EnableRAG),
-            nameof(RebuildRagFromKnowledgeIfMissing),
-            nameof(MaxHistoryPerNPC),
-            nameof(InitializeOnStart)
+            nameof(_profiles),
+            nameof(_persistHistory),
+            nameof(_enableRAG),
+            nameof(_rebuildRagFromKnowledgeIfMissing),
+            nameof(_maxHistoryPerNPC),
+            nameof(_initializeOnStart)
         )]
         [SerializeField]
         EditorAttributes.Void dialogueSettingsGroup;
 
         [HideProperty]
-        public NPCProfile[] profiles = Array.Empty<NPCProfile>();
+        [FormerlySerializedAs("profiles")]
+        [SerializeField]
+        NPCProfile[] _profiles = Array.Empty<NPCProfile>();
 
-        [HideProperty]
-        [FormerlySerializedAs("persistHistory")]
-        public bool PersistHistory = true;
+        [HideProperty, FormerlySerializedAs("persistHistory")]
+        [SerializeField]
+        bool _persistHistory = true;
 
-        [HideProperty]
-        [FormerlySerializedAs("enableRAG")]
-        public bool EnableRAG = true;
+        [HideProperty, FormerlySerializedAs("enableRAG")]
+        [SerializeField]
+        bool _enableRAG = true;
 
-        [HideProperty]
-        [FormerlySerializedAs("rebuildRagFromKnowledgeIfMissing")]
-        public bool RebuildRagFromKnowledgeIfMissing = true;
+        [HideProperty, FormerlySerializedAs("rebuildRagFromKnowledgeIfMissing")]
+        [SerializeField]
+        bool _rebuildRagFromKnowledgeIfMissing = true;
 
         [Clamp(1, 200)]
-        [HideProperty]
-        [FormerlySerializedAs("maxHistoryPerNPC")]
-        public int MaxHistoryPerNPC = 20;
+        [HideProperty, FormerlySerializedAs("maxHistoryPerNPC")]
+        [SerializeField]
+        int _maxHistoryPerNPC = 20;
 
         [Tooltip(
             "If true, dialogue systems initialize on Start. If false, they are initialized on-demand (e.g., after player login success)."
         )]
-        [HideProperty]
-        [FormerlySerializedAs("initializeOnStart")]
-        public bool InitializeOnStart = false;
+        [HideProperty, FormerlySerializedAs("initializeOnStart")]
+        [SerializeField]
+        bool _initializeOnStart = false;
 
         [FoldoutGroup(
             "Events",
@@ -221,14 +236,29 @@ namespace NPCSystem
         static NPCFlowLogger Logger => NPCFlowLogger.FindOrCreate();
 
         public NPCProfile currentProfile => _currentNPC;
+        public NPCProfile[] Profiles
+        {
+            get => _profiles ?? Array.Empty<NPCProfile>();
+            set => _profiles = value;
+        }
+
+        // ─── Configuration properties (backed by [SerializeField] private fields) ───
+        public string RemoteHost { get => _remoteHost; set => _remoteHost = value; }
+        public int RemotePort { get => _remotePort; set => _remotePort = value; }
+        public string RemoteModel { get => _remoteModel; set => _remoteModel = value; }
+        public string RemoteEmbeddingHost { get => _remoteEmbeddingHost; set => _remoteEmbeddingHost = value; }
+        public int RemoteEmbeddingPort { get => _remoteEmbeddingPort; set => _remoteEmbeddingPort = value; }
+        public string RagEmbeddingPath { get => _ragEmbeddingPath; set => _ragEmbeddingPath = value; }
+        public bool UseQdrantRag { get => _useQdrantRag; set => _useQdrantRag = value; }
+        public bool PersistHistory { get => _persistHistory; set => _persistHistory = value; }
+        public bool EnableRAG { get => _enableRAG; set => _enableRAG = value; }
+        public bool RebuildRagFromKnowledgeIfMissing { get => _rebuildRagFromKnowledgeIfMissing; set => _rebuildRagFromKnowledgeIfMissing = value; }
+        public int MaxHistoryPerNPC { get => _maxHistoryPerNPC; set => _maxHistoryPerNPC = value; }
+        public bool InitializeOnStart { get => _initializeOnStart; set => _initializeOnStart = value; }
         public bool IsResponding => _sessionService != null && _sessionService.IsResponding;
         public bool IsInitialized =>
             _initializationTask != null && _initializationTask.IsCompletedSuccessfully;
         public bool IsRagAvailable => _retrievalService != null && _retrievalService.IsRagAvailable;
-        public NPCProfile[] Profiles =>
-            profiles == null
-                ? Array.Empty<NPCProfile>()
-                : profiles.Where(profile => profile != null).ToArray();
 
         void Start()
         {

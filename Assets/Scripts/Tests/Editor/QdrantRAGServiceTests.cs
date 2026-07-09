@@ -11,8 +11,8 @@ namespace NPCSystem.Tests
         {
             var serviceObject = new GameObject(nameof(QdrantRAGServiceTests));
             var service = serviceObject.AddComponent<QdrantRAGService>();
-            service.qdrantUrl = "http://localhost:6333";
-            service.collectionName = "unity_linux_llm_codebase_v1";
+            service.QdrantUrl = "http://localhost:6333";
+            service.CollectionName = "unity_linux_llm_codebase_v1";
 
             try
             {
@@ -35,8 +35,8 @@ namespace NPCSystem.Tests
         {
             var serviceObject = new GameObject(nameof(QdrantRAGServiceTests));
             var service = serviceObject.AddComponent<QdrantRAGService>();
-            service.qdrantUrl = null;
-            service.collectionName = "unity_linux_llm_codebase_v1";
+            service.QdrantUrl = null;
+            service.CollectionName = "unity_linux_llm_codebase_v1";
 
             try
             {
@@ -54,8 +54,8 @@ namespace NPCSystem.Tests
         {
             var serviceObject = new GameObject(nameof(QdrantRAGServiceTests));
             var service = serviceObject.AddComponent<QdrantRAGService>();
-            service.qdrantUrl = "http://localhost:6333";
-            service.collectionName = null;
+            service.QdrantUrl = "http://localhost:6333";
+            service.CollectionName = null;
 
             try
             {
@@ -73,8 +73,8 @@ namespace NPCSystem.Tests
         {
             var serviceObject = new GameObject(nameof(QdrantRAGServiceTests));
             var service = serviceObject.AddComponent<QdrantRAGService>();
-            service.qdrantUrl = "http://localhost:6333/";
-            service.collectionName = "unity_linux_llm_codebase_v1";
+            service.QdrantUrl = "http://localhost:6333/";
+            service.CollectionName = "unity_linux_llm_codebase_v1";
 
             try
             {
@@ -101,19 +101,19 @@ namespace NPCSystem.Tests
 
             try
             {
-                service.qdrantUrl = "http://localhost:6333";
+                service.QdrantUrl = "http://localhost:6333";
                 Assert.That(service.HasValidQdrantUrl(), Is.True);
 
-                service.qdrantUrl = "https://qdrant.example.com";
+                service.QdrantUrl = "https://qdrant.example.com";
                 Assert.That(service.HasValidQdrantUrl(), Is.True);
 
-                service.qdrantUrl = "localhost:6333";
+                service.QdrantUrl = "localhost:6333";
                 Assert.That(service.HasValidQdrantUrl(), Is.False);
 
-                service.qdrantUrl = "";
+                service.QdrantUrl = "";
                 Assert.That(service.HasValidQdrantUrl(), Is.False);
 
-                service.qdrantUrl = null;
+                service.QdrantUrl = null;
                 Assert.That(service.HasValidQdrantUrl(), Is.False);
             }
             finally
@@ -130,16 +130,16 @@ namespace NPCSystem.Tests
 
             try
             {
-                service.collectionName = "unity_linux_llm_codebase_v1";
+                service.CollectionName = "unity_linux_llm_codebase_v1";
                 Assert.That(service.HasValidCollectionName(), Is.True);
 
-                service.collectionName = "my collection";
+                service.CollectionName = "my collection";
                 Assert.That(service.HasValidCollectionName(), Is.False);
 
-                service.collectionName = "";
+                service.CollectionName = "";
                 Assert.That(service.HasValidCollectionName(), Is.False);
 
-                service.collectionName = null;
+                service.CollectionName = null;
                 Assert.That(service.HasValidCollectionName(), Is.False);
             }
             finally
@@ -156,8 +156,8 @@ namespace NPCSystem.Tests
 
             try
             {
-                Assert.That(service.qdrantUrl, Is.EqualTo("http://localhost:6333"));
-                Assert.That(service.collectionName, Is.EqualTo("unity_linux_llm_codebase_v1"));
+                Assert.That(service.QdrantUrl, Is.EqualTo("http://localhost:6333"));
+                Assert.That(service.CollectionName, Is.EqualTo("unity_linux_llm_codebase_v1"));
             }
             finally
             {
@@ -174,15 +174,15 @@ namespace NPCSystem.Tests
             embedder.mockResponse = "{\"data\":[{\"embedding\":[0.1,0.2,0.3],\"index\":0}]}";
 
             var service = serviceObject.AddComponent<TestableQdrantRAGService>();
-            service.qdrantUrl = "http://localhost:6333";
-            service.collectionName = "unity_linux_llm_codebase_v1";
-            service.embedder = embedder;
+            service.QdrantUrl = "http://localhost:6333";
+            service.CollectionName = "unity_linux_llm_codebase_v1";
+            service.Embedder = embedder;
             service.mockResponse =
                 "{\"result\":[{\"score\":0.95,\"payload\":{\"text\":\"Found knowledge\"}}]}";
 
             try
             {
-                string result = service.SearchMemoryAsync("test query").GetAwaiter().GetResult();
+                string result = service.SearchMemoryAsync("test query", 5, null, null).GetAwaiter().GetResult();
                 Assert.That(result, Is.EqualTo("Found knowledge"));
                 Assert.That(
                     service.lastRequestedEndpoint,
@@ -205,14 +205,14 @@ namespace NPCSystem.Tests
             embedder.mockResponse = "{\"data\":[{\"embedding\":[0.1,0.2,0.3],\"index\":0}]}";
 
             var service = serviceObject.AddComponent<TestableQdrantRAGService>();
-            service.qdrantUrl = "http://localhost:6333";
-            service.collectionName = "unity_linux_llm_codebase_v1";
-            service.embedder = embedder;
+            service.QdrantUrl = "http://localhost:6333";
+            service.CollectionName = "unity_linux_llm_codebase_v1";
+            service.Embedder = embedder;
             service.mockResponse = null;
 
             try
             {
-                string result = service.SearchMemoryAsync("test query").GetAwaiter().GetResult();
+                string result = service.SearchMemoryAsync("test query", 5, null, null).GetAwaiter().GetResult();
                 Assert.That(result, Is.Empty);
             }
             finally
@@ -231,14 +231,14 @@ namespace NPCSystem.Tests
             embedder.mockResponse = "{\"data\":[{\"embedding\":[0.1,0.2,0.3],\"index\":0}]}";
 
             var service = serviceObject.AddComponent<TestableQdrantRAGService>();
-            service.qdrantUrl = "http://localhost:6333";
-            service.collectionName = "unity_linux_llm_codebase_v1";
-            service.embedder = embedder;
+            service.QdrantUrl = "http://localhost:6333";
+            service.CollectionName = "unity_linux_llm_codebase_v1";
+            service.Embedder = embedder;
             service.mockResponse = "{\"result\":[]}";
 
             try
             {
-                string result = service.SearchMemoryAsync("test query").GetAwaiter().GetResult();
+                string result = service.SearchMemoryAsync("test query", 5, null, null).GetAwaiter().GetResult();
                 Assert.That(result, Is.Empty);
             }
             finally
@@ -257,13 +257,13 @@ namespace NPCSystem.Tests
             embedder.mockResponse = "{}";
 
             var service = serviceObject.AddComponent<TestableQdrantRAGService>();
-            service.qdrantUrl = "http://localhost:6333";
-            service.collectionName = "unity_linux_llm_codebase_v1";
-            service.embedder = embedder;
+            service.QdrantUrl = "http://localhost:6333";
+            service.CollectionName = "unity_linux_llm_codebase_v1";
+            service.Embedder = embedder;
 
             try
             {
-                string result = service.SearchMemoryAsync("test query").GetAwaiter().GetResult();
+                string result = service.SearchMemoryAsync("test query", 5, null, null).GetAwaiter().GetResult();
                 Assert.That(result, Is.Empty);
             }
             finally
@@ -282,14 +282,14 @@ namespace NPCSystem.Tests
             embedder.mockResponse = "{\"data\":[{\"embedding\":[0.1],\"index\":0}]}";
 
             var service = serviceObject.AddComponent<TestableQdrantRAGService>();
-            service.qdrantUrl = "http://localhost:6333";
-            service.collectionName = "unity_linux_llm_codebase_v1";
-            service.embedder = null;
+            service.QdrantUrl = "http://localhost:6333";
+            service.CollectionName = "unity_linux_llm_codebase_v1";
+            service.Embedder = null;
             service.mockResponse = "{\"result\":[]}";
 
             try
             {
-                string result = service.SearchMemoryAsync("test query").GetAwaiter().GetResult();
+                string result = service.SearchMemoryAsync("test query", 5, null, null).GetAwaiter().GetResult();
                 Assert.That(result, Is.Empty);
             }
             finally
@@ -308,15 +308,15 @@ namespace NPCSystem.Tests
             embedder.mockResponse = "{\"data\":[{\"embedding\":[0.1,0.2,0.3],\"index\":0}]}";
 
             var service = serviceObject.AddComponent<TestableQdrantRAGService>();
-            service.qdrantUrl = "http://localhost:6333";
-            service.collectionName = "unity_linux_llm_codebase_v1";
-            service.embedder = embedder;
+            service.QdrantUrl = "http://localhost:6333";
+            service.CollectionName = "unity_linux_llm_codebase_v1";
+            service.Embedder = embedder;
             service.mockResponse =
                 "{\"result\":[{\"score\":0.95,\"payload\":{\"text\":\"First result\"}},{\"score\":0.80,\"payload\":{\"text\":\"Second result\"}}]}";
 
             try
             {
-                string result = service.SearchMemoryAsync("test query").GetAwaiter().GetResult();
+                string result = service.SearchMemoryAsync("test query", 5, null, null).GetAwaiter().GetResult();
                 Assert.That(result, Is.EqualTo("First result\nSecond result"));
             }
             finally

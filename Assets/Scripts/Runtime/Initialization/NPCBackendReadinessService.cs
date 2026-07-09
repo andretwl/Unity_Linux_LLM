@@ -41,16 +41,19 @@ namespace NPCSystem
             MessageMode.Log,
             drawAbove: true
         )]
-        [FoldoutGroup("References", true, nameof(authService), nameof(DialogueManager))]
+        [FoldoutGroup("References", true, nameof(_authService), nameof(_dialogueManager))]
         [SerializeField]
         private Void referencesGroup;
 
-        [SerializeField, HideProperty]
-        public PlayerAuthService authService;
+        [SerializeField, HideProperty, FormerlySerializedAs("authService")]
+        PlayerAuthService _authService;
+        /// <summary>Public accessor (used by tests).</summary>
+        public PlayerAuthService AuthService { get => _authService; set => _authService = value; }
 
-        [SerializeField, HideProperty]
-        [FormerlySerializedAs("DialogueManager")]
-        public NPCDialogueManager DialogueManager;
+        [SerializeField, HideProperty, FormerlySerializedAs("DialogueManager")]
+        NPCDialogueManager _dialogueManager;
+        /// <summary>Public accessor (used by tests).</summary>
+        public NPCDialogueManager DialogueManager { get => _dialogueManager; set => _dialogueManager = value; }
 
         [FoldoutGroup(
             "Probe Targets",
@@ -137,14 +140,14 @@ namespace NPCSystem
         [Button("Auto Assign Backend References")]
         void AutoAssignReferences()
         {
-            if (authService == null)
+            if (_authService == null)
             {
-                authService = FindAnyObjectByType<PlayerAuthService>(FindObjectsInactive.Include);
+                _authService = FindAnyObjectByType<PlayerAuthService>(FindObjectsInactive.Include);
             }
 
-            if (DialogueManager == null)
+            if (_dialogueManager == null)
             {
-                DialogueManager = FindAnyObjectByType<NPCDialogueManager>(
+                _dialogueManager = FindAnyObjectByType<NPCDialogueManager>(
                     FindObjectsInactive.Include
                 );
             }
@@ -164,11 +167,11 @@ namespace NPCSystem
             AutoAssignReferences();
 
             // Proactively initialize auth service to resolve dynamic URL on WebGL before probing
-            if (authService != null)
+            if (_authService != null)
             {
                 try
                 {
-                    await authService.InitializeAsync();
+                    await _authService.InitializeAsync();
                 }
                 catch (Exception ex)
                 {
@@ -307,19 +310,19 @@ namespace NPCSystem
         string BuildAuthProbeUrl()
         {
             string baseUrl =
-                authService == null ? "http://localhost:8091" : authService.SupabaseUrl;
+                _authService == null ? "http://localhost:8091" : _authService.SupabaseUrl;
             return CombineUrl(baseUrl, authProbeRelativePath);
         }
 
         string BuildLocalAiProbeUrl()
         {
-            if (DialogueManager == null)
+            if (_dialogueManager == null)
             {
                 return "http://localhost:8080/v1/models";
             }
 
             return CombineUrl(
-                $"http://{DialogueManager.remoteHost}:{DialogueManager.remotePort}",
+                $"http://{_dialogueManager.RemoteHost}:{_dialogueManager.RemotePort}",
                 localAiProbeRelativePath
             );
         }

@@ -34,39 +34,61 @@ namespace NPCSystem
             NPCSceneInitializationPhase.Spawning,
         };
 
+        // ─── Public accessors (used by tests) ───
+        public NPCNetworkBootstrap NetworkBootstrap => _networkBootstrap;
+        public NPCDialogueManager DialogueManager => _dialogueManager;
+        public NPCBackendReadinessService BackendReadiness => _backendReadiness;
+        public NPCDialogueNetworkBridge NetworkBridge => _networkBridge;
+        public NPCDialogueSmokeValidator SmokeValidator => _smokeValidator;
+        public bool ConfigureNetworkTransport => _configureNetworkTransport;
+        public bool StartNetworkingAfterInitialization => _startNetworkingAfterInitialization;
+
         [Header("References")]
         [FormerlySerializedAs("FlowLogger")]
-        public NPCFlowLogger FlowLogger;
+        [SerializeField]
+        NPCFlowLogger _flowLogger;
         [FormerlySerializedAs("NetworkBootstrap")]
-        public NPCNetworkBootstrap NetworkBootstrap;
+        [SerializeField]
+        NPCNetworkBootstrap _networkBootstrap;
         [FormerlySerializedAs("DialogueManager")]
-        public NPCDialogueManager DialogueManager;
+        [SerializeField]
+        NPCDialogueManager _dialogueManager;
         [FormerlySerializedAs("BackendReadiness")]
-        public NPCBackendReadinessService BackendReadiness;
+        [SerializeField]
+        NPCBackendReadinessService _backendReadiness;
         [FormerlySerializedAs("NetworkBridge")]
-        public NPCDialogueNetworkBridge NetworkBridge;
+        [SerializeField]
+        NPCDialogueNetworkBridge _networkBridge;
         [FormerlySerializedAs("SmokeValidator")]
-        public NPCDialogueSmokeValidator SmokeValidator;
+        [SerializeField]
+        NPCDialogueSmokeValidator _smokeValidator;
 
         [Header("Startup")]
         [FormerlySerializedAs("InitializeOnStart")]
-        public bool InitializeOnStart = true;
+        [SerializeField]
+        bool _initializeOnStart = true;
         [FormerlySerializedAs("ConfigureNetworkTransport")]
-        public bool ConfigureNetworkTransport = false;
+        [SerializeField]
+        bool _configureNetworkTransport = false;
 
         [Tooltip(
             "If true, initializes the dialogue manager immediately during scene start. Set to false to delay initialization until after player login (recommended for WebGL memory-smart start)."
         )]
         [FormerlySerializedAs("InitializeDialogueManager")]
-        public bool InitializeDialogueManager = false;
+        [SerializeField]
+        bool _initializeDialogueManager = false;
         [FormerlySerializedAs("VerifyBackendsDuringInitialization")]
-        public bool VerifyBackendsDuringInitialization = false;
+        [SerializeField]
+        bool _verifyBackendsDuringInitialization = false;
         [FormerlySerializedAs("InitializeNetworkBridge")]
-        public bool InitializeNetworkBridge = true;
+        [SerializeField]
+        bool _initializeNetworkBridge = true;
         [FormerlySerializedAs("ValidateAfterInitialization")]
-        public bool ValidateAfterInitialization = true;
+        [SerializeField]
+        bool _validateAfterInitialization = true;
         [FormerlySerializedAs("StartNetworkingAfterInitialization")]
-        public bool StartNetworkingAfterInitialization = false;
+        [SerializeField]
+        bool _startNetworkingAfterInitialization = false;
 
         bool _started;
         Task _initializationTask;
@@ -95,12 +117,12 @@ namespace NPCSystem
 
         async void Start()
         {
-            if (!InitializeOnStart)
+            if (!_initializeOnStart)
                 return;
             if (ShouldDeferInitializationForWebGL())
             {
-                FlowLogger = FlowLogger != null ? FlowLogger : NPCFlowLogger.FindOrCreate();
-                FlowLogger.Log(
+                _flowLogger = _flowLogger != null ? _flowLogger : NPCFlowLogger.FindOrCreate();
+                _flowLogger.Log(
                     NPCFlowStage.SceneBootstrap,
                     NPCFlowStatus.Skipped,
                     NPCFlowLogLevel.Info,
@@ -132,11 +154,9 @@ namespace NPCSystem
         async Task InitializeSceneInternalAsync()
         {
             if (_started)
-            {
                 return;
-            }
-
             _started = true;
+
             foreach (NPCSceneInitializationPhase phase in OrderedPhases)
             {
                 await RunPhaseAsync(phase);
@@ -145,7 +165,7 @@ namespace NPCSystem
 
         async Task RunPhaseAsync(NPCSceneInitializationPhase phase)
         {
-            NPCFlowLogger logger = FlowLogger != null ? FlowLogger : NPCFlowLogger.FindOrCreate();
+            NPCFlowLogger logger = _flowLogger ?? NPCFlowLogger.FindOrCreate();
             using var scope = NPCFlowScope.Start(
                 logger,
                 NPCFlowStage.SceneBootstrap,
@@ -158,42 +178,48 @@ namespace NPCSystem
                 switch (phase)
                 {
                     case NPCSceneInitializationPhase.Logger:
-                        FlowLogger = logger;
+                        _flowLogger = logger;
                         break;
+
                     case NPCSceneInitializationPhase.SceneReferences:
                         ResolveReferences();
                         break;
+
                     case NPCSceneInitializationPhase.NetworkTransport:
-                        if (ConfigureNetworkTransport && NetworkBootstrap != null)
+                        if (_configureNetworkTransport && _networkBootstrap != null)
                         {
-                            NetworkBootstrap.ApplyTransportConfiguration();
+                            _networkBootstrap.ApplyTransportConfiguration();
                         }
                         break;
+
                     case NPCSceneInitializationPhase.DialogueServices:
-                        if (InitializeDialogueManager && DialogueManager != null)
+                        if (_initializeDialogueManager && _dialogueManager != null)
                         {
-                            await DialogueManager.InitializeAsync();
+                            await _dialogueManager.InitializeAsync();
                         }
                         break;
+
                     case NPCSceneInitializationPhase.BackendReadiness:
-                        if (VerifyBackendsDuringInitialization && BackendReadiness != null)
+                        if (_verifyBackendsDuringInitialization && _backendReadiness != null)
                         {
                             bool probeLocalAi =
-                                InitializeDialogueManager
-                                && (DialogueManager != null && DialogueManager.InitializeOnStart);
-                            await BackendReadiness.ProbeAsync(probeLocalAi);
+                                _initializeDialogueManager
+                                && (_dialogueManager != null && _dialogueManager.InitializeOnStart);
+                            await _backendReadiness.ProbeAsync(probeLocalAi);
                         }
                         break;
+
                     case NPCSceneInitializationPhase.NetworkBridge:
-                        if (InitializeNetworkBridge && NetworkBridge != null)
+                        if (_initializeNetworkBridge && _networkBridge != null)
                         {
-                            await NetworkBridge.InitializeAsync();
+                            await _networkBridge.InitializeAsync();
                         }
                         break;
+
                     case NPCSceneInitializationPhase.Validation:
-                        if (ValidateAfterInitialization && SmokeValidator != null)
+                        if (_validateAfterInitialization && _smokeValidator != null)
                         {
-                            if (DialogueManager != null && !DialogueManager.IsInitialized)
+                            if (_dialogueManager != null && !_dialogueManager.IsInitialized)
                             {
                                 logger.Log(
                                     NPCFlowStage.SceneBootstrap,
@@ -209,16 +235,17 @@ namespace NPCSystem
                             }
                             else
                             {
-                                SmokeValidator.ValidateConfiguration();
+                                _smokeValidator.ValidateConfiguration();
                             }
                         }
                         break;
+
                     case NPCSceneInitializationPhase.Spawning:
-                        if (StartNetworkingAfterInitialization && NetworkBootstrap != null)
+                        if (_startNetworkingAfterInitialization && _networkBootstrap != null)
                         {
                             bool skipForBatchmodeBootstrap =
                                 Application.isBatchMode
-                                && NetworkBootstrap.TransportConfig.autoStartMode
+                                && _networkBootstrap.TransportConfig.autoStartMode
                                     != NPCNetworkAutoStartMode.Manual;
 
                             if (skipForBatchmodeBootstrap)
@@ -233,13 +260,13 @@ namespace NPCSystem
                                     {
                                         ["phase"] = phase.ToString(),
                                         ["autoStartMode"] =
-                                            NetworkBootstrap.TransportConfig.autoStartMode.ToString(),
+                                            _networkBootstrap.TransportConfig.autoStartMode.ToString(),
                                     }
                                 );
                                 break;
                             }
 
-                            bool started = NetworkBootstrap.StartConfiguredMode();
+                            bool started = _networkBootstrap.StartConfiguredMode();
                             logger.Log(
                                 NPCFlowStage.SceneBootstrap,
                                 started ? NPCFlowStatus.Success : NPCFlowStatus.Skipped,
@@ -255,6 +282,7 @@ namespace NPCSystem
                             );
                         }
                         break;
+
                     default:
                         throw new ArgumentOutOfRangeException(
                             nameof(phase),
@@ -291,45 +319,33 @@ namespace NPCSystem
 
         public void ResolveReferences()
         {
-            if (FlowLogger == null)
-            {
-                FlowLogger = NPCFlowLogger.FindOrCreate();
-            }
+            if (_flowLogger == null)
+                _flowLogger = NPCFlowLogger.FindOrCreate();
 
-            if (NetworkBootstrap == null)
-            {
-                NetworkBootstrap = FindAnyObjectByType<NPCNetworkBootstrap>(
+            if (_networkBootstrap == null)
+                _networkBootstrap = FindAnyObjectByType<NPCNetworkBootstrap>(
                     FindObjectsInactive.Include
                 );
-            }
 
-            if (DialogueManager == null)
-            {
-                DialogueManager = FindAnyObjectByType<NPCDialogueManager>(
+            if (_dialogueManager == null)
+                _dialogueManager = FindAnyObjectByType<NPCDialogueManager>(
                     FindObjectsInactive.Include
                 );
-            }
 
-            if (NetworkBridge == null)
-            {
-                NetworkBridge = FindAnyObjectByType<NPCDialogueNetworkBridge>(
+            if (_networkBridge == null)
+                _networkBridge = FindAnyObjectByType<NPCDialogueNetworkBridge>(
                     FindObjectsInactive.Include
                 );
-            }
 
-            if (BackendReadiness == null)
-            {
-                BackendReadiness = FindAnyObjectByType<NPCBackendReadinessService>(
+            if (_backendReadiness == null)
+                _backendReadiness = FindAnyObjectByType<NPCBackendReadinessService>(
                     FindObjectsInactive.Include
                 );
-            }
 
-            if (SmokeValidator == null)
-            {
-                SmokeValidator = FindAnyObjectByType<NPCDialogueSmokeValidator>(
+            if (_smokeValidator == null)
+                _smokeValidator = FindAnyObjectByType<NPCDialogueSmokeValidator>(
                     FindObjectsInactive.Include
                 );
-            }
         }
     }
 }

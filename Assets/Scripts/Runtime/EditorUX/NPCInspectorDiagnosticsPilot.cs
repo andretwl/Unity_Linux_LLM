@@ -57,7 +57,7 @@ namespace NPCSystem.EditorUX
         string LocalAiBaseUrl => $"http://{localAiHost}:{localAiPort}/v1";
 
         [ShowInInspector]
-        string QdrantCollection => QdrantRag == null ? "<none>" : QdrantRag.collectionName;
+        string QdrantCollection => QdrantRag == null ? "<none>" : QdrantRag.CollectionName;
 
         void Reset()
         {
@@ -128,15 +128,15 @@ namespace NPCSystem.EditorUX
             }
 
             bool hasUrl =
-                !string.IsNullOrWhiteSpace(QdrantRag.qdrantUrl)
+                !string.IsNullOrWhiteSpace(QdrantRag.QdrantUrl)
                 && (
-                    QdrantRag.qdrantUrl.StartsWith("http://")
-                    || QdrantRag.qdrantUrl.StartsWith("https://")
+                    QdrantRag.QdrantUrl.StartsWith("http://")
+                    || QdrantRag.QdrantUrl.StartsWith("https://")
                 );
-            bool hasCollection = !string.IsNullOrWhiteSpace(QdrantRag.collectionName);
+            bool hasCollection = !string.IsNullOrWhiteSpace(QdrantRag.CollectionName);
             lastValidationStatus =
                 hasUrl && hasCollection
-                    ? $"Qdrant settings look valid: {QdrantRag.qdrantUrl} collection={QdrantRag.collectionName}"
+                    ? $"Qdrant settings look valid: {QdrantRag.QdrantUrl} collection={QdrantRag.CollectionName}"
                     : "Qdrant settings are incomplete. Check URL and collection name.";
         }
 

@@ -11,6 +11,15 @@ namespace NPCSystem
         void HandleNpcChanged(string displayName)
         {
             UpdatePortrait(GetActiveProfile());
+
+            NPCProfile profile = GetActiveProfile();
+            if (RelationshipUI != null && profile != null && DialogueManager != null)
+            {
+                string slug = profile.GetNpcSlug();
+                int count = DialogueManager.GetHistory(slug).Count;
+                RelationshipUI.Refresh(DialogueManager.EvidenceState, slug, count);
+            }
+
             _readyForInput = true;
             SetInputEnabled(true);
         }
@@ -62,6 +71,12 @@ namespace NPCSystem
             SetInputEnabled(true);
             if (PlayerInput != null)
                 PlayerInput.text = "";
+
+            if (RelationshipUI != null && DialogueManager != null)
+            {
+                int count = DialogueManager.GetHistory(npcName).Count;
+                RelationshipUI.Refresh(DialogueManager.EvidenceState, npcName, count);
+            }
         }
 
         void HandleError(string error)

@@ -1,23 +1,31 @@
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 namespace NPCSystem
 {
     /// <summary>
     /// Clean event-driven wrapper around the InputSystem_Actions input action asset.
-    /// Provides cached action references and clean C# events \u2014 no string lookups, no keyboard fallback.
+    /// Provides cached action references and clean C# events — no string lookups, no keyboard fallback.
     /// Designed for multiplayer: EnableForOwner/Disable based on NetworkBehaviour ownership.
     /// </summary>
     public sealed class NPCMultiplayerInputActions : MonoBehaviour
     {
         [Header("Input Asset")]
-        public InputActionAsset inputActions;
+        [FormerlySerializedAs("inputActions")]
+        [SerializeField]
+        InputActionAsset _inputActions;
 
-        public string actionMapName = "Player";
-        public string uiActionMapName = "UI";
+        [FormerlySerializedAs("actionMapName")]
+        [SerializeField]
+        string _actionMapName = "Player";
 
-        // Cached action references \u2014 set once in Awake, never string-looked-up again.
+        [FormerlySerializedAs("uiActionMapName")]
+        [SerializeField]
+        string _uiActionMapName = "UI";
+
+        // Cached action references — set once in Awake, never string-looked-up again.
         InputAction _moveAction;
         InputAction _lookAction;
         InputAction _jumpAction;
@@ -33,18 +41,21 @@ namespace NPCSystem
 
         bool _enabled;
 
-        // \u2500\u2500\u2500 Continuous state (polled each frame) \u2500\u2500\u2500
+        // ─── Continuous state (polled each frame) ───
         public Vector2 MoveInput { get; private set; }
         public Vector2 LookInput { get; private set; }
         public bool SprintHeld { get; private set; }
 
-        // \u2500\u2500\u2500 One-shot events \u2500\u2500\u2500
+        // ─── One-shot events ───
         public event Action OnJump;
         public event Action OnInteract;
         public event Action OnCrouch;
         public event Action OnPrevious;
         public event Action OnNext;
         public event Action OnAttack;
+
+        // ─── Public accessors for Inspector-assigned fields ───
+        public InputActionAsset InputActions { get => _inputActions; set => _inputActions = value; }
 
         void Awake()
         {
@@ -66,7 +77,7 @@ namespace NPCSystem
                 return;
             }
 
-            // Continuous polling \u2014 standard pattern for movement/look
+            // Continuous polling — standard pattern for movement/look
             MoveInput = _moveAction?.ReadValue<Vector2>() ?? Vector2.zero;
             LookInput = _lookAction?.ReadValue<Vector2>() ?? Vector2.zero;
             SprintHeld = _sprintAction?.IsPressed() ?? false;
@@ -121,8 +132,8 @@ namespace NPCSystem
 
         public void EnableAll()
         {
-            if (inputActions != null)
-                inputActions.Enable();
+            if (_inputActions != null)
+                _inputActions.Enable();
             EnableActions();
             EnableUIActions();
         }
@@ -130,22 +141,22 @@ namespace NPCSystem
         public void DisableAll()
         {
             _enabled = false;
-            if (inputActions != null)
-                inputActions.Disable();
+            if (_inputActions != null)
+                _inputActions.Disable();
         }
 
         void ResolveActions()
         {
-            if (inputActions == null)
+            if (_inputActions == null)
                 return;
 
-            _playerMap = inputActions.FindActionMap(actionMapName, false);
-            _uiMap = inputActions.FindActionMap(uiActionMapName, false);
+            _playerMap = _inputActions.FindActionMap(_actionMapName, false);
+            _uiMap = _inputActions.FindActionMap(_uiActionMapName, false);
 
             if (_playerMap == null)
             {
                 Debug.LogError(
-                    $"[{nameof(NPCMultiplayerInputActions)}] Action map '{actionMapName}' not found in {inputActions.name}."
+                    $"[{nameof(NPCMultiplayerInputActions)}] Action map '{_actionMapName}' not found in {_inputActions.name}."
                 );
                 return;
             }
@@ -173,9 +184,9 @@ namespace NPCSystem
 
         public void SetActionMap(string mapName)
         {
-            if (inputActions == null)
+            if (_inputActions == null)
                 return;
-            var map = inputActions.FindActionMap(mapName, false);
+            var map = _inputActions.FindActionMap(mapName, false);
             if (map != null)
                 map.Enable();
         }

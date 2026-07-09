@@ -105,8 +105,8 @@ namespace NPCSystem
                 );
                 ok &= Require(
                     logger,
-                    !string.IsNullOrWhiteSpace(DialogueManager.ragEmbeddingPath),
-                    "NPCDialogueManager.ragEmbeddingPath is set."
+                    !string.IsNullOrWhiteSpace(DialogueManager.RagEmbeddingPath),
+                    "NPCDialogueManager.RagEmbeddingPath is set."
                 );
             }
 

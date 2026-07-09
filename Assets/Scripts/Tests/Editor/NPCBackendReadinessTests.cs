@@ -40,9 +40,9 @@ namespace NPCSystem.Tests
                 typeof(PlayerAuthService)
                     .GetField("serviceBaseUrl", BindingFlags.Instance | BindingFlags.NonPublic)
                     ?.SetValue(authService, "http://localhost:5100/");
-                dialogueManager.remoteHost = "127.0.0.1";
-                dialogueManager.remotePort = 8080;
-                service.authService = authService;
+                dialogueManager.RemoteHost = "127.0.0.1";
+                dialogueManager.RemotePort = 8080;
+                service.AuthService = authService;
                 service.DialogueManager = dialogueManager;
 
                 MethodInfo authMethod = typeof(NPCBackendReadinessService).GetMethod(

@@ -67,19 +67,19 @@ namespace NPCSystem
         {
             if (_localRag != null)
             {
-                if (_localRag.search == null)
+                if (_localRag.SearchMethod == null)
                     _localRag.UpdateGameObjects();
-                if (_localRag.search != null && _localRag.search.llmEmbedder != null)
+                if (_localRag.SearchMethod != null && _localRag.SearchMethod.LlmEmbedder != null)
                 {
-                    _localRag.search.llmEmbedder.host = _remoteEmbeddingHost;
-                    _localRag.search.llmEmbedder.port = _remoteEmbeddingPort;
+                    _localRag.SearchMethod.LlmEmbedder.host = _remoteEmbeddingHost;
+                    _localRag.SearchMethod.LlmEmbedder.port = _remoteEmbeddingPort;
                 }
             }
 
-            if (_useQdrantRag && _qdrantRag != null && _qdrantRag.embedder != null)
+            if (_useQdrantRag && _qdrantRag != null && _qdrantRag.Embedder != null)
             {
-                _qdrantRag.embedder.host = _remoteEmbeddingHost;
-                _qdrantRag.embedder.port = _remoteEmbeddingPort;
+                _qdrantRag.Embedder.host = _remoteEmbeddingHost;
+                _qdrantRag.Embedder.port = _remoteEmbeddingPort;
             }
         }
 
@@ -375,7 +375,7 @@ namespace NPCSystem
 
             SyncEmbedderHost();
 
-            if (_localRag.search == null || _localRag.search.llmEmbedder == null)
+            if (_localRag.SearchMethod == null || _localRag.SearchMethod.LlmEmbedder == null)
             {
                 await Task.Yield();
                 return;
@@ -387,7 +387,7 @@ namespace NPCSystem
             {
                 try
                 {
-                    List<float> embeddings = await _localRag.search.llmEmbedder.Embeddings("ready");
+                    List<float> embeddings = await _localRag.SearchMethod.LlmEmbedder.Embeddings("ready");
 
                     if (embeddings == null || embeddings.Count == 0)
                     {

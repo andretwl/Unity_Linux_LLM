@@ -19,7 +19,9 @@ namespace NPCSystem
     public sealed class NPCNetworkItemInteractor : NetworkBehaviour
     {
         [Header("References")]
-        public NPCPlayerInventory inventory;
+        [FormerlySerializedAs("inventory")]
+        [SerializeField]
+        NPCPlayerInventory _inventory;
 
         [Header("Range")]
         [FormerlySerializedAs("PickupRange")]
@@ -29,7 +31,7 @@ namespace NPCSystem
 
         void Awake()
         {
-            inventory = inventory != null ? inventory : GetComponent<NPCPlayerInventory>();
+            _inventory = _inventory != null ? _inventory : GetComponent<NPCPlayerInventory>();
         }
 
         void Update()

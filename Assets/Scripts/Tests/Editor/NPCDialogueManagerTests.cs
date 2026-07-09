@@ -14,9 +14,9 @@ namespace NPCSystem.Tests
             var manager = managerObject.AddComponent<NPCDialogueManager>();
             AttachMinimalChatClient(managerObject, manager);
             var profile = CreateProfile("butler", "Butler");
-            manager.profiles = new[] { profile };
-            manager.persistHistory = false;
-            manager.enableRAG = false;
+            manager.Profiles = new[] { profile };
+            manager.PersistHistory = false;
+            manager.EnableRAG = false;
             manager.InitializeOnStart = false;
 
             string changedName = null;
@@ -43,9 +43,9 @@ namespace NPCSystem.Tests
             var manager = managerObject.AddComponent<NPCDialogueManager>();
             AttachMinimalChatClient(managerObject, manager);
             var profile = CreateProfile("maid", "Maid");
-            manager.profiles = new[] { profile };
-            manager.persistHistory = false;
-            manager.enableRAG = false;
+            manager.Profiles = new[] { profile };
+            manager.PersistHistory = false;
+            manager.EnableRAG = false;
             manager.InitializeOnStart = false;
 
             string errorMessage = null;
@@ -75,9 +75,9 @@ namespace NPCSystem.Tests
             var managerObject = new GameObject(nameof(NPCDialogueManagerTests));
             var manager = managerObject.AddComponent<NPCDialogueManager>();
             AttachMinimalChatClient(managerObject, manager);
-            manager.profiles = Array.Empty<NPCProfile>();
-            manager.persistHistory = false;
-            manager.enableRAG = false;
+            manager.Profiles = Array.Empty<NPCProfile>();
+            manager.PersistHistory = false;
+            manager.EnableRAG = false;
             manager.InitializeOnStart = false;
 
             string errorMessage = null;
@@ -99,9 +99,9 @@ namespace NPCSystem.Tests
         {
             var managerObject = new GameObject(nameof(NPCDialogueManagerTests));
             var manager = managerObject.AddComponent<NPCDialogueManager>();
-            manager.profiles = Array.Empty<NPCProfile>();
-            manager.persistHistory = false;
-            manager.enableRAG = false;
+            manager.Profiles = Array.Empty<NPCProfile>();
+            manager.PersistHistory = false;
+            manager.EnableRAG = false;
             manager.InitializeOnStart = false;
 
             string errorMessage = null;
@@ -123,7 +123,7 @@ namespace NPCSystem.Tests
         {
             var managerObject = new GameObject(nameof(NPCDialogueManagerTests));
             var manager = managerObject.AddComponent<NPCDialogueManager>();
-            manager.profiles = Array.Empty<NPCProfile>();
+            manager.Profiles = Array.Empty<NPCProfile>();
             manager.InitializeOnStart = false;
 
             try
@@ -144,7 +144,7 @@ namespace NPCSystem.Tests
             var manager = managerObject.AddComponent<NPCDialogueManager>();
             var butler = CreateProfile("butler", "Butler");
             var maid = CreateProfile("maid", "Maid");
-            manager.profiles = new[] { butler, maid };
+            manager.Profiles = new[] { butler, maid };
             manager.InitializeOnStart = false;
 
             try
@@ -167,7 +167,7 @@ namespace NPCSystem.Tests
             var manager = managerObject.AddComponent<NPCDialogueManager>();
             var butler = CreateProfile("butler", "Butler");
             var maid = CreateProfile("maid", "Maid");
-            manager.profiles = new[] { butler, maid };
+            manager.Profiles = new[] { butler, maid };
             manager.InitializeOnStart = false;
 
             try
@@ -261,9 +261,9 @@ namespace NPCSystem.Tests
             AttachMinimalChatClient(managerObject, manager);
             var profile = CreateProfile("butler", "Butler");
             profile.historySaveFile = $"NPCDialogue/test_clear{Guid.NewGuid():N}.json";
-            manager.profiles = new[] { profile };
-            manager.persistHistory = false;
-            manager.enableRAG = false;
+            manager.Profiles = new[] { profile };
+            manager.PersistHistory = false;
+            manager.EnableRAG = false;
             manager.InitializeOnStart = false;
 
             try
@@ -290,9 +290,9 @@ namespace NPCSystem.Tests
             var manager = managerObject.AddComponent<NPCDialogueManager>();
             AttachMinimalChatClient(managerObject, manager);
             var profile = CreateProfile("butler", "Butler");
-            manager.profiles = new[] { profile };
-            manager.persistHistory = true;
-            manager.enableRAG = false;
+            manager.Profiles = new[] { profile };
+            manager.PersistHistory = true;
+            manager.EnableRAG = false;
             manager.InitializeOnStart = false;
 
             try
@@ -329,9 +329,9 @@ namespace NPCSystem.Tests
             var managerObject = new GameObject(nameof(NPCDialogueManagerTests));
             var manager = managerObject.AddComponent<NPCDialogueManager>();
             AttachMinimalChatClient(managerObject, manager);
-            manager.profiles = Array.Empty<NPCProfile>();
-            manager.persistHistory = false;
-            manager.enableRAG = false;
+            manager.Profiles = Array.Empty<NPCProfile>();
+            manager.PersistHistory = false;
+            manager.EnableRAG = false;
             manager.InitializeOnStart = false;
 
             try
@@ -353,9 +353,9 @@ namespace NPCSystem.Tests
             var manager = managerObject.AddComponent<NPCDialogueManager>();
             AttachMinimalChatClient(managerObject, manager);
             var profile = CreateProfile("chef", "Chef");
-            manager.profiles = new[] { profile };
-            manager.persistHistory = false;
-            manager.enableRAG = false;
+            manager.Profiles = new[] { profile };
+            manager.PersistHistory = false;
+            manager.EnableRAG = false;
             manager.InitializeOnStart = false;
 
             try
@@ -373,8 +373,8 @@ namespace NPCSystem.Tests
         static NPCProfile CreateProfile(string slug, string displayName)
         {
             var profile = ScriptableObject.CreateInstance<NPCProfile>();
-            profile.npcSlug = slug;
-            profile.displayName = displayName;
+            profile.NpcSlug = slug;
+            profile.DisplayName = displayName;
             profile.systemPrompt = "You are a helpful NPC.";
             profile.maxTokens = 64;
             profile.ragResults = 1;

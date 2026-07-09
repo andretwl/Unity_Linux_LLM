@@ -35,8 +35,8 @@ namespace NPCSystem
                 NPCFlowStatus.Start,
                 $"Applying client session and switching to NPC '{request.npcSlug}' before dialogue generation."
             );
-            await DialogueManager.SwitchToNPCAsync(request.npcSlug);
-            DialogueManager.SendMessage(request.playerMessage);
+            await _dialogueManager.SwitchToNPCAsync(request.npcSlug);
+            _dialogueManager.SendMessage(request.playerMessage);
         }
 
         async Task WaitForResolvedPlayerNameAsync(ulong clientId)
@@ -73,8 +73,8 @@ namespace NPCSystem
         {
             if (
                 _activeClientId.HasValue
-                || DialogueManager == null
-                || SessionManager == null
+                || _dialogueManager == null
+                || _sessionManager == null
                 || !Application.isPlaying
             )
                 return;
@@ -83,7 +83,7 @@ namespace NPCSystem
             {
                 PendingDialogueRequest pending = _pendingRequests.Dequeue();
                 if (
-                    !SessionManager.TryGetSelectedNpcSlug(
+                    !_sessionManager.TryGetSelectedNpcSlug(
                         pending.clientId,
                         out string selectedNpcSlug
                     ) || string.IsNullOrWhiteSpace(selectedNpcSlug)
@@ -121,26 +121,26 @@ namespace NPCSystem
 
         void EnsureClientSessionSeeded(ulong clientId)
         {
-            if (SessionManager == null)
+            if (_sessionManager == null)
                 return;
-            if (DialogueManager != null && _baselineHistorySnapshot.Count == 0)
+            if (_dialogueManager != null && _baselineHistorySnapshot.Count == 0)
             {
                 CaptureBaselineState();
             }
 
             string playerDisplayName = ResolvePlayerDisplayName(clientId);
-            if (SessionManager.HasSession(clientId))
+            if (_sessionManager.HasSession(clientId))
                 return;
 
-            SessionManager.SetAllHistorySnapshots(
+            _sessionManager.SetAllHistorySnapshots(
                 clientId,
                 CloneHistorySnapshot(_baselineHistorySnapshot)
             );
-            SessionManager.SetEvidenceSnapshot(
+            _sessionManager.SetEvidenceSnapshot(
                 clientId,
                 _baselineEvidenceSnapshot?.Clone() ?? new NPCEvidenceStateSnapshot()
             );
-            SessionManager.SetPlayerDisplayName(clientId, playerDisplayName);
+            _sessionManager.SetPlayerDisplayName(clientId, playerDisplayName);
             LogClientSessionEvent(
                 clientId,
                 NPCFlowStatus.Success,
@@ -150,35 +150,35 @@ namespace NPCSystem
 
         void ApplySessionStateToManager(ulong clientId)
         {
-            if (DialogueManager == null || SessionManager == null)
+            if (_dialogueManager == null || _sessionManager == null)
                 return;
-            SessionManager.SetPlayerDisplayName(clientId, ResolvePlayerDisplayName(clientId));
-            DialogueManager.ApplyHistorySnapshot(SessionManager.GetAllHistorySnapshots(clientId));
-            DialogueManager.ApplyEvidenceSnapshot(SessionManager.GetEvidenceSnapshot(clientId));
-            DialogueManager.SetRuntimePlayerContext(
-                SessionManager.GetPlayerDisplayName(clientId),
+            _sessionManager.SetPlayerDisplayName(clientId, ResolvePlayerDisplayName(clientId));
+            _dialogueManager.ApplyHistorySnapshot(_sessionManager.GetAllHistorySnapshots(clientId));
+            _dialogueManager.ApplyEvidenceSnapshot(_sessionManager.GetEvidenceSnapshot(clientId));
+            _dialogueManager.SetRuntimePlayerContext(
+                _sessionManager.GetPlayerDisplayName(clientId),
                 clientId
             );
             LogClientSessionEvent(
                 clientId,
                 NPCFlowStatus.Success,
-                $"Applied session to dialogue manager for '{SessionManager.GetPlayerDisplayName(clientId)}'."
+                $"Applied session to dialogue manager for '{_sessionManager.GetPlayerDisplayName(clientId)}'."
             );
         }
 
         void SyncSessionFromManagerState(ulong clientId)
         {
-            if (DialogueManager == null || SessionManager == null)
+            if (_dialogueManager == null || _sessionManager == null)
                 return;
-            SessionManager.SetAllHistorySnapshots(
+            _sessionManager.SetAllHistorySnapshots(
                 clientId,
-                DialogueManager.CaptureHistorySnapshot()
+                _dialogueManager.CaptureHistorySnapshot()
             );
-            SessionManager.SetEvidenceSnapshot(clientId, DialogueManager.CaptureEvidenceSnapshot());
+            _sessionManager.SetEvidenceSnapshot(clientId, _dialogueManager.CaptureEvidenceSnapshot());
             LogClientSessionEvent(
                 clientId,
                 NPCFlowStatus.Success,
-                $"Synchronized dialogue manager state back into session cache for '{SessionManager.GetPlayerDisplayName(clientId)}'."
+                $"Synchronized dialogue manager state back into session cache for '{_sessionManager.GetPlayerDisplayName(clientId)}'."
             );
         }
     }

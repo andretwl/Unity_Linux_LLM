@@ -91,6 +91,14 @@ namespace NPCSystem
         [SerializeField, HideProperty]
         public NotebookUIController NotebookController;
 
+        [FoldoutGroup("Relationship UI", true, nameof(RelationshipUI))]
+        [SerializeField]
+        EditorAttributes.Void relationshipGroup;
+
+        [FormerlySerializedAs("relationshipUI")]
+        [SerializeField, HideProperty]
+        public NPCRelationshipUIController RelationshipUI;
+
         [FoldoutGroup("Exit and Startup", true, nameof(ExitButton), nameof(InitializeOnStart))]
         [SerializeField]
         EditorAttributes.Void exitStartupGroup;

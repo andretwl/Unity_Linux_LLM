@@ -17,11 +17,11 @@ namespace NPCSystem
         NPCNotebookStateMessage BuildNotebookStateMessage()
         {
             return NPCNotebookStateFormatter.Build(
-                DialogueManager != null
-                    ? DialogueManager.CaptureEvidenceSnapshot()
+                _dialogueManager != null
+                    ? _dialogueManager.CaptureEvidenceSnapshot()
                     : new NPCEvidenceStateSnapshot(),
-                DialogueManager != null && DialogueManager.currentProfile != null
-                    ? DialogueManager.currentProfile.GetNpcSlug()
+                _dialogueManager != null && _dialogueManager.currentProfile != null
+                    ? _dialogueManager.currentProfile.GetNpcSlug()
                     : _localSelectedNpcSlug
             );
         }
@@ -37,14 +37,14 @@ namespace NPCSystem
         NPCNotebookStateMessage BuildNotebookStateMessageForClient(ulong clientId)
         {
             string selectedNpcSlug = string.Empty;
-            if (SessionManager != null)
+            if (_sessionManager != null)
             {
-                SessionManager.TryGetSelectedNpcSlug(clientId, out selectedNpcSlug);
+                _sessionManager.TryGetSelectedNpcSlug(clientId, out selectedNpcSlug);
             }
 
             return NPCNotebookStateFormatter.Build(
-                SessionManager != null
-                    ? SessionManager.GetEvidenceSnapshot(clientId)
+                _sessionManager != null
+                    ? _sessionManager.GetEvidenceSnapshot(clientId)
                     : new NPCEvidenceStateSnapshot(),
                 selectedNpcSlug
             );
@@ -62,13 +62,13 @@ namespace NPCSystem
 
         void CaptureBaselineState()
         {
-            if (DialogueManager == null)
+            if (_dialogueManager == null)
                 return;
             _baselineHistorySnapshot = CloneHistorySnapshot(
-                DialogueManager.CaptureHistorySnapshot()
+                _dialogueManager.CaptureHistorySnapshot()
             );
             _baselineEvidenceSnapshot =
-                DialogueManager.CaptureEvidenceSnapshot()?.Clone()
+                _dialogueManager.CaptureEvidenceSnapshot()?.Clone()
                 ?? new NPCEvidenceStateSnapshot();
         }
     }

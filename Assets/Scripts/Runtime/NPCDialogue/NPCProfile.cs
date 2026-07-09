@@ -17,9 +17,11 @@ namespace NPCSystem
         )]
         [OnValueChanged(nameof(RefreshInspectorPreview))]
         [Header("Identity")]
-        public string npcSlug = "npc";
+        [FormerlySerializedAs("npcSlug")]
+        public string NpcSlug = "npc";
 
-        public string displayName = "NPC";
+        [FormerlySerializedAs("displayName")]
+        public string DisplayName = "NPC";
         [FormerlySerializedAs("portraitTexture")]
         public Texture2D PortraitTexture;
 
@@ -138,17 +140,17 @@ namespace NPCSystem
 
         public string GetNpcSlug()
         {
-            if (!string.IsNullOrWhiteSpace(npcSlug))
-                return npcSlug.Trim().ToLowerInvariant();
-            if (!string.IsNullOrWhiteSpace(displayName))
-                return displayName.Trim().ToLowerInvariant().Replace(" ", "-");
+            if (!string.IsNullOrWhiteSpace(NpcSlug))
+                return NpcSlug.Trim().ToLowerInvariant();
+            if (!string.IsNullOrWhiteSpace(DisplayName))
+                return DisplayName.Trim().ToLowerInvariant().Replace(" ", "-");
             return name.Trim().ToLowerInvariant().Replace(" ", "-");
         }
 
         public string GetDisplayName()
         {
-            if (!string.IsNullOrWhiteSpace(displayName))
-                return displayName.Trim();
+            if (!string.IsNullOrWhiteSpace(DisplayName))
+                return DisplayName.Trim();
             return string.IsNullOrWhiteSpace(name) ? "NPC" : name.Trim();
         }
 

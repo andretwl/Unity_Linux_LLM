@@ -8,6 +8,7 @@
   <Project Path="Unity.ShaderGraph.Editor.csproj" />
   <Project Path="Unity.ScriptableBuildPipeline.Editor.csproj" />
   <Project Path="Unity.Multiplayer.Center.Editor.csproj" />
+  <Project Path="NPCSystem.Runtime.csproj" />
   <Project Path="Unity.RenderPipelines.Universal.2D.Runtime.csproj" />
   <Project Path="Unity.Addressables.Editor.csproj" />
   <Project Path="Unity.MemoryProfiler.Editor.csproj" />
@@ -65,7 +66,6 @@
   <Project Path="Unity.TextMeshPro.csproj" />
   <Project Path="Unity.RenderPipelines.Core.Runtime.csproj" />
   <Project Path="Unity.Entities.Hybrid.Tests.csproj" />
-  <Project Path="NPCSystem.Runtime.csproj" />
   <Project Path="Unity.PlatformToolkit.Editor.csproj" />
   <Project Path="Unity.Serialization.csproj" />
   <Project Path="Unity.Numerics.Linear.Dense.csproj" />

@@ -2,6 +2,7 @@ using System;
 using System.IO.Compression;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace NPCSystem
 {
@@ -22,36 +23,48 @@ namespace NPCSystem
     public class NPCLocalRAG : NPCSearchable
     {
         [Tooltip("Search method type for local RAG (SimpleSearch only in this project).")]
-        public NPCSearchMethods searchType = NPCSearchMethods.SimpleSearch;
+        [FormerlySerializedAs("searchType")]
+        [SerializeField]
+        NPCSearchMethods _searchType = NPCSearchMethods.SimpleSearch;
 
         [Tooltip("Search method GameObject.")]
-        public NPCSearchMethod search;
+        [FormerlySerializedAs("search")]
+        [SerializeField]
+        NPCSearchMethod _search;
 
         [Tooltip("Chunking method for splitting inputs.")]
-        public NPCChunkingMethods chunkingType = NPCChunkingMethods.NoChunking;
+        [FormerlySerializedAs("chunkingType")]
+        [SerializeField]
+        NPCChunkingMethods _chunkingType = NPCChunkingMethods.NoChunking;
 
         [Tooltip("Chunking method GameObject.")]
-        public NPCChunking chunking;
+        [FormerlySerializedAs("chunking")]
+        [SerializeField]
+        NPCChunking _chunking;
+
+        // ─── Public accessors ───
+        public NPCSearchMethod SearchMethod => _search;
+        public NPCChunking Chunking => _chunking;
 
         public void Init(
             NPCSearchMethods searchMethod = NPCSearchMethods.SimpleSearch,
             NPCChunkingMethods chunkingMethod = NPCChunkingMethods.NoChunking
         )
         {
-            searchType = searchMethod;
-            chunkingType = chunkingMethod;
+            _searchType = searchMethod;
+            _chunkingType = chunkingMethod;
             UpdateGameObjects();
         }
 
         public void ReturnChunks(bool returnChunks)
         {
-            if (chunking != null)
-                chunking.ReturnChunks(returnChunks);
+            if (_chunking != null)
+                _chunking.ReturnChunks(returnChunks);
         }
 
         protected void ConstructSearch()
         {
-            search = ConstructComponent<NPCSearchMethod>(
+            _search = ConstructComponent<NPCSearchMethod>(
                 typeof(NPCSimpleSearch),
                 (
                     previous,
@@ -64,11 +77,11 @@ namespace NPCSystem
         protected void ConstructChunking()
         {
             Type type = null;
-            if (chunkingType != NPCChunkingMethods.NoChunking)
-                type = Type.GetType("NPCSystem." + chunkingType.ToString());
-            chunking = ConstructComponent<NPCChunking>(type);
-            if (chunking != null)
-                chunking.SetSearch(search);
+            if (_chunkingType != NPCChunkingMethods.NoChunking)
+                type = Type.GetType("NPCSystem." + _chunkingType.ToString());
+            _chunking = ConstructComponent<NPCChunking>(type);
+            if (_chunking != null)
+                _chunking.SetSearch(_search);
         }
 
         public override void UpdateGameObjects()
@@ -81,10 +94,10 @@ namespace NPCSystem
 
         protected NPCSearchable GetSearcher()
         {
-            if (chunking != null)
-                return chunking;
-            if (search != null)
-                return search;
+            if (_chunking != null)
+                return _chunking;
+            if (_search != null)
+                return _search;
             Debug.LogError("[NPC] Local RAG search GameObject is null");
             return null;
         }

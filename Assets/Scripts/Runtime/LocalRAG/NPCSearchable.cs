@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace NPCSystem
 {
@@ -149,7 +150,10 @@ namespace NPCSystem
 
     public abstract class NPCSearchMethod : NPCSearchable
     {
-        public NPCLocalAIEmbedder llmEmbedder;
+        [FormerlySerializedAs("llmEmbedder")]
+        [SerializeField]
+        NPCLocalAIEmbedder _llmEmbedder;
+        public NPCLocalAIEmbedder LlmEmbedder => _llmEmbedder;
 
         protected int nextKey = 0;
         protected int nextIncrementalSearchKey = 0;
@@ -217,12 +221,12 @@ namespace NPCSystem
 
         public virtual async Task<float[]> Encode(string inputString)
         {
-            if (llmEmbedder == null)
+            if (_llmEmbedder == null)
             {
-                Debug.LogError("[NPC] SearchMethod: llmEmbedder is null, cannot encode.");
+                Debug.LogError("[NPC] SearchMethod: _llmEmbedder is null, cannot encode.");
                 return Array.Empty<float>();
             }
-            return (await llmEmbedder.Embeddings(inputString)).ToArray();
+            return (await _llmEmbedder.Embeddings(inputString)).ToArray();
         }
 
         /// <summary>Simple tokenize: splits on whitespace/punctuation. For remote-only mode without LocalAI tokenize endpoint.</summary>
@@ -371,9 +375,9 @@ namespace NPCSystem
 
         public override void UpdateGameObjects()
         {
-            if (this == null || llmEmbedder != null)
+            if (this == null || _llmEmbedder != null)
                 return;
-            llmEmbedder = ConstructComponent<NPCLocalAIEmbedder>(
+            _llmEmbedder = ConstructComponent<NPCLocalAIEmbedder>(
                 typeof(NPCLocalAIEmbedder),
                 (
                     previous,

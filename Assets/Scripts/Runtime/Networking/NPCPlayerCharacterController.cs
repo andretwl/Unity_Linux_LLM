@@ -44,15 +44,18 @@ namespace NPCSystem
         NPCNetworkItemInteractor interactor;
 
         [Header("Input Asset")]
-        public InputActionAsset inputActions;
-        [FormerlySerializedAs("ActionMapName")]
-        public string ActionMapName = "Player";
+        [FormerlySerializedAs("inputActions")]
+        [SerializeField]
+        InputActionAsset _inputActions;
 
         [Header("Owner Settings")]
         [FormerlySerializedAs("LockCursorForOwner")]
-        public bool LockCursorForOwner = true;
+        [SerializeField]
+        bool _lockCursorForOwner = true;
+
         [FormerlySerializedAs("LogSpawnDiagnostics")]
-        public bool LogSpawnDiagnostics = true;
+        [SerializeField]
+        bool _logSpawnDiagnostics = true;
 
         // ─── Singleton-style access for the owning client ───
         public static NPCPlayerCharacterController LocalInstance { get; private set; }
@@ -75,7 +78,7 @@ namespace NPCSystem
 
         bool _eventsSubscribed;
 
-        // \u2500\u2500\u2500 Lifecycle \u2500\u2500\u2500
+        // ─── Lifecycle ───
 
         void Reset() => ResolveReferences();
 
@@ -166,7 +169,7 @@ namespace NPCSystem
             motor.SprintInput = inputHandler != null && inputHandler.SprintHeld;
         }
 
-        // \u2500\u2500\u2500 Input Event Wiring \u2500\u2500\u2500
+        // ─── Input Event Wiring ───
 
         void SubscribeInputEvents()
         {
@@ -227,22 +230,22 @@ namespace NPCSystem
 
         void HandleCrouch()
         {
-            // Reserved for crouch toggle \u2014 extend when crouch mechanic is added
+            // Reserved for crouch toggle — extend when crouch mechanic is added
         }
 
-        // \u2500\u2500\u2500 Input Management \u2500\u2500\u2500
+        // ─── Input Management ───
 
         void EnableOwnerInput()
         {
             if (inputHandler != null)
             {
-                if (inputHandler.inputActions == null && inputActions != null)
-                    inputHandler.inputActions = inputActions;
+                if (inputHandler.InputActions == null && _inputActions != null)
+                    inputHandler.InputActions = _inputActions;
 
                 inputHandler.EnableActions();
             }
 
-            if (LockCursorForOwner)
+            if (_lockCursorForOwner)
             {
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
@@ -254,7 +257,7 @@ namespace NPCSystem
             if (inputHandler != null)
                 inputHandler.DisableAll();
 
-            if (LockCursorForOwner && IsOwner)
+            if (_lockCursorForOwner && IsOwner)
             {
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
@@ -278,7 +281,7 @@ namespace NPCSystem
             {
                 inputHandler.DisableUIActions();
                 inputHandler.EnableActions();
-                if (LockCursorForOwner)
+                if (_lockCursorForOwner)
                 {
                     Cursor.lockState = CursorLockMode.Locked;
                     Cursor.visible = false;
@@ -302,7 +305,7 @@ namespace NPCSystem
                 interactor = GetComponent<NPCNetworkItemInteractor>();
         }
 
-        // \u2500\u2500\u2500 Public API \u2500\u2500\u2500
+        // ─── Public API ───
 
         public NPCCharacterMotor Motor => motor;
         public NPCMultiplayerInputActions InputHandler => inputHandler;

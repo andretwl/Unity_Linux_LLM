@@ -5,6 +5,7 @@ using EditorAttributes;
 using Supabase;
 using static Postgrest.Constants;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace NPCSystem
 {
@@ -12,12 +13,12 @@ namespace NPCSystem
     public class SupabaseDialogueRepository : MonoBehaviour
     {
         [Title("Supabase Dialogue Repository (SDK)")]
-        [FoldoutGroup("References", true, nameof(authService))]
+        [FoldoutGroup("References", true, nameof(_authService))]
         [SerializeField]
         EditorAttributes.Void referencesGroup;
 
-        [SerializeField, HideProperty]
-        public PlayerAuthService authService;
+        [SerializeField, HideProperty, FormerlySerializedAs("authService")]
+        PlayerAuthService _authService;
 
         [FoldoutGroup("Behaviour", true, nameof(requestTimeoutSeconds))]
         [SerializeField]
@@ -51,8 +52,8 @@ namespace NPCSystem
         [Button("Validate Repository Settings")]
         void ValidateRepositorySettings()
         {
-            bool validAuth = authService != null && authService.SupabaseClient != null;
-            bool authed = authService != null && authService.IsAuthenticated;
+            bool validAuth = _authService != null && _authService.SupabaseClient != null;
+            bool authed = _authService != null && _authService.IsAuthenticated;
 
             lastStatus =
                 validAuth && authed
@@ -88,14 +89,14 @@ namespace NPCSystem
         }
 
         public bool IsConfigured =>
-            authService != null
-            && authService.SupabaseClient != null
-            && authService.IsAuthenticated;
+            _authService != null
+            && _authService.SupabaseClient != null
+            && _authService.IsAuthenticated;
 
         Supabase.Client GetClient()
         {
-            if (_client == null && authService != null)
-                _client = authService.SupabaseClient;
+            if (_client == null && _authService != null)
+                _client = _authService.SupabaseClient;
             return _client;
         }
 
@@ -115,7 +116,7 @@ namespace NPCSystem
 
                 string sessionId = await client.Rpc<string>("find_or_create_dialogue_session", new
                 {
-                    p_player_id = authService.CurrentSession.playerId,
+                    p_player_id = _authService.CurrentSession.playerId,
                     p_npc_slug = npcSlug,
                 });
 
@@ -182,7 +183,7 @@ namespace NPCSystem
                 {
                     string sessionId = await client.Rpc<string>("find_or_create_dialogue_session", new
                     {
-                        p_player_id = authService.CurrentSession.playerId,
+                        p_player_id = _authService.CurrentSession.playerId,
                         p_npc_slug = npcSlug,
                     });
                     if (string.IsNullOrWhiteSpace(sessionId))
@@ -193,7 +194,7 @@ namespace NPCSystem
                 var turn = new DialogueTurnRecord
                 {
                     SessionId = _lastSessionId,
-                    PlayerId = authService.CurrentSession.playerId,
+                    PlayerId = _authService.CurrentSession.playerId,
                     Role = role,
                     Content = content,
                 };
@@ -233,7 +234,7 @@ namespace NPCSystem
 
                 await client.Rpc("close_dialogue_session", new
                 {
-                    p_player_id = authService.CurrentSession.playerId,
+                    p_player_id = _authService.CurrentSession.playerId,
                     p_npc_slug = npcSlug,
                 });
 
@@ -268,7 +269,7 @@ namespace NPCSystem
                 data: new Dictionary<string, object>
                 {
                     ["sessionId"] = _lastSessionId ?? string.Empty,
-                    ["authPlayerId"] = authService?.CurrentSession?.playerId ?? string.Empty,
+                    ["authPlayerId"] = _authService?.CurrentSession?.playerId ?? string.Empty,
                 }
             );
         }

@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace NPCSystem
 {
@@ -7,7 +8,9 @@ namespace NPCSystem
     public sealed class NPCNameplate : MonoBehaviour
     {
         [Header("References")]
-        public TextMeshProUGUI nameLabel;
+        [FormerlySerializedAs("nameLabel")]
+        [SerializeField]
+        TextMeshProUGUI _nameLabel;
 
         NPCServerCharacter _npc;
         Camera _camera;
@@ -16,13 +19,13 @@ namespace NPCSystem
         {
             _camera = Camera.main;
 
-            if (nameLabel == null)
-                nameLabel = GetComponentInChildren<TextMeshProUGUI>();
+            if (_nameLabel == null)
+                _nameLabel = GetComponentInChildren<TextMeshProUGUI>();
 
             _npc = GetComponentInParent<NPCServerCharacter>();
             if (_npc != null)
             {
-                nameLabel.text = _npc.DisplayName;
+                _nameLabel.text = _npc.DisplayName;
                 _npc.npcDisplayName.OnValueChanged += OnNpcNameChanged;
             }
         }
@@ -40,8 +43,8 @@ namespace NPCSystem
 
         void OnNpcNameChanged(string _, string newValue)
         {
-            if (nameLabel != null)
-                nameLabel.text = string.IsNullOrWhiteSpace(newValue) ? "NPC" : newValue;
+            if (_nameLabel != null)
+                _nameLabel.text = string.IsNullOrWhiteSpace(newValue) ? "NPC" : newValue;
         }
 
         void OnDestroy()

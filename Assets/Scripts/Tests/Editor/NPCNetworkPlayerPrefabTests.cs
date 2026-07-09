@@ -64,7 +64,12 @@ namespace NPCSystem.Tests
             Assert.That(playerInput, Is.Not.Null);
             Assert.That(playerInput.actions, Is.SameAs(AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputActionsPath)));
             Assert.That(playerInput.defaultActionMap, Is.EqualTo("Player"));
-            Assert.That(controller.LockCursorForOwner, Is.True);
+            var inputActionsField = typeof(NPCPlayerCharacterController).GetField(
+                "_lockCursorForOwner",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic
+            );
+            Assert.That(inputActionsField, Is.Not.Null);
+            Assert.That((bool)inputActionsField.GetValue(controller), Is.True);
         }
 
         [Test]
@@ -75,7 +80,7 @@ namespace NPCSystem.Tests
             var inputActions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputActionsPath);
 
             Assert.That(newHandler, Is.Not.Null);
-            Assert.That(newHandler.inputActions, Is.SameAs(inputActions));
+            Assert.That(newHandler.InputActions, Is.SameAs(inputActions));
         }
 #endif
 
