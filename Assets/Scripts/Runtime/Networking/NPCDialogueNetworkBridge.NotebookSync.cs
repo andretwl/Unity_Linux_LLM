@@ -8,7 +8,7 @@ namespace NPCSystem
     public partial class NPCDialogueNetworkBridge
     {
         NPCNotebookStateMessage _currentNotebookState;
-        readonly Dictionary<string, List<DialogueEntry>> _baselineHistorySnapshot =
+        Dictionary<string, List<DialogueEntry>> _baselineHistorySnapshot =
             new Dictionary<string, List<DialogueEntry>>(StringComparer.OrdinalIgnoreCase);
         NPCEvidenceStateSnapshot _baselineEvidenceSnapshot = new NPCEvidenceStateSnapshot();
 
