@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Offline-first Unity C# codebase scanner and Qdrant indexer"
 requires-python = ">=3.11"
 dependencies = [
+    "ddtrace>=4.10.8",
     "watchdog>=4.0.0",
 ]
 

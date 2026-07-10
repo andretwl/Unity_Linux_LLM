@@ -45,21 +45,18 @@ if command -v curl &>/dev/null; then
     fi
 fi
 
-# Start the watchdog in background so we can forward signals
-codebase-embedder watch \
+# Start the watchdog with Datadog APM tracing
+export DD_SERVICE="${DD_SERVICE:-codebase-watchdog}"
+export DD_ENV="${DD_ENV:-production}"
+export DD_SITE="${DD_SITE:-us5.datadoghq.com}"
+export DD_AGENT_HOST="${DD_AGENT_HOST:-localhost}"
+export DD_TRACE_AGENT_PORT="${DD_TRACE_AGENT_PORT:-8126}"
+
+ddtrace-run codebase-embedder watch \
     --root /workspace \
     --qdrant-url "$QDRANT_URL" \
     --collection "$COLLECTION_NAME" \
     --localai-base-url "$LOCALAI_BASE_URL" \
     --embedding-model "$EMBEDDING_MODEL" \
     --project-slug "$PROJECT_SLUG" \
-    --debounce "$WATCH_DEBOUNCE_SECONDS" &
-WATCH_PID=$!
-
-# Forward shutdown signals to the Python process
-trap 'echo "Shutting down watcher (PID $WATCH_PID)..."; kill -TERM $WATCH_PID 2>/dev/null; wait $WATCH_PID; exit 0' SIGTERM SIGINT
-
-wait $WATCH_PID
-EXIT_CODE=$?
-echo "Watcher exited with code $EXIT_CODE"
-exit $EXIT_CODE
+    --debounce "$WATCH_DEBOUNCE_SECONDS"

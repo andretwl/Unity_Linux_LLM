@@ -15,6 +15,13 @@ services:
       - EMBEDDING_MODEL=nomic-embed-text-v1.5
       - PROJECT_SLUG=Unity_Linux_LLM
       - WATCH_DEBOUNCE_SECONDS=1.5
+      # Datadog APM — traces sent to host-level dd-agent on :8126
+      - DD_SERVICE=codebase-watchdog
+      - DD_ENV=production
+      - DD_SITE=us5.datadoghq.com
+      - DD_AGENT_HOST=localhost
+      - DD_TRACE_AGENT_PORT=8126
+      - DD_LOGS_INJECTION=true
     # Bind-mount the project root so the watcher can read files and
     # maintain the .codebase-index/ artifact cache.
     volumes:
