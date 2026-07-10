@@ -7,7 +7,8 @@ instances:
     tags:
       - service:qdrant
       - team:npc-platform
-      - env:${DD_ENV:-production}
+      - env:production
+      - container:qdrant
     metrics:
       ## Collection-level metrics
       - qdrant_collection_points_total: qdrant.collection.points

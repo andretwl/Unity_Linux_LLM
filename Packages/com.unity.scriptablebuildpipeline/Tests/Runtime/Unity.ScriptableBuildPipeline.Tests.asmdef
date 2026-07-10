@@ -2,9 +2,9 @@
     "name": "Unity.ScriptableBuildPipeline.Tests",
     "rootNamespace": "",
     "references": [
-        "GUID:27619889b8ba8c24980f49ee34dbb44a",
-        "GUID:c5ecc461727906345a35491a0440694f",
-        "GUID:0acc523941302664db1f4e527237feb3"
+        "UnityEngine.TestRunner",
+        "Unity.ScriptableBuildPipeline.Editor",
+        "UnityEditor.TestRunner"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

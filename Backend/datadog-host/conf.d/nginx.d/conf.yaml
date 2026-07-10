@@ -8,7 +8,9 @@ instances:
   - nginx_status_url: http://localhost:8085/nginx_status
     tags:
       - service:webgl-client
-      - container:npc-webgl-client
+      - team:npc-platform
+      - container:webgl-client
+      - env:production
 
 logs:
   ## Parse nginx access logs from Docker container stdout

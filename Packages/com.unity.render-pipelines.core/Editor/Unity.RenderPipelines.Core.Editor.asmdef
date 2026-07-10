@@ -1,0 +1,52 @@
+{
+    "name": "Unity.RenderPipelines.Core.Editor",
+    "rootNamespace": "",
+    "references": [
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.Burst",
+        "Unity.Mathematics",
+        "Unity.RenderPipelines.GPUDriven.Runtime",
+        "Unity.UnifiedRayTracing.Runtime",
+        "Unity.Collections",
+        "Unity.PathTracing.Runtime",
+        "Unity.PathTracing.Editor",
+        "Unity.InternalAPIEngineBridge.RenderPipelines.Core.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.burst",
+            "expression": "1.5.0",
+            "define": "HAS_BURST"
+        },
+        {
+            "name": "com.unity.modules.physics",
+            "expression": "1.0.0",
+            "define": "ENABLE_PHYSICS_MODULE"
+        },
+        {
+            "name": "com.unity.modules.uielements",
+            "expression": "1.0.0",
+            "define": "ENABLE_UIELEMENTS_MODULE"
+        },
+        {
+            "name": "com.unity.modules.nvidia",
+            "expression": "1.0.0",
+            "define": "ENABLE_NVIDIA_MODULE"
+        },
+        {
+            "name": "com.unity.modules.amd",
+            "expression": "1.0.0",
+            "define": "ENABLE_AMD_MODULE"
+        }
+    ],
+    "noEngineReferences": false
+}

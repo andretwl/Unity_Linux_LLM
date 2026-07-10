@@ -11,7 +11,7 @@ services:
     environment:
       - QDRANT_URL=http://localhost:6333
       - COLLECTION_NAME=unity_linux_llm_codebase_v2
-      - LOCALAI_BASE_URL=http://localhost:8080/v2
+      - LOCALAI_BASE_URL=http://localhost:8080/v1
       - EMBEDDING_MODEL=nomic-embed-text-v1.5
       - PROJECT_SLUG=Unity_Linux_LLM
       - WATCH_DEBOUNCE_SECONDS=1.5
@@ -28,27 +28,7 @@ services:
         max-file: "3"
 
   # ─────────────────────────────────────────────────
-  # Datadog Agent — collects logs, metrics, and live
-  # processes from the codebase watchdog container.
-  # Requires DD_API_KEY set in Backend/.env
+  # Monitoring: see Backend/datadog-host/docker-compose.yml
+  # for the single host-level Datadog Agent that auto-discovers
+  # all containers, including this codebase watchdog.
   # ─────────────────────────────────────────────────
-  datadog-agent:
-    container_name: datadog-agent-watchdog
-    image: gcr.io/datadoghq/agent:latest
-    pid: host
-    network_mode: host
-    environment:
-      - DD_API_KEY=${DD_API_KEY:?err}
-      - DD_SITE=${DD_SITE:-datadoghq.com}
-      - DD_TAGS=project:unity-linux-llm env:production service:codebase-watchdog
-      - DD_APM_ENABLED=true
-      - DD_APM_NON_LOCAL_TRAFFIC=true
-      - DD_LOGS_ENABLED=true
-      - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
-      - DD_PROCESS_AGENT_ENABLED=true
-      - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /proc/:/host/proc/:ro
-      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
-    restart: unless-stopped

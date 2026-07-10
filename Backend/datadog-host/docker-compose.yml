@@ -20,6 +20,7 @@ services:
     network_mode: host
     environment:
       - DD_API_KEY=${DD_API_KEY:?err}
+      - DD_APP_KEY=${DD_APP_KEY:?err}
       - DD_SITE=${DD_SITE:-us5.datadoghq.com}
       - DD_ENV=${DD_ENV:-production}
       - DD_TAGS=project:unity-linux-llm env:${DD_ENV:-production} team:npc-platform

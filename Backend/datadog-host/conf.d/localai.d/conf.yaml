@@ -8,7 +8,8 @@ instances:
     tags:
       - service:localai
       - team:npc-platform
-      - env:${DD_ENV:-production}
+      - env:production
+      - container:localai
     metrics:
       ## LLM inference metrics
       - llm_inference_requests_total: llm.inference.requests.total
@@ -33,3 +34,4 @@ logs:
       - type: multi_line
         name: new_log_start_with_timestamp
         pattern: \d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}
+       

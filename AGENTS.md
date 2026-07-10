@@ -416,18 +416,19 @@ To import:
 - 🔐 **Auth & Network** — Login volume, server starts, client connections
 - 🖥️ **Linux Host OS** — CPU, memory, disk I/O, network traffic, GPU, disk space
 
-### 6.5 Docker Compose Sidecars
+### 6.5 Single Host-Level Agent (Simplified)
 
-Each backend service's `docker-compose.yml` also includes a Datadog Agent sidecar
-for isolated monitoring when running stacks independently:
+The architecture uses **one host-level agent** (`dd-agent` in `Backend/datadog-host/`) that
+auto-discovers all Docker containers — no sidecar agents needed. With
+`DD_LOGS_CONFIG_CONTAINER_COLL_ALL=true`, the agent automatically tails every
+container's stdout/stderr, and the custom DogStatsD metrics from Unity reach it
+via UDP port 8125 on the host network.
 
-- `Backend/unity-dedicated-server/docker-compose.yml` — `datadog-agent-unity-server`
-- `Backend/webgl-client/docker-compose.yml` — `datadog-agent-webgl`
-- `Backend/codebase-watchdog/docker-compose.yml` — `datadog-agent-watchdog`
-- `Backend/supabase-stack/docker-compose.yml` — `datadog-agent`
-
-**Note:** In production, use ONE host-level agent (preferred). Sidecars are for
-development/testing isolation.
+**No Datadog Agent sidecars** exist in any of the per-service compose files
+(`unity-dedicated-server`, `webgl-client`, `codebase-watchdog`, `supabase-stack`).
+They were removed because multiple agents in `network_mode: host` conflict on ports
+8125/8126. If you need per-stack agents for development isolation, assign each a
+unique port mapping instead of host networking.
 
 ---
 

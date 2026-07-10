@@ -5,7 +5,7 @@ set -e
 
 # Environment defaults
 QDRANT_URL="${QDRANT_URL:-http://localhost:6333}"
-COLLECTION_NAME="${COLLECTION_NAME:-unity_linux_llm_codebase_v1}"
+COLLECTION_NAME="${COLLECTION_NAME:-unity_linux_llm_codebase_v2}"
 LOCALAI_BASE_URL="${LOCALAI_BASE_URL:-http://localhost:8080/v1}"
 EMBEDDING_MODEL="${EMBEDDING_MODEL:-nomic-embed-text-v1.5}"
 PROJECT_SLUG="${PROJECT_SLUG:-Unity_Linux_LLM}"

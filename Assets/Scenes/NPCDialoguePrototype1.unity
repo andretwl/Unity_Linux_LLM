@@ -11371,7 +11371,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e3f5ddad511dc3ada6f258ffc9812b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCSystem.NPCDialogueBootstrapper
-  DialogueManager: {fileID: 0}
+  DialogueManager: {fileID: 1778380623}
   autoSelectDefaultNPC: 0
   defaultNpcSlug: butler
   initializeOnStart: 0
@@ -11407,7 +11407,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: NPCSystem.Runtime::NPCSystem.QdrantRAGService
   _qdrantUrl: http://localhost:6333
-  _collectionName: unity_linux_llm_codebase_v1
+  _collectionName: unity_linux_llm_codebase_v2
   _embedder: {fileID: 1778380633}
   inspectorStatus: 'Logged Qdrant configuration: http://localhost:6333/collections/unity_linux_llm_codebase_v1/points/search'
 --- !u!114 &1778380629
@@ -11535,7 +11535,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: NPCSystem.Runtime::NPCSystem.SupabaseDialogueRepository
   _authService: {fileID: 1351714796}
   requestTimeoutSeconds: 10
-  lastStatus: Repository settings look valid.
+  lastStatus: Repository settings are incomplete. Check AuthService reference and
+    ensure authenticated.
   lastOperation: ValidateRepositorySettings
   lastOperationDurationMs: 0
 --- !u!114 &1778380638

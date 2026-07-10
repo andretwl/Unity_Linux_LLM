@@ -104,11 +104,10 @@ namespace NPCSystem
 
                         // All retries exhausted
                         sw.Stop();
-                        DatadogMetricsService.Increment("llm.request.error", tags: new[]
-                        {
-                            $"model:{modelName}",
-                            $"reason:empty_response",
-                        });
+                        DatadogMetricsService.Increment(
+                            "llm.request.error",
+                            tags: new[] { $"model:{modelName}", $"reason:empty_response" }
+                        );
                         return string.Empty;
                     }
 
@@ -121,16 +120,15 @@ namespace NPCSystem
                     )
                     {
                         sw.Stop();
-                        DatadogMetricsService.Timer("llm.request.duration", sw.ElapsedMilliseconds, tags: new[]
-                        {
-                            $"model:{modelName}",
-                            $"attempt:{attempt}",
-                        });
-                        DatadogMetricsService.Increment("llm.request.count", tags: new[]
-                        {
-                            $"model:{modelName}",
-                            $"status:success",
-                        });
+                        DatadogMetricsService.Timer(
+                            "llm.request.duration",
+                            sw.ElapsedMilliseconds,
+                            tags: new[] { $"model:{modelName}", $"attempt:{attempt}" }
+                        );
+                        DatadogMetricsService.Increment(
+                            "llm.request.count",
+                            tags: new[] { $"model:{modelName}", $"status:success" }
+                        );
 
                         string rawContent = response.choices[0].message.content ?? string.Empty;
                         rawContent = Regex
@@ -140,23 +138,25 @@ namespace NPCSystem
                     }
 
                     sw.Stop();
-                    DatadogMetricsService.Increment("llm.request.error", tags: new[]
-                    {
-                        $"model:{modelName}",
-                        $"reason:unexpected_format",
-                    });
+                    DatadogMetricsService.Increment(
+                        "llm.request.error",
+                        tags: new[] { $"model:{modelName}", $"reason:unexpected_format" }
+                    );
                     Debug.LogError($"[NPCLocalAIClient] Unexpected response format from {uri}");
                     return string.Empty;
                 }
                 catch (Exception ex)
                 {
                     sw.Stop();
-                    DatadogMetricsService.Increment("llm.request.error", tags: new[]
-                    {
-                        $"model:{modelName}",
-                        $"reason:exception",
-                        $"attempt:{attempt}",
-                    });
+                    DatadogMetricsService.Increment(
+                        "llm.request.error",
+                        tags: new[]
+                        {
+                            $"model:{modelName}",
+                            $"reason:exception",
+                            $"attempt:{attempt}",
+                        }
+                    );
                     if (attempt < numRetries)
                     {
                         await Task.Delay(500 * (attempt + 1));

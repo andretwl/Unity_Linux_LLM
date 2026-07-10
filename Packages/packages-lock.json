@@ -311,9 +311,9 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.render-pipelines.core": {
-      "version": "17.5.0",
-      "depth": 1,
-      "source": "builtin",
+      "version": "file:com.unity.render-pipelines.core",
+      "depth": 0,
+      "source": "embedded",
       "dependencies": {
         "com.unity.burst": "1.8.14",
         "com.unity.collections": "2.4.3",
@@ -332,9 +332,9 @@
       }
     },
     "com.unity.render-pipelines.universal-config": {
-      "version": "17.5.0",
-      "depth": 1,
-      "source": "builtin",
+      "version": "file:com.unity.render-pipelines.universal-config",
+      "depth": 0,
+      "source": "embedded",
       "dependencies": {
         "com.unity.render-pipelines.core": "17.5.0"
       }
@@ -412,9 +412,9 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.test-framework": {
-      "version": "1.7.0",
+      "version": "file:com.unity.test-framework",
       "depth": 0,
-      "source": "builtin",
+      "source": "embedded",
       "dependencies": {
         "com.unity.ext.nunit": "2.1.0",
         "com.unity.modules.imgui": "1.0.0",

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using EditorAttributes;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Serialization;
@@ -44,9 +45,21 @@ namespace NPCSystem
         string SearchEndpointPreview => BuildSearchEndpoint();
 
         // ─── Public accessors ───
-        public string QdrantUrl { get => _qdrantUrl; set => _qdrantUrl = value; }
-        public string CollectionName { get => _collectionName; set => _collectionName = value; }
-        public NPCLocalAIEmbedder Embedder { get => _embedder; set => _embedder = value; }
+        public string QdrantUrl
+        {
+            get => _qdrantUrl;
+            set => _qdrantUrl = value;
+        }
+        public string CollectionName
+        {
+            get => _collectionName;
+            set => _collectionName = value;
+        }
+        public NPCLocalAIEmbedder Embedder
+        {
+            get => _embedder;
+            set => _embedder = value;
+        }
 
         [Button("Validate Qdrant Inspector Settings")]
         void ValidateInspectorSettings()
@@ -131,9 +144,7 @@ namespace NPCSystem
                 ["with_payload"] = false,
                 ["with_vector"] = false,
             };
-            string scrollJson = JsonUtility.ToJson(
-                new QdrantPayload { payload = scrollPayload }
-            );
+            string scrollJson = JsonConvert.SerializeObject(scrollPayload);
 
             using var request = new UnityWebRequest(scrollEndpoint, "POST");
             byte[] bytes = Encoding.UTF8.GetBytes(scrollJson);
@@ -191,10 +202,10 @@ namespace NPCSystem
                         "[QdrantRAGService] No NPCLocalAIEmbedder found for query encoding."
                     );
                     searchSw.Stop();
-                    DatadogMetricsService.Increment("qdrant.search.error", tags: new[]
-                    {
-                        "reason:no_embedder",
-                    });
+                    DatadogMetricsService.Increment(
+                        "qdrant.search.error",
+                        tags: new[] { "reason:no_embedder" }
+                    );
                     return new List<string>();
                 }
             }
@@ -206,21 +217,16 @@ namespace NPCSystem
             }
             catch (Exception ex)
             {
-                Debug.LogError(
-                    $"[QdrantRAGService] Embedding failed: {ex.Message}"
-                );
+                Debug.LogError($"[QdrantRAGService] Embedding failed: {ex.Message}");
                 searchSw.Stop();
-                DatadogMetricsService.Increment("qdrant.search.error", tags: new[]
-                {
-                    "reason:embedding_failed",
-                    $"exception:{ex.GetType().Name}",
-                });
+                DatadogMetricsService.Increment(
+                    "qdrant.search.error",
+                    tags: new[] { "reason:embedding_failed", $"exception:{ex.GetType().Name}" }
+                );
                 return new List<string>();
             }
 
-            string searchJson = JsonUtility.ToJson(
-                new QdrantPayload { payload = searchPayload }
-            );
+            string searchJson = JsonConvert.SerializeObject(searchPayload);
 
             using var request = new UnityWebRequest(endpoint, "POST");
             byte[] bytes = Encoding.UTF8.GetBytes(searchJson);
@@ -236,11 +242,10 @@ namespace NPCSystem
                     $"[QdrantRAGService] Search failed: {request.error}\n{request.downloadHandler.text}"
                 );
                 searchSw.Stop();
-                DatadogMetricsService.Increment("qdrant.search.error", tags: new[]
-                {
-                    "reason:http_error",
-                    $"http_result:{request.result}",
-                });
+                DatadogMetricsService.Increment(
+                    "qdrant.search.error",
+                    tags: new[] { "reason:http_error", $"http_result:{request.result}" }
+                );
                 return new List<string>();
             }
 
@@ -252,19 +257,20 @@ namespace NPCSystem
                 List<string> results = ExtractPayloadTexts(searchResult);
                 searchSw.Stop();
 
-                DatadogMetricsService.Timer("qdrant.search.duration", searchSw.ElapsedMilliseconds, tags: new[]
-                {
-                    $"limit:{limit}",
-                    $"result_count:{results.Count}",
-                });
-                DatadogMetricsService.Increment("qdrant.search.count", tags: new[]
-                {
-                    $"result_count:{results.Count}",
-                });
-                DatadogMetricsService.Gauge("qdrant.search.result_count", results.Count, tags: new[]
-                {
-                    $"collection:{_collectionName}",
-                });
+                DatadogMetricsService.Timer(
+                    "qdrant.search.duration",
+                    searchSw.ElapsedMilliseconds,
+                    tags: new[] { $"limit:{limit}", $"result_count:{results.Count}" }
+                );
+                DatadogMetricsService.Increment(
+                    "qdrant.search.count",
+                    tags: new[] { $"result_count:{results.Count}" }
+                );
+                DatadogMetricsService.Gauge(
+                    "qdrant.search.result_count",
+                    results.Count,
+                    tags: new[] { $"collection:{_collectionName}" }
+                );
 
                 return results;
             }
@@ -274,11 +280,10 @@ namespace NPCSystem
                     $"[QdrantRAGService] Search parse error: {ex.Message}\n{request.downloadHandler.text}"
                 );
                 searchSw.Stop();
-                DatadogMetricsService.Increment("qdrant.search.error", tags: new[]
-                {
-                    "reason:parse_error",
-                    $"exception:{ex.GetType().Name}",
-                });
+                DatadogMetricsService.Increment(
+                    "qdrant.search.error",
+                    tags: new[] { "reason:parse_error", $"exception:{ex.GetType().Name}" }
+                );
                 return new List<string>();
             }
         }
@@ -286,7 +291,12 @@ namespace NPCSystem
         /// <summary>
         /// Search Qdrant and return results as a single concatenated string (legacy API).
         /// </summary>
-        public async Task<string> SearchMemoryAsync(string query, int limit, string requestId, string npcSlug)
+        public async Task<string> SearchMemoryAsync(
+            string query,
+            int limit,
+            string requestId,
+            string npcSlug
+        )
         {
             List<string> results = await SearchAsync(query, limit);
             return results.Count > 0 ? string.Join("\n", results) : string.Empty;
@@ -345,12 +355,6 @@ namespace NPCSystem
         public bool HasValidCollectionName()
         {
             return !string.IsNullOrWhiteSpace(_collectionName) && !_collectionName.Contains(" ");
-        }
-
-        [Serializable]
-        class QdrantPayload
-        {
-            public Dictionary<string, object> payload;
         }
 
         [Serializable]
