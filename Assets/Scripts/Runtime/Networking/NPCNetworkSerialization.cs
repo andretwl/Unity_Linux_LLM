@@ -10,7 +10,7 @@ namespace NPCSystem
     /// registrations in individual <see cref="NetworkBehaviour"/> types
     /// have been removed in favour of this single point of setup.
     /// </summary>
-    static class NPCNetworkSerialization
+    public static class NPCNetworkSerialization
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Initialize()

@@ -232,6 +232,7 @@ namespace NPCSystem
         NPCDialogueHistoryService _historyService;
         NPCDialogueRetrievalService _retrievalService;
         NPCDialogueSessionService _sessionService;
+        PlayerDialogueContextService _contextService;
 
         static NPCFlowLogger Logger => NPCFlowLogger.FindOrCreate();
 
@@ -411,6 +412,7 @@ namespace NPCSystem
                     _retrievalService,
                     ActionPlanner,
                     EvidenceState,
+                    _contextService,
                     RemoteHost,
                     RemotePort,
                     RemoteModel,
@@ -516,6 +518,13 @@ namespace NPCSystem
             if (_sessionService == null)
             {
                 _sessionService = FindAnyObjectByType<NPCDialogueSessionService>(
+                    FindObjectsInactive.Include
+                );
+            }
+
+            if (_contextService == null)
+            {
+                _contextService = FindAnyObjectByType<PlayerDialogueContextService>(
                     FindObjectsInactive.Include
                 );
             }

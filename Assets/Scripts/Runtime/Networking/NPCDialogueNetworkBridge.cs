@@ -53,7 +53,7 @@ namespace NPCSystem
         string _localSelectedNpcSlug = string.Empty;
         bool _eventsBound;
         bool _disconnectCallbackRegistered;
-        RpcTarget? _persistentClientTarget;
+        BaseRpcTarget _persistentClientTarget;
         readonly Queue<PendingDialogueRequest> _pendingRequests =
             new Queue<PendingDialogueRequest>();
 
@@ -626,6 +626,38 @@ namespace NPCSystem
                                 : string.Empty,
                     }
                 );
+        }
+
+        /// <summary>
+        /// Returns a cached <see cref="BaseRpcTarget"/> when <paramref name="clientId"/>
+        /// matches the active dialogue client; otherwise creates a one-shot Temp target.
+        /// </summary>
+        BaseRpcTarget GetClientTarget(ulong clientId)
+        {
+            if (_persistentClientTarget != null && _activeClientId == clientId)
+                return _persistentClientTarget;
+            return RpcTarget.Single(clientId, RpcTargetUse.Temp);
+        }
+
+        /// <summary>
+        /// Sets the active dialogue client and caches a persistent RPC target
+        /// for efficient multi-hop response streaming.
+        /// </summary>
+        void SetActiveClient(ulong clientId, string requestId)
+        {
+            _activeClientId = clientId;
+            _activeRequestId = requestId;
+            _persistentClientTarget = RpcTarget.Single(clientId, RpcTargetUse.Persistent);
+        }
+
+        /// <summary>
+        /// Clears the active dialogue client and invalidates the cached RPC target.
+        /// </summary>
+        void ClearActiveClient()
+        {
+            _activeClientId = null;
+            _activeRequestId = string.Empty;
+            _persistentClientTarget = null;
         }
 
         /// <summary>

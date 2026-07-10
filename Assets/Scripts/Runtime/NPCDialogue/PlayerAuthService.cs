@@ -112,6 +112,9 @@ namespace NPCSystem
         UnitySessionStore _sessionStore;
         bool _initialized;
 
+        // Auto-discovered on first use
+        SupabaseRealtimeService _realtimeService;
+
         public PlayerAuthSessionResponse CurrentSession { get; private set; }
         public bool IsAuthenticated =>
             CurrentSession != null
@@ -364,6 +367,7 @@ namespace NPCSystem
                 UnitySessionStore.Clear();
 
             await TryCreatePlayerProfileAsync(username?.Trim() ?? string.Empty);
+            await TryConnectRealtimeAsync();
 
             lastAuthStatus =
                 $"Login successful for '{username?.Trim()}'. Session expires at {CurrentSession.expiresAtUtc}.";
@@ -396,6 +400,7 @@ namespace NPCSystem
                 );
 
                 await TryCreatePlayerProfileAsync(CurrentSession.username);
+                await TryConnectRealtimeAsync();
                 return CurrentSession;
             }
             catch
@@ -428,6 +433,7 @@ namespace NPCSystem
             finally
             {
                 ClearLocalSession();
+                DisconnectRealtime();
             }
         }
 
@@ -453,6 +459,28 @@ namespace NPCSystem
         {
             CurrentSession = null;
             UnitySessionStore.Clear();
+        }
+
+        async Task TryConnectRealtimeAsync()
+        {
+            if (_realtimeService == null)
+                _realtimeService = FindAnyObjectByType<SupabaseRealtimeService>(
+                    FindObjectsInactive.Include
+                );
+
+            if (_realtimeService != null)
+                await _realtimeService.ConnectAsync();
+        }
+
+        void DisconnectRealtime()
+        {
+            if (_realtimeService == null)
+                _realtimeService = FindAnyObjectByType<SupabaseRealtimeService>(
+                    FindObjectsInactive.Include
+                );
+
+            if (_realtimeService != null)
+                _realtimeService.Disconnect();
         }
 
         static string EmailFromUsername(string username)

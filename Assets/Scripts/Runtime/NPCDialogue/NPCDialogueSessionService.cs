@@ -26,6 +26,7 @@ namespace NPCSystem
         NPCDialogueRetrievalService _retrievalService;
         NPCDialogueActionPlanner _actionPlanner;
         NPCEvidenceState _evidenceState;
+        PlayerDialogueContextService _contextService;
         string _remoteHost;
         int _remotePort;
         NPCProfile[] _profiles;
@@ -56,6 +57,7 @@ namespace NPCSystem
             NPCDialogueRetrievalService retrievalService,
             NPCDialogueActionPlanner actionPlanner,
             NPCEvidenceState evidenceState,
+            PlayerDialogueContextService contextService,
             string remoteHost,
             int remotePort,
             string chatModel,
@@ -67,6 +69,7 @@ namespace NPCSystem
             _retrievalService = retrievalService;
             _actionPlanner = actionPlanner;
             _evidenceState = evidenceState;
+            _contextService = contextService;
             _remoteHost = remoteHost ?? "localhost";
             _remotePort = remotePort;
             _chatModel = chatModel ?? "";
@@ -341,6 +344,26 @@ namespace NPCSystem
             {
                 sysPrompt +=
                     $"\n\nThe player who is speaking to you is named '{playerName}'. This is a factual part of the current conversation context. If the player asks what their name is, answer that their name is '{playerName}'. Address them by name naturally when appropriate.";
+            }
+
+            // Inject enriched player context (trust, mood, clues, items, locations)
+            if (_contextService != null && profile != null)
+            {
+                string npcSlug = profile.GetNpcSlug();
+                try
+                {
+                    var playerCtx = await _contextService.GetOrLoadContextAsync(npcSlug);
+                    if (playerCtx.HasContext)
+                    {
+                        sysPrompt += "\n\n" + playerCtx.BuildPromptBlock(npcSlug);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning(
+                        $"[NPCDialogueSessionService] Failed to load player context: {ex.Message}"
+                    );
+                }
             }
 
             messages.Add(

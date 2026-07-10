@@ -61,7 +61,6 @@ services:
       - /dev/nvidia1:/dev/nvidia1:ro
       - /dev/nvidiactl:/dev/nvidiactl:ro
       - /dev/nvidia-modeset:/dev/nvidia-modeset:ro
-      - /usr/lib/x86_64-linux-gnu/libnvidia-ml.so:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so:ro
     restart: unless-stopped
     stop_grace_period: 30s
     logging:

@@ -25,9 +25,7 @@ namespace NPCSystem
 
         async Task BeginDialogueRequestAsync(ulong clientId, NPCDialogueRequestMessage request)
         {
-            _activeClientId = clientId;
-            _activeRequestId = request.requestId;
-            _persistentClientTarget = RpcTarget.Single(clientId, RpcTargetUse.Persistent);
+            SetActiveClient(clientId, request.requestId);
             await WaitForResolvedPlayerNameAsync(clientId);
             ApplySessionStateToManager(clientId);
             LogRoutingEvent(
