@@ -8,7 +8,7 @@ MultiplayerManager:
     1: []
     2:
     - UnityEngine.UI:UnityEngine.UI:PositionAsUV1
-    - UnityEngine.UI:UnityEngine.UI:ScrollRect
+    - Unity.RenderPipelines.Universal.Runtime:UnityEngine.Rendering.Universal:UniversalAdditionalLightData
     - UnityEngine.UI:UnityEngine.EventSystems:TouchInputModule
     - UnityEngine.UI:UnityEngine.UI:Toggle
     - UnityEngine.UI:UnityEngine.UI:ContentSizeFitter
@@ -88,6 +88,6 @@ MultiplayerManager:
     - Unity.RenderPipelines.Core.Editor.Tests:UnityEngine.Rendering.Tests:RemoveComponent/FruitBasket
     - UnityEngine.VFXModule:UnityEngine.VFX:VFXRenderer
     - Unity.RenderPipelines.Core.Editor.Tests:UnityEngine.Rendering.Tests:RemoveComponent/WaterMelon
-    - UnityEngine.UI:UnityEngine.UI:Outline
-    - Unity.RenderPipelines.Universal.Runtime:UnityEngine.Rendering.Universal:UniversalAdditionalLightData
     - UnityEngine.CoreModule:UnityEngine:LineRenderer
+    - UnityEngine.UI:UnityEngine.UI:Outline
+    - UnityEngine.UI:UnityEngine.UI:ScrollRect

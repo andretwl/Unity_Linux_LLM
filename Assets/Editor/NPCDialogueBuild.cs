@@ -74,6 +74,12 @@ public static class NPCDialogueBuild
         }
 
         string outputPath = ResolvePath("Builds/WebGL_client/WebGL");
+
+        // Clean stale build artifacts that can cause type tree mismatches
+        // after apiCompatibilityLevel changes (e.g. old Addressables bundles
+        // from .NET 6 builds are incompatible with .NET Standard 2.1 builds).
+        CleanStaleBuildArtifacts(outputPath);
+
         var options = new BuildPlayerWithProfileOptions
         {
             buildProfile = LoadProfile(WebGLProfilePath),
@@ -95,6 +101,38 @@ public static class NPCDialogueBuild
             UnityEditor.EditorUtility.SetDirty(settings);
             AssetDatabase.SaveAssets();
             Debug.Log($"[NPCBuild] Restored Addressables auto-build to {prevValue}.");
+        }
+    }
+
+    /// <summary>
+    /// Delete stale build artifacts from previous builds that can cause
+    /// runtime errors after build configuration changes.
+    /// Stale Addressables bundles are incompatible when apiCompatibilityLevel
+    /// changes (type tree mismatches → memory corruption).
+    /// </summary>
+    static void CleanStaleBuildArtifacts(string outputPath)
+    {
+        if (!Directory.Exists(outputPath))
+            return;
+
+        string streamingAssets = Path.Combine(outputPath, "StreamingAssets");
+        string burstDebug = Path.Combine(outputPath, "Unity_Linux_LLM_BurstDebugInformation_DoNotShip");
+
+        // Delete old Addressables bundles in StreamingAssets/aa/
+        // These are NOT regenerated when m_BuildAddressablesWithPlayerBuild=0
+        // and will contain stale type tree data from previous builds.
+        string aaDir = Path.Combine(streamingAssets, "aa");
+        if (Directory.Exists(aaDir))
+        {
+            Directory.Delete(aaDir, true);
+            Debug.Log($"[NPCBuild] Cleaned stale Addressables bundles: {aaDir}");
+        }
+
+        // Clean Burst debug info (not needed at runtime)
+        if (Directory.Exists(burstDebug))
+        {
+            Directory.Delete(burstDebug, true);
+            Debug.Log($"[NPCBuild] Cleaned Burst debug info: {burstDebug}");
         }
     }
 
