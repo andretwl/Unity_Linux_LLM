@@ -7,8 +7,8 @@ MultiplayerManager:
   m_StrippingTypes:
     1: []
     2:
-    - UnityEngine.UI:UnityEngine.UI:Outline
     - UnityEngine.UI:UnityEngine.UI:PositionAsUV1
+    - Unity.RenderPipelines.Core.Editor.Tests:UnityEngine.Rendering.Tests:RemoveComponent/WaterMelon
     - UnityEngine.UI:UnityEngine.EventSystems:TouchInputModule
     - UnityEngine.UI:UnityEngine.UI:Toggle
     - UnityEngine.UI:UnityEngine.UI:ContentSizeFitter
@@ -39,15 +39,15 @@ MultiplayerManager:
     - UnityEngine.RenderAs2DModule:UnityEngine:RenderAs2D
     - UnityEngine.SpriteMaskModule:UnityEngine:SpriteMask
     - UnityEngine.CoreModule:UnityEngine:SpriteRenderer
+    - UnityEngine.UI:UnityEngine.UI:Dropdown/DropdownItem
     - UnityEngine.TilemapModule:UnityEngine.Tilemaps:TilemapRenderer
-    - UnityEngine.UI:UnityEngine.UI:AspectRatioFitter
     - UnityEngine.CoreModule:UnityEngine:Camera
     - UnityEngine.UIElementsModule:UnityEngine.UIElements:UIRenderer
+    - UnityEngine.UI:UnityEngine.UI:AspectRatioFitter
     - UnityEngine.AudioModule:UnityEngine:AudioEchoFilter
     - UnityEngine.UI:UnityEngine.EventSystems:PhysicsRaycaster
     - UnityEngine.UI:UnityEngine.EventSystems:BaseInputModule
     - Unity.RenderPipelines.Core.Editor.Tests:UnityEngine.Rendering.Tests:RemoveComponent/AdditionalApple
-    - UnityEngine.UI:UnityEngine.UI:Dropdown/DropdownItem
     - UnityEngine.CoreModule:UnityEngine:LightProbeGroup
     - UnityEngine.UI:UnityEngine.UI:HorizontalOrVerticalLayoutGroup
     - UnityEngine.UI:UnityEngine.EventSystems:BaseInput
@@ -88,6 +88,6 @@ MultiplayerManager:
     - Unity.RenderPipelines.Core.Editor.Tests:UnityEngine.Rendering.Tests:RemoveComponent/FruitBasket
     - UnityEngine.VFXModule:UnityEngine.VFX:VFXRenderer
     - UnityEngine.CoreModule:UnityEngine:LineRenderer
-    - Unity.RenderPipelines.Core.Editor.Tests:UnityEngine.Rendering.Tests:RemoveComponent/WaterMelon
+    - UnityEngine.UI:UnityEngine.UI:Outline
     - Unity.RenderPipelines.Universal.Runtime:UnityEngine.Rendering.Universal:UniversalAdditionalLightData
     - UnityEngine.UI:UnityEngine.UI:ScrollRect

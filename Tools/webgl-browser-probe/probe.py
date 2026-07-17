@@ -101,7 +101,6 @@ def run_probe(artifact_dir, port, timeout_s=60):
             )
             context = browser.new_context(
                 viewport={"width": 1280, "height": 720},
-                enable_web_security=True,
             )
             page = context.new_page()
 

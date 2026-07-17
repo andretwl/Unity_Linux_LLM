@@ -1,5 +1,5 @@
-model = "gpt-5.5"
-model_context_window = 400000
+model = "gpt-5.6-sol"
+model_context_window = 372000
 model_reasoning_effort = "high"
 plan_mode_reasoning_effort = "xhigh"
 [mcp_servers.gladekit-unity]

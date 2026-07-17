@@ -9,12 +9,23 @@ namespace NPCSystem.Tests
         const string ProjectSettingsPath = "ProjectSettings/ProjectSettings.asset";
         const string DesktopProfilePath = "Assets/Settings/Build Profiles/WebGL - Desktop - Development.asset";
         const string MobileProfilePath = "Assets/Settings/Build Profiles/WebGL - Mobile - Development.asset";
+        const string LinuxProfilePath = "Assets/Settings/Build Profiles/Linux.asset";
+        const string LinuxServerProfilePath = "Assets/Settings/Build Profiles/Linux Server.asset";
 
         static readonly string[] WebGLSettingsFiles =
         {
             ProjectSettingsPath,
             DesktopProfilePath,
             MobileProfilePath,
+        };
+
+        static readonly string[] ApiCompatibilityFiles =
+        {
+            ProjectSettingsPath,
+            DesktopProfilePath,
+            MobileProfilePath,
+            LinuxProfilePath,
+            LinuxServerProfilePath,
         };
 
         [Test]
@@ -28,6 +39,18 @@ namespace NPCSystem.Tests
                 AssertSetting(contents, "webGLDataCaching", "1", path);
                 AssertSetting(contents, "webGLNameFilesAsHashes", "1", path);
                 AssertSetting(contents, "webGLAnalyzeBuildSize", "1", path);
+                AssertApiCompatibilityLevel(contents, path);
+            }
+        }
+
+        [Test]
+        public void BuildProfiles_KeepDotNetStandardCompatibility()
+        {
+            foreach (string path in ApiCompatibilityFiles)
+            {
+                string contents = ReadProjectFile(path);
+
+                AssertApiCompatibilityLevel(contents, path);
             }
         }
 
@@ -46,7 +69,18 @@ namespace NPCSystem.Tests
             Assert.That(
                 contents.Contains(directSetting) || contents.Contains(buildProfileSetting),
                 Is.True,
-                $"{path} must keep {key} at {expectedValue} for WebGL browser startup stability."
+                $"{path} must keep {key} at {expectedValue} for browser startup stability."
+            );
+        }
+
+        static void AssertApiCompatibilityLevel(string contents, string path)
+        {
+            AssertSetting(contents, "apiCompatibilityLevel", "2", path);
+            Assert.That(
+                contents.Contains("apiCompatibilityLevel: 6")
+                    || contents.Contains("|   apiCompatibilityLevel: 6"),
+                Is.False,
+                $"{path} must not use .NET apiCompatibilityLevel 6 for player builds."
             );
         }
     }

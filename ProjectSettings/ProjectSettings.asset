@@ -812,7 +812,7 @@ PlayerSettings:
   spritePackerPolicy: 
   webGLMemorySize: 512
   webGLExceptionSupport: 1
-  webGLNameFilesAsHashes: 0
+  webGLNameFilesAsHashes: 1
   webGLShowDiagnostics: 0
   webGLDataCaching: 1
   webGLDebugSymbols: 0
@@ -824,7 +824,7 @@ PlayerSettings:
   webGLCompressionFormat: 2
   webGLWasmArithmeticExceptions: 0
   webGLLinkerTarget: 1
-  webGLThreadsSupport: 0
+  webGLThreadsSupport: 1
   webGLDecompressionFallback: 0
   webGLInitialMemorySize: 1024
   webGLMaximumMemorySize: 4096
@@ -944,7 +944,7 @@ PlayerSettings:
   hmiCpuConfiguration: 
   hmiLogStartupTiming: 0
   qnxGraphicConfPath: 
-  apiCompatibilityLevel: 6
+  apiCompatibilityLevel: 2
   captureStartupLogs: {}
   activeInputHandler: 1
   windowsGamepadBackendHint: 0

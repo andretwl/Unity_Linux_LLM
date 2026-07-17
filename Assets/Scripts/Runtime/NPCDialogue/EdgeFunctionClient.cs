@@ -46,9 +46,7 @@ namespace NPCSystem
 
         void Reset()
         {
-            _dialogueManager = FindAnyObjectByType<NPCDialogueManager>(
-                FindObjectsInactive.Include
-            );
+            _dialogueManager = FindAnyObjectByType<NPCDialogueManager>(FindObjectsInactive.Include);
         }
 
         bool IsReady => !string.IsNullOrWhiteSpace(_edgeFunctionUrl);
@@ -93,11 +91,7 @@ namespace NPCSystem
         {
             return await PostAsync<SummarizeSessionResult>(
                 "/memory/summarize-session",
-                new Dictionary<string, object>
-                {
-                    ["session_id"] = sessionId,
-                    ["user_id"] = userId,
-                }
+                new Dictionary<string, object> { ["session_id"] = sessionId, ["user_id"] = userId }
             );
         }
 

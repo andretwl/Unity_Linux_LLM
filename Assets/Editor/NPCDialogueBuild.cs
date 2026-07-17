@@ -75,6 +75,8 @@ public static class NPCDialogueBuild
 
         string outputPath = ResolvePath("Builds/WebGL_client/WebGL");
 
+        EnsureWebGLApiCompatibility(WebGLProfilePath);
+
         // Clean stale build artifacts that can cause type tree mismatches
         // after apiCompatibilityLevel changes (e.g. old Addressables bundles
         // from .NET 6 builds are incompatible with .NET Standard 2.1 builds).
@@ -102,6 +104,8 @@ public static class NPCDialogueBuild
             AssetDatabase.SaveAssets();
             Debug.Log($"[NPCBuild] Restored Addressables auto-build to {prevValue}.");
         }
+
+        EnsureWebGLApiCompatibility(WebGLProfilePath);
     }
 
     /// <summary>
@@ -199,6 +203,42 @@ public static class NPCDialogueBuild
     public static void PerformClientBuild() => BuildClient();
 
     public static void PerformWebGLBuild() => BuildWebGL();
+
+    static void EnsureWebGLApiCompatibility(string profilePath)
+    {
+        var currentLevel = PlayerSettings.GetApiCompatibilityLevel(NamedBuildTarget.WebGL);
+        if (currentLevel != ApiCompatibilityLevel.NET_Standard)
+        {
+            PlayerSettings.SetApiCompatibilityLevel(
+                NamedBuildTarget.WebGL,
+                ApiCompatibilityLevel.NET_Standard
+            );
+            Debug.Log(
+                $"[NPCBuild] Corrected WebGL API compatibility from {currentLevel} to "
+                    + $"{ApiCompatibilityLevel.NET_Standard}."
+            );
+        }
+
+        string fullProfilePath = ResolvePath(profilePath);
+        if (!File.Exists(fullProfilePath))
+        {
+            return;
+        }
+
+        string contents = File.ReadAllText(fullProfilePath);
+        string corrected = contents.Replace(
+            "|   apiCompatibilityLevel: 6",
+            "|   apiCompatibilityLevel: 2"
+        );
+        if (corrected == contents)
+        {
+            return;
+        }
+
+        File.WriteAllText(fullProfilePath, corrected);
+        AssetDatabase.ImportAsset(profilePath);
+        Debug.Log($"[NPCBuild] Corrected WebGL build profile API compatibility: {profilePath}");
+    }
 
     static void EnsureLinuxDockerReadableArtifacts(string outputPath, bool buildSucceeded)
     {

@@ -1,3 +1,4 @@
+using System.IO;
 using Unity.Web.Stripping.Editor;
 using UnityEditor;
 using UnityEditor.Build;
@@ -38,5 +39,42 @@ public sealed class WebGLStripPostBuild : IPreprocessBuildWithReport
             $"[WebGLStrip] Enabled package-managed stripping with "
                 + $"{settings.SubmodulesToStrip.Count} configured submodule(s)."
         );
+    }
+}
+
+public sealed class WebGLStripWorkerMetadataPostBuild : IPostprocessBuildWithReport
+{
+    static readonly string[] MetadataFiles = { "functions.json", "labels.json" };
+
+    public int callbackOrder => 1000;
+
+    public void OnPostprocessBuild(BuildReport report)
+    {
+        if (report.summary.platform != BuildTarget.WebGL)
+        {
+            return;
+        }
+
+        string buildPath = Path.Combine(report.summary.outputPath, "Build");
+        string workerBuildPath = Path.Combine(buildPath, "Build");
+        if (!Directory.Exists(buildPath))
+        {
+            return;
+        }
+
+        foreach (string metadataFile in MetadataFiles)
+        {
+            string sourcePath = Path.Combine(buildPath, metadataFile);
+            if (!File.Exists(sourcePath))
+            {
+                continue;
+            }
+
+            Directory.CreateDirectory(workerBuildPath);
+            File.Copy(sourcePath, Path.Combine(workerBuildPath, metadataFile), true);
+            Debug.Log(
+                $"[WebGLStrip] Mirrored {metadataFile} for threaded worker metadata lookup."
+            );
+        }
     }
 }
