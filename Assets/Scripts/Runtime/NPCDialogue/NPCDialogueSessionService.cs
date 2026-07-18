@@ -352,6 +352,9 @@ namespace NPCSystem
                     promptVars.trustLabel = playerCtx.TrustLabel;
                     promptVars.mood = playerCtx.CurrentMood;
                     promptVars.dialogueCount = playerCtx.DialogueCount;
+                    // Use last visited location as current location; fall back to default
+                    if (playerCtx.VisitedLocations.Count > 0)
+                        promptVars.currentLocation = playerCtx.VisitedLocations[^1];
                 }
                 catch (Exception ex)
                 {

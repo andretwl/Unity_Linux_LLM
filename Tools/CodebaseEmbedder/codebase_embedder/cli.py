@@ -171,6 +171,9 @@ def cmd_index(args: argparse.Namespace) -> int:
         sparse_vectors = compute_sparse_vectors([r.text for r in records])
     with timed_stage("qdrant_collection", timings):
         store = QdrantStore(cfg.qdrant_url, cfg.collection_name)
+        if args.clear:
+            existed = store.clear()
+            print(f"Cleared Qdrant collection '{cfg.collection_name}' (existed={existed}).")
         store.ensure_collection(dim)
     upserted_records = 0
     for start in range(0, len(records), args.batch_size):
@@ -291,6 +294,7 @@ def cmd_check(args: argparse.Namespace) -> int:
         output_path=args.output,
         min_severity=args.min_severity,
         json_output=args.json,
+        exclude_patterns=args.exclude or None,
     )
 
 
@@ -339,6 +343,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--use-vector-cache", action="store_true", help="Cache embeddings by model, vector dimension, point id, and text hash")
     p.add_argument("--reuse-artifacts", action="store_true", help="Load existing .codebase-index/chunks.jsonl instead of rebuilding artifacts")
     p.add_argument("--fail-if-artifacts-missing", action="store_true", help="With --reuse-artifacts, fail if chunks.jsonl is missing or empty")
+    p.add_argument("--clear", action="store_true", help="Delete all points from the Qdrant collection before indexing (clean re-index)")
     p.set_defaults(func=cmd_index)
     p = sub.add_parser("query")
     add_common_args(p)
@@ -369,6 +374,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--target", help="Target subdirectory (e.g., Assets/Scripts/Runtime)")
     p.add_argument("--output", help="Write report to file")
     p.add_argument("--rules", help="Path to .codebaserules.yaml (default: project root)")
+    p.add_argument("--exclude", action="append", default=[],
+                    help="Glob pattern to exclude (repeatable, e.g. --exclude 'Packages/**' --exclude 'Assets/Editor/**')")
     p.add_argument("--min-severity", default="Suggestion", choices=["Error", "Warning", "Suggestion", "Info"],
                     help="Minimum severity to report (default: Suggestion)")
     p.add_argument("--json", action="store_true", help="Output as JSON")

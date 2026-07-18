@@ -111,7 +111,8 @@ namespace NPCSystem
         [Rpc(SendTo.Server)]
         void RegisterPlayerNameServerRpc(string name, RpcParams rpcParams = default)
         {
-            if (!IsServer) return;
+            if (!IsServer)
+                return;
 
             NPCFlowLogger
                 .FindOrCreate()

@@ -86,7 +86,7 @@ namespace NPCSystem
                     {
                         try
                         {
-                            await FlushAsync().ConfigureAwait(false);
+                            await FlushAsync();
                         }
                         catch (Exception ex)
                         {
@@ -286,7 +286,7 @@ namespace NPCSystem
                 _pendingSpans.Clear();
             }
 
-            await SendTracesAsync(snapshot).ConfigureAwait(false);
+            await SendTracesAsync(snapshot);
         }
 
         private static void SendTraces(List<SpanData> spans)
@@ -304,7 +304,6 @@ namespace NPCSystem
 
                 var response = _httpClient
                     .SendAsync(request)
-                    .ConfigureAwait(false)
                     .GetAwaiter()
                     .GetResult();
                 _ = response.StatusCode; // swallow — we just care it was sent
@@ -334,7 +333,7 @@ namespace NPCSystem
                 request.Content.Headers.ContentType =
                     new System.Net.Http.Headers.MediaTypeHeaderValue("application/msgpack");
 
-                var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+                var response = await _httpClient.SendAsync(request);
                 _ = response.StatusCode;
             }
             catch (Exception ex)

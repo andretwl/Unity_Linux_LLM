@@ -35,20 +35,24 @@ class VectorCache:
         entries = self._load()
         key = self.key_for(record)
         entries[key] = list(vector)
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        payload = {
-            "key": key,
-            "model": self.model,
-            "dimension": self.dimension,
-            "record_type": record.record_type,
-            "point_id": record.point_id,
-            "stable_key": record.stable_key,
-            "path": record.payload.get("path", ""),
-            "created_at": utc_now(),
-            "vector": vector,
-        }
-        with self.path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(payload, sort_keys=True) + "\n")
+        try:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            payload = {
+                "key": key,
+                "model": self.model,
+                "dimension": self.dimension,
+                "record_type": record.record_type,
+                "point_id": record.point_id,
+                "stable_key": record.stable_key,
+                "path": record.payload.get("path", ""),
+                "created_at": utc_now(),
+                "vector": vector,
+            }
+            with self.path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(payload, sort_keys=True) + "\n")
+        except PermissionError:
+            # Gracefully degrade — cache writes are best-effort
+            pass
 
     def _load(self) -> dict[str, list[float]]:
         if self._entries is not None:

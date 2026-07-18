@@ -4,13 +4,9 @@
     "references": [
         "Unity.Netcode.Runtime",
         "Unity.Collections",
-        "Unity.Multiplayer.MetricTypes",
-        "Unity.Multiplayer.NetStats",
         "Unity.Multiplayer.Tools.MetricTypes",
         "Unity.Multiplayer.Tools.NetStats",
         "Unity.Networking.Transport",
-        "ClientNetworkTransform",
-        "Unity.Netcode.TestHelpers.Runtime",
         "Unity.Mathematics",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"

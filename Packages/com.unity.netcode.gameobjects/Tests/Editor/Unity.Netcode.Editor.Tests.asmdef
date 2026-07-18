@@ -5,8 +5,6 @@
         "Unity.Collections",
         "Unity.Netcode.Runtime",
         "Unity.Netcode.Editor",
-        "Unity.Multiplayer.MetricTypes",
-        "Unity.Multiplayer.NetStats",
         "Unity.Multiplayer.Tools.MetricTypes",
         "Unity.Multiplayer.Tools.NetStats",
         "Unity.Networking.Transport",
@@ -45,9 +43,9 @@
             "define": "SCENE_MANAGEMENT_SCENE_HANDLE_NO_INT_CONVERSION"
         },
         {
-          "name": "Unity",
-          "expression": "6000.5.0a1",
-          "define": "SCENE_MANAGEMENT_SCENE_HANDLE_MUST_USE_ULONG"
+            "name": "Unity",
+            "expression": "6000.5.0a1",
+            "define": "SCENE_MANAGEMENT_SCENE_HANDLE_MUST_USE_ULONG"
         }
     ],
     "noEngineReferences": false

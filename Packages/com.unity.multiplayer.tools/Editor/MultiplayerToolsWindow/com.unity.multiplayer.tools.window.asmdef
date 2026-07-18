@@ -2,10 +2,10 @@
     "name": "com.unity.multiplayer.tools.window",
     "rootNamespace": "",
     "references": [
-        "GUID:c2f37c48e057342cda1e4b53ad30d616",
-        "GUID:2c360f3794ebc41388fc11424ddbfdd0",
-        "GUID:2406edb708fb4de7b412856af92595c9",
-        "GUID:1491147abca9d7d4bb7105af628b223e"
+        "Unity.Multiplayer.Tools.Common",
+        "Unity.Multiplayer.Tools.NetStatsMonitor.Component",
+        "Unity.Multiplayer.Tools.NetworkSimulator.Runtime",
+        "Unity.Netcode.Runtime"
     ],
     "includePlatforms": [
         "Editor"

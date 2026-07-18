@@ -199,10 +199,14 @@ namespace NPCSystem
         /// </summary>
         public static TrustThreshold ClassifyTrust(int trustScore)
         {
-            if (trustScore >= 80) return TrustThreshold.Trusting;
-            if (trustScore >= 60) return TrustThreshold.Cooperative;
-            if (trustScore >= 40) return TrustThreshold.Cautious;
-            if (trustScore >= 20) return TrustThreshold.Guarded;
+            if (trustScore >= 80)
+                return TrustThreshold.Trusting;
+            if (trustScore >= 60)
+                return TrustThreshold.Cooperative;
+            if (trustScore >= 40)
+                return TrustThreshold.Cautious;
+            if (trustScore >= 20)
+                return TrustThreshold.Guarded;
             return TrustThreshold.Hostile;
         }
     }

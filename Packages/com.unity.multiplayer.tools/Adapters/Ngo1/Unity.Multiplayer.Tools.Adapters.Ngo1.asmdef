@@ -2,7 +2,6 @@
     "name": "Unity.Multiplayer.Tools.Adapters.Ngo1",
     "rootNamespace": "Unity.Multiplayer.Tools.Adapters.Ngo1",
     "references": [
-        "com.unity.netcode.runtime",
         "Unity.Multiplayer.Tools.Adapters",
         "Unity.Multiplayer.Tools.Common",
         "Unity.Multiplayer.Tools.MetricEvents",

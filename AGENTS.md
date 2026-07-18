@@ -82,6 +82,7 @@ Dual source of truth (do not duplicate rule text here):
 uv run codebase-embedder status --root ../..
 uv run codebase-embedder scan --root ../..
 uv run codebase-embedder index --root ../..   # embeds + upserts to Qdrant
+uv run codebase-embedder index --root ../.. --clear   # delete all points first, then re-index
 uv run codebase-embedder query --root ../.. --local "<concept>"
 uv run codebase-embedder check --root ../..   # runs all 21 rules from .codebaserules.yaml
 uv run codebase-embedder check --root ../.. --target Assets/Scripts/Runtime --output check-report.md
@@ -166,6 +167,23 @@ uv run --extra test pytest -q
 - After changing `apiCompatibilityLevel`, delete `Library/` and rebuild.
 - `m_BuildAddressablesWithPlayerBuild` should be `0` for iteration builds. Rebuild Addressables manually when needed.
 - If SBP errors appear, clear `Library/com.unity.addressables/`, `Temp/com.unity.addressables/`, and stale `addressables_content_state.bin` files, then rebuild.
+
+## 14. Code quality workflow
+
+Repeatable audit → fix → verify cycle using existing tools:
+
+1. **Scan** — `uv run codebase-embedder scan --root ../..` (refreshes `.codebase-index/` artifacts)
+2. **Check** — `uv run codebase-embedder check --root ../.. --target <path> --output report.md` (runs `.codebaserules.yaml` rules)
+3. **Fix** — address violations in reported files (SER01 → private fields, NET01 → remove hard-coded localhost, BPR01 → split bool params, CMT01 → delete commented code)
+4. **Re-check** — run `check` again, confirm 0 violations
+5. **Scene audit** (when Unity Editor is open) — use GladeKit MCP: `get_scene_hierarchy` → `find_game_objects` → `get_component_inspector_properties` → verify field values match code expectations
+6. **Re-index** — `uv run codebase-embedder index --root ../.. --clear` for a clean re-index when artifacts change significantly
+
+Key flags:
+- `--target <path>` — scope `check` to a subdirectory
+- `--output <file>` — write report to file
+- `--clear` — delete all Qdrant points before re-indexing
+- `--no-qdrant` — skip Qdrant upsert (local artifacts only)
 
 ---
 

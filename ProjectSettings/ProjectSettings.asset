@@ -842,7 +842,7 @@ PlayerSettings:
   webWasm2023: 1
   webEnableSubmoduleStrippingCompatibility: 1
   scriptingDefineSymbols:
-    Standalone: GLADE_AI_NAVIGATION;GLADE_INPUT_SYSTEM;GLADE_UGUI
+    Standalone: GLADE_AI_NAVIGATION;GLADE_INPUT_SYSTEM;GLADE_UGUI;SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY
     WebGL: 
   additionalCompilerArguments: {}
   platformArchitecture: {}

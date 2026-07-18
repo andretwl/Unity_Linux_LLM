@@ -90,10 +90,14 @@ namespace NPCSystem
         {
             get
             {
-                if (_trustScore >= 80) return "trusting";
-                if (_trustScore >= 60) return "cooperative";
-                if (_trustScore >= 40) return "cautious";
-                if (_trustScore >= 20) return "guarded";
+                if (_trustScore >= 80)
+                    return "trusting";
+                if (_trustScore >= 60)
+                    return "cooperative";
+                if (_trustScore >= 40)
+                    return "cautious";
+                if (_trustScore >= 20)
+                    return "guarded";
                 return "hostile";
             }
         }

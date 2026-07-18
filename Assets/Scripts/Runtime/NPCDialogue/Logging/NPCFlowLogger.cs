@@ -299,14 +299,14 @@ namespace NPCSystem
             );
         }
 
-        [Button("Run Log Cleanup Now", buttonHeight: 20f)]
+        [Button(buttonLabel: "Run Log Cleanup Now", buttonHeight: 20f)]
         void RunLogCleanupInspector()
         {
             string directory = !string.IsNullOrWhiteSpace(OverrideAbsoluteLogDirectory)
                 ? OverrideAbsoluteLogDirectory.Trim()
                 : Path.Combine(
-                    Application.persistentDataPath,
-                    string.IsNullOrWhiteSpace(RelativeLogDirectory)
+                    path1: Application.persistentDataPath,
+                    path2: string.IsNullOrWhiteSpace(RelativeLogDirectory)
                         ? "NPCDialogue/Logs"
                         : RelativeLogDirectory.Trim()
                 );
@@ -348,19 +348,19 @@ namespace NPCSystem
             string directory = !string.IsNullOrWhiteSpace(OverrideAbsoluteLogDirectory)
                 ? OverrideAbsoluteLogDirectory.Trim()
                 : Path.Combine(
-                    Application.persistentDataPath,
-                    string.IsNullOrWhiteSpace(RelativeLogDirectory)
+                    path1: Application.persistentDataPath,
+                    path2: string.IsNullOrWhiteSpace(value: RelativeLogDirectory)
                         ? "NPCDialogue/Logs"
                         : RelativeLogDirectory.Trim()
                 );
 
             Log(
-                NPCFlowStage.ConfigurationValidation,
-                issues.Count == 0 ? NPCFlowStatus.Success : NPCFlowStatus.Warning,
-                NPCFlowLogLevel.Info,
-                issues.Count == 0
+                stage: NPCFlowStage.ConfigurationValidation,
+                status: issues.Count == 0 ? NPCFlowStatus.Success : NPCFlowStatus.Warning,
+                level: NPCFlowLogLevel.Info,
+                message: issues.Count == 0
                     ? "All logger settings valid. Log path: "
-                        + Path.Combine(directory, "npc-flow-*.jsonl").Replace('\\', '/')
+                        + Path.Combine(path1: directory, path2: "npc-flow-*.jsonl").Replace(oldChar: '\\', newChar: '/')
                     : "Logger settings have "
                         + issues.Count
                         + " issue(s): "

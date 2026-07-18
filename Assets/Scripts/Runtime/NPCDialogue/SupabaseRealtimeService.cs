@@ -201,7 +201,10 @@ namespace NPCSystem
 
             if (_roomChannel != null)
             {
-                try { _realtime?.Remove(_roomChannel); }
+                try
+                {
+                    _realtime?.Remove(_roomChannel);
+                }
                 catch (Exception ex)
                 {
                     Debug.LogWarning(
@@ -507,7 +510,10 @@ namespace NPCSystem
             // Unsubscribe from any previous room first
             if (_roomChannel != null)
             {
-                try { _realtime.Remove(_roomChannel); }
+                try
+                {
+                    _realtime.Remove(_roomChannel);
+                }
                 catch { /* ignore */ }
                 _roomChannel = null;
                 _roomBroadcast = null;

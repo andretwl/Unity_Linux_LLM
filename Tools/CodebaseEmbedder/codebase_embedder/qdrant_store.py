@@ -56,6 +56,20 @@ class QdrantStore:
     # Collection lifecycle
     # ------------------------------------------------------------------
 
+    def clear(self) -> bool:
+        """Delete the entire collection so it can be recreated fresh.
+
+        Returns True if the collection existed and was deleted, False if
+        it did not exist.
+        """
+        try:
+            self._request("DELETE", f"/collections/{self.collection}")
+            return True
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                return False
+            raise
+
     def ensure_collection(self, vector_size: int) -> None:
         """Create or verify the collection with named dense + sparse vectors.
 

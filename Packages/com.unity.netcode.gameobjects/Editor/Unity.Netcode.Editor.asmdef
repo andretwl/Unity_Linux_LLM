@@ -3,11 +3,7 @@
     "rootNamespace": "Unity.Netcode.Editor",
     "references": [
         "Unity.Netcode.Runtime",
-        "Unity.Netcode.Components",
-        "Unity.Services.Relay",
-        "Unity.Networking.Transport",
-        "Unity.Services.Core",
-        "Unity.Services.Authentication"
+        "Unity.Networking.Transport"
     ],
     "includePlatforms": [
         "Editor"

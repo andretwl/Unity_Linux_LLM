@@ -10064,7 +10064,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: 9452ae1262a74094f8a68013fbcd1834, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -11052,6 +11052,7 @@ GameObject:
   - component: {fileID: 1778380643}
   - component: {fileID: 1778380645}
   - component: {fileID: 1778380644}
+  - component: {fileID: 1778380646}
   m_Layer: 0
   m_Name: NPCDialogueSystem
   m_TagString: Untagged
@@ -11080,7 +11081,7 @@ MonoBehaviour:
   _evidenceState: {fileID: 1778380644}
   _supabaseRepo: {fileID: 1778380637}
   _remoteHost: 127.0.0.1
-  _remotePort: 8090
+  _remotePort: 8080
   _remoteModel: llama-3.2-3b-instruct:q8_0
   _cachedModelNames:
   - llama-3.1-8b-q4-k-m-vulkan
@@ -11098,7 +11099,7 @@ MonoBehaviour:
   - gemma-4-e2b-it
   - intelligent-router
   _remoteEmbeddingHost: 127.0.0.1
-  _remoteEmbeddingPort: 8090
+  _remoteEmbeddingPort: 8080
   _profiles:
   - {fileID: 11400000, guid: fee9805d1a4aff5de9e2b4c154fda9a7, type: 2}
   - {fileID: 11400000, guid: a2b00eea2a038c8d890b04ea76369e61, type: 2}
@@ -11284,6 +11285,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 768834cce95a7c94fb343460934183f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: NPCSystem.Runtime::NPCSystem.NPCDialogueActionPlanner
+--- !u!114 &1778380646
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1778380622}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48dcf98b290a05a02be6c56f7fc1feb0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NPCSystem.Runtime::NPCSystem.PlayerDialogueContextService
+  _authService: {fileID: 1351714796}
+  _evidenceState: {fileID: 1778380644}
+  _enableServerContext: 1
+  _currentNpcSlug: 
+  _cachedContext: 
 --- !u!1 &1779205794
 GameObject:
   m_ObjectHideFlags: 0

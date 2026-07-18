@@ -504,9 +504,11 @@ namespace NPCSystem
 
         NPCProfile FindProfile(string npcName)
         {
-            if (string.IsNullOrWhiteSpace(npcName)) return null;
+            if (string.IsNullOrWhiteSpace(npcName))
+                return null;
             string key = npcName.Trim();
-            if (_profilesBySlug.TryGetValue(key, out NPCProfile bySlug)) return bySlug;
+            if (_profilesBySlug.TryGetValue(key, out NPCProfile bySlug))
+                return bySlug;
             return Profiles.FirstOrDefault(profile =>
                 string.Equals(profile.GetDisplayName(), key, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(profile.name, key, StringComparison.OrdinalIgnoreCase));
@@ -516,7 +518,8 @@ namespace NPCSystem
         public List<DialogueEntry> GetHistory(string npcName)
         {
             NPCProfile profile = FindProfile(npcName);
-            if (profile == null) return new List<DialogueEntry>();
+            if (profile == null)
+                return new List<DialogueEntry>();
             return _historyService?.GetHistory(profile) ?? new List<DialogueEntry>();
         }
 
@@ -586,8 +589,10 @@ namespace NPCSystem
 #if UNITY_EDITOR
         void OnValidate()
         {
-            if (Application.isPlaying) return;
-            if (_qdrantRag == null) _qdrantRag = GetComponent<QdrantRAGService>();
+            if (Application.isPlaying)
+                return;
+            if (_qdrantRag == null)
+                _qdrantRag = GetComponent<QdrantRAGService>();
         }
 #endif
     }

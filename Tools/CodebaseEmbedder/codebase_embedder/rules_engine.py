@@ -142,14 +142,18 @@ def check_all_files(
     rules: list[RuleDef],
     csharp_paths: list[Path],
     target_dir: str | None = None,
+    exclude_patterns: list[str] | None = None,
 ) -> list[RuleFinding]:
     """Run all applicable rules against all C# files."""
+    import fnmatch as _fnmatch
     all_findings: list[RuleFinding] = []
     roslyn_rules = [r for r in rules if r.check == "roslyn"]
 
     for path in csharp_paths:
         rel = path.relative_to(project_root).as_posix()
         if target_dir and not rel.startswith(target_dir):
+            continue
+        if exclude_patterns and any(_fnmatch.fnmatch(rel, pat) for pat in exclude_patterns):
             continue
         try:
             text = path.read_text(encoding="utf-8", errors="ignore")
@@ -250,6 +254,7 @@ def run_check(
     output_path: str | None = None,
     min_severity: str = "Suggestion",
     json_output: bool = False,
+    exclude_patterns: list[str] | None = None,
 ) -> int:
     """Main entry point for the check command."""
     if rules_path is None:
@@ -259,10 +264,10 @@ def run_check(
     csharp_paths = sorted(project_root.rglob("*.cs"))
 
     # Filter out build artifacts
-    exclude_dirs = {".git", ".venv", "Library", "Temp", "Logs", "obj", "bin", "Build", "Builds", "node_modules", "__pycache__"}
+    exclude_dirs = {".git", ".venv", "Library", "Temp", "Logs", "obj", "bin", "Build", "Builds", "node_modules", "__pycache__", "Packages"}
     csharp_paths = [p for p in csharp_paths if not any(d in p.parts for d in exclude_dirs)]
 
-    findings = check_all_files(project_root, rules, csharp_paths, target_dir)
+    findings = check_all_files(project_root, rules, csharp_paths, target_dir, exclude_patterns)
 
     if json_output:
         output = json.dumps(

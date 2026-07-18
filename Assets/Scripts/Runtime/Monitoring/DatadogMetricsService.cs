@@ -287,7 +287,14 @@ namespace NPCSystem
             }
             catch (ObjectDisposedException)
             {
-                // Shutdown race — ignore
+                // Shutdown race — silently ignore
+                NPCFlowLogger.FindOrCreate().Log(
+                    NPCFlowStage.SceneBootstrap,
+                    NPCFlowStatus.Warning,
+                    NPCFlowLogLevel.Debug,
+                    "[DatadogMetrics] Send skipped — ObjectDisposedException (shutdown race).",
+                    source: nameof(DatadogMetricsService)
+                );
             }
             catch (Exception ex)
             {

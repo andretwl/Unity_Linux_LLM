@@ -257,16 +257,22 @@ namespace NPCSystem
             // Local wins for clues/items/locations discovered *this session*
             // that haven't been persisted yet.  We merge both.
             var mergedClues = new HashSet<string>();
-            foreach (var c in server.KnownClues) mergedClues.Add(c);
-            foreach (var c in local.KnownClues) mergedClues.Add(c);
+            foreach (var c in server.KnownClues)
+                mergedClues.Add(c);
+            foreach (var c in local.KnownClues)
+                mergedClues.Add(c);
 
             var mergedItems = new HashSet<string>();
-            foreach (var i in server.Inventory) mergedItems.Add(i);
-            foreach (var i in local.Inventory) mergedItems.Add(i);
+            foreach (var i in server.Inventory)
+                mergedItems.Add(i);
+            foreach (var i in local.Inventory)
+                mergedItems.Add(i);
 
             var mergedLocations = new HashSet<string>();
-            foreach (var l in server.VisitedLocations) mergedLocations.Add(l);
-            foreach (var l in local.VisitedLocations) mergedLocations.Add(l);
+            foreach (var l in server.VisitedLocations)
+                mergedLocations.Add(l);
+            foreach (var l in local.VisitedLocations)
+                mergedLocations.Add(l);
 
             return new PlayerDialogueContext(
                 playerName: !string.IsNullOrWhiteSpace(server.PlayerName)

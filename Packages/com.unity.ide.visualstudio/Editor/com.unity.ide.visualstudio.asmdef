@@ -1,5 +1,6 @@
 {
     "name": "Unity.VisualStudio.Editor",
+    "rootNamespace": "Unity.VisualStudio.Editor",
     "references": [],
     "includePlatforms": [
         "Editor"

@@ -948,7 +948,7 @@ MonoBehaviour:
     - line: '|     QNX: ENABLE_JSON_CATALOG'
     - line: '|     Server: ENABLE_JSON_CATALOG'
     - line: '|     Standalone: ENABLE_JSON_CATALOG;GLADE_AI_NAVIGATION;GLADE_INPUT_SYSTEM;GLADE_UGUI'
-    - line: '|     WebGL: ENABLE_JSON_CATALOG'
+    - line: '|     WebGL: ENABLE_JSON_CATALOG;SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY'
     - line: '|     Windows Store Apps: ENABLE_JSON_CATALOG'
     - line: '|     XboxOne: ENABLE_JSON_CATALOG'
     - line: '|     iPhone: ENABLE_JSON_CATALOG'

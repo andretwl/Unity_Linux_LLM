@@ -100,5 +100,6 @@
         "node",
         "supa-storage",
         "supabase/postgres-meta"
-    ]
+    ],
+    "csharpier.enableDebugLogs": true
 }

@@ -2,10 +2,6 @@
     "name": "Unity.Netcode.Runtime",
     "rootNamespace": "Unity.Netcode",
     "references": [
-        "Unity.Multiplayer.MetricTypes",
-        "Unity.Multiplayer.NetStats",
-        "Unity.Multiplayer.NetStatsReporting",
-        "Unity.Multiplayer.NetworkSolutionInterface",
         "Unity.Multiplayer.Tools.MetricTypes",
         "Unity.Multiplayer.Tools.NetStats",
         "Unity.Multiplayer.Tools.NetStatsReporting",
@@ -99,9 +95,9 @@
             "define": "NGO_FINDOBJECTS_NOSORTING"
         },
         {
-          "name": "Unity",
-          "expression": "6000.6.0a3",
-          "define": "NGO_FINDOBJECTS_UNORDERED_IDS"
+            "name": "Unity",
+            "expression": "6000.6.0a3",
+            "define": "NGO_FINDOBJECTS_UNORDERED_IDS"
         }
     ],
     "noEngineReferences": false

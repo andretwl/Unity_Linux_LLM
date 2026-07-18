@@ -81,6 +81,7 @@ namespace NPCSystem
         bool _initialized;
         bool _isRegisterMode;
         bool _eventsBound;
+        bool _referencesResolved;
 
         [System.Serializable]
         public class AuthEvents
@@ -149,7 +150,7 @@ namespace NPCSystem
 
         void OnValidate()
         {
-            ResolveReferences();
+            ResolveReferences(force: true);
             ConfigureInputs();
             NormalizeVisualLayout();
             ApplyMode(_isRegisterMode);
@@ -180,6 +181,14 @@ namespace NPCSystem
 
         void ResolveReferences()
         {
+            ResolveReferences(force: false);
+        }
+
+        void ResolveReferences(bool force)
+        {
+            if (_referencesResolved && !force)
+                return;
+
             if (authPanel == null)
             {
                 authPanel = FindObject("AuthPanel");

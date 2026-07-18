@@ -2,7 +2,7 @@
     "name": "Unity.TextMeshPro",
     "rootNamespace": "",
     "references": [
-        "GUID:43b111c4a445f446abd2c02e77750ff5"
+        "Unity.InternalAPIEngineBridge.004"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
