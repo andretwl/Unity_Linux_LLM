@@ -293,15 +293,14 @@ namespace NPCSystem
         {
             try
             {
-                string json = BuildPayload(spans);
-                byte[] data = Encoding.UTF8.GetBytes(json);
+                byte[] data = BuildMsgpackPayload(spans);
 
                 using var request = new HttpRequestMessage(HttpMethod.Post, _traceEndpoint)
                 {
                     Content = new ByteArrayContent(data),
                 };
                 request.Content.Headers.ContentType =
-                    new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+                    new System.Net.Http.Headers.MediaTypeHeaderValue("application/msgpack");
 
                 var response = _httpClient
                     .SendAsync(request)
@@ -326,15 +325,14 @@ namespace NPCSystem
         {
             try
             {
-                string json = BuildPayload(spans);
-                byte[] data = Encoding.UTF8.GetBytes(json);
+                byte[] data = BuildMsgpackPayload(spans);
 
                 using var request = new HttpRequestMessage(HttpMethod.Post, _traceEndpoint)
                 {
                     Content = new ByteArrayContent(data),
                 };
                 request.Content.Headers.ContentType =
-                    new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+                    new System.Net.Http.Headers.MediaTypeHeaderValue("application/msgpack");
 
                 var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
                 _ = response.StatusCode;
@@ -352,11 +350,11 @@ namespace NPCSystem
         }
 
         /// <summary>
-        /// Builds the Datadog Trace Agent payload.
+        /// Builds the Datadog Trace Agent v0.5 payload in MessagePack format.
         /// Format: [ [ span1, span2 ], [ span3 ] ] — an array of trace arrays.
-        /// If all spans share the same trace_id, they go in one trace array.
+        /// Datadog v0.5 requires binary msgpack encoding, not JSON.
         /// </summary>
-        private static string BuildPayload(List<SpanData> spans)
+        private static byte[] BuildMsgpackPayload(List<SpanData> spans)
         {
             // Group spans by trace_id
             var traces = new Dictionary<long, List<Dictionary<string, object>>>();
@@ -369,36 +367,203 @@ namespace NPCSystem
                     traces[span.TraceId] = traceSpans;
                 }
 
-                traceSpans.Add(
-                    new Dictionary<string, object>
-                    {
-                        ["trace_id"] = span.TraceId,
-                        ["span_id"] = span.SpanId,
-                        ["parent_id"] = span.ParentId,
-                        ["start"] = span.StartNanos,
-                        ["duration"] = span.DurationNanos,
-                        ["service"] = span.Service,
-                        ["name"] = span.OperationName,
-                        ["resource"] = span.Resource,
-                        ["type"] = span.Type,
-                        ["meta"] = span.Tags,
-                        ["metrics"] = new Dictionary<string, object>(),
-                    }
-                );
+                var spanDict = new Dictionary<string, object>
+                {
+                    ["trace_id"] = span.TraceId,
+                    ["span_id"] = span.SpanId,
+                    ["parent_id"] = span.ParentId,
+                    ["start"] = span.StartNanos,
+                    ["duration"] = span.DurationNanos,
+                    ["service"] = span.Service,
+                    ["name"] = span.OperationName,
+                    ["resource"] = span.Resource,
+                    ["type"] = span.Type,
+                };
+
+                // Add tags if present
+                if (span.Tags != null && span.Tags.Count > 0)
+                    spanDict["meta"] = span.Tags;
+
+                // Empty metrics map (required by v0.5)
+                spanDict["metrics"] = new Dictionary<string, double>();
+
+                traceSpans.Add(spanDict);
             }
 
-            // Build outer array of trace arrays
+            // Build outer array of trace arrays, encode as msgpack
             var payload = new List<object>();
             foreach (var traceSpans in traces.Values)
             {
                 payload.Add(traceSpans);
             }
 
-            return JsonConvert.SerializeObject(
-                payload,
-                Formatting.None,
-                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }
-            );
+            return MsgpackEncode(payload);
+        }
+
+        /// <summary>
+        /// Lightweight MessagePack encoder for Datadog v0.5 trace format.
+        /// Handles: integers (int64), strings, arrays, and maps.
+        /// </summary>
+        private static byte[] MsgpackEncode(object obj)
+        {
+            var buffer = new List<byte>();
+            EncodeValue(buffer, obj);
+            return buffer.ToArray();
+        }
+
+        private static void EncodeValue(List<byte> buffer, object obj)
+        {
+            if (obj == null)
+            {
+                buffer.Add(0xc0); // nil
+            }
+            else if (obj is long longVal)
+            {
+                EncodeLong(buffer, longVal);
+            }
+            else if (obj is int intVal)
+            {
+                EncodeLong(buffer, (long)intVal);
+            }
+            else if (obj is double doubleVal)
+            {
+                buffer.Add(0xcb); // float 64
+                buffer.AddRange(BitConverter.GetBytes(doubleVal));
+            }
+            else if (obj is string str)
+            {
+                EncodeString(buffer, str);
+            }
+            else if (obj is Dictionary<string, object> dict)
+            {
+                EncodeMap(buffer, dict);
+            }
+            else if (obj is Dictionary<string, double> doubleDict)
+            {
+                var objDict = new Dictionary<string, object>();
+                foreach (var kvp in doubleDict)
+                    objDict[kvp.Key] = (object)kvp.Value;
+                EncodeMap(buffer, objDict);
+            }
+            else if (obj is Dictionary<string, string> stringDict)
+            {
+                var objDict = new Dictionary<string, object>();
+                foreach (var kvp in stringDict)
+                    objDict[kvp.Key] = (object)kvp.Value;
+                EncodeMap(buffer, objDict);
+            }
+            else if (obj is System.Collections.IList list)
+            {
+                EncodeArray(buffer, list);
+            }
+        }
+
+        private static void EncodeLong(List<byte> buffer, long val)
+        {
+            // Datadog v0.5 uses varint64 (zigzag encoding for signed, or raw for unsigned)
+            // For trace IDs and span IDs, use varint encoding
+            if (val >= 0 && val < 128)
+            {
+                buffer.Add((byte)val); // positive fixint
+            }
+            else if (val >= -32 && val < 0)
+            {
+                buffer.Add((byte)(0xe0 | (val & 0x1f))); // negative fixint
+            }
+            else if (val >= 0 && val <= 0xffff)
+            {
+                buffer.Add(0xcd); // uint 16
+                buffer.AddRange(BitConverter.GetBytes((ushort)val));
+            }
+            else if (val >= 0 && val <= 0xffffffff)
+            {
+                buffer.Add(0xce); // uint 32
+                buffer.AddRange(BitConverter.GetBytes((uint)val));
+            }
+            else
+            {
+                buffer.Add(0xcf); // uint 64
+                buffer.AddRange(BitConverter.GetBytes((ulong)val));
+            }
+        }
+
+        private static void EncodeString(List<byte> buffer, string str)
+        {
+            byte[] utf8 = Encoding.UTF8.GetBytes(str);
+            int len = utf8.Length;
+
+            if (len < 32)
+            {
+                buffer.Add((byte)(0xa0 | len)); // fixstr
+            }
+            else if (len < 256)
+            {
+                buffer.Add(0xd9); // str 8
+                buffer.Add((byte)len);
+            }
+            else if (len < 65536)
+            {
+                buffer.Add(0xda); // str 16
+                buffer.AddRange(BitConverter.GetBytes((ushort)len));
+            }
+            else
+            {
+                buffer.Add(0xdb); // str 32
+                buffer.AddRange(BitConverter.GetBytes((uint)len));
+            }
+
+            buffer.AddRange(utf8);
+        }
+
+        private static void EncodeArray(List<byte> buffer, System.Collections.IList list)
+        {
+            int len = list.Count;
+
+            if (len < 16)
+            {
+                buffer.Add((byte)(0x90 | len)); // fixarray
+            }
+            else if (len < 65536)
+            {
+                buffer.Add(0xdc); // array 16
+                buffer.AddRange(BitConverter.GetBytes((ushort)len));
+            }
+            else
+            {
+                buffer.Add(0xdd); // array 32
+                buffer.AddRange(BitConverter.GetBytes((uint)len));
+            }
+
+            foreach (var item in list)
+            {
+                EncodeValue(buffer, item);
+            }
+        }
+
+        private static void EncodeMap(List<byte> buffer, Dictionary<string, object> dict)
+        {
+            int len = dict.Count;
+
+            if (len < 16)
+            {
+                buffer.Add((byte)(0x80 | len)); // fixmap
+            }
+            else if (len < 65536)
+            {
+                buffer.Add(0xde); // map 16
+                buffer.AddRange(BitConverter.GetBytes((ushort)len));
+            }
+            else
+            {
+                buffer.Add(0xdf); // map 32
+                buffer.AddRange(BitConverter.GetBytes((uint)len));
+            }
+
+            foreach (var kvp in dict)
+            {
+                EncodeString(buffer, kvp.Key);
+                EncodeValue(buffer, kvp.Value);
+            }
         }
 
         private static long NanosSinceEpoch()

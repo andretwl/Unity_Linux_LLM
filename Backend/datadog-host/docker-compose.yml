@@ -48,26 +48,28 @@ services:
       - DD_APM_ENABLED=true
       - DD_APM_NON_LOCAL_TRAFFIC=true
       - DD_APM_RECEIVER_SOCKET=/var/run/datadog/apm.socket
-      - DD_DATA_STREAMS_ENABLED=true
-      - DD_PROFILING_ENABLED=auto
-      # GPU Monitoring
-      - DD_GPU_ENABLED=true
+      - DD_DATA_STREAMS_ENABLED=false
+      # Note: DD_PROFILING_ENABLED should be set on the tracer (client), not agent
       # Logs
       - DD_LOGS_ENABLED=true
       - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
       - DD_LOGS_CONFIG_AUTO_MULTI_LINE_DETECTION=true
       - DD_CONTAINER_EXCLUDE_LOGS=name:dd-agent
-      # Process
-      - DD_PROCESS_AGENT_ENABLED=true
+      # Process Agent — use new config format (deprecated: DD_PROCESS_AGENT_ENABLED)
+      - DD_PROCESS_CONFIG_CONTAINER_COLLECTION_ENABLED=true
+      - DD_PROCESS_CONFIG_PROCESS_COLLECTION_ENABLED=true
       # DogStatsD
       - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
       - DD_DOGSTATSD_ORIGIN_DETECTION=true
       - DD_DOGSTATSD_SOCKET=/var/run/datadog/dsd.socket
       # Host root for filesystem-based security checks
       - HOST_ROOT=/host/root
-      # Runtime Security
-      - DD_RUNTIME_SECURITY_CONFIG_ENABLED=true
-      - DD_LOG_LEVEL=info
+      # Runtime Security (disabled for non-production or if eBPF unavailable)
+      - DD_RUNTIME_SECURITY_CONFIG_ENABLED=false
+      # GPU Monitoring — use NVIDIA DCGM queries instead of deprecated DD_GPU_ENABLED
+      - DD_NVIDIA_DCGM_QUERIES=true
+      # Reduce log noise from expected platform skips (Kubernetes, EC2, CloudFoundry)
+      - DD_LOG_LEVEL=warn
       # Disable remote config (no system-probe needed)
       - DD_REMOTE_CONFIGURATION_ENABLED=false
     volumes:
