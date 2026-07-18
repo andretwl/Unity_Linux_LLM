@@ -8704,7 +8704,7 @@ MonoBehaviour:
   _authController: {fileID: 1351714794}
   _networkBootstrap: {fileID: 774187519}
   _gameplayLoadController: {fileID: 985270263}
-  _autoDetectStartupMode: 1
+  _autoDetectStartupMode: 0
   _startAsHost: 1
   _hostAddress: 127.0.0.1
   _hostPort: 0
@@ -10950,14 +10950,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32852d652d4bd17afa0f0b195a43165b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCSystem.NPCDialogueManager
-  ChatClient: {fileID: 1778380643}
-  LocalRag: {fileID: 1778380647}
+  _chatClient: {fileID: 1778380643}
+  _localRag: {fileID: 1778380647}
   _ragEmbeddingPath: RAG/NPCDialogues.rag
-  _useQdrantRag: 0
-  QdrantRag: {fileID: 1778380642}
-  ActionPlanner: {fileID: 1778380645}
-  EvidenceState: {fileID: 1778380644}
-  SupabaseRepo: {fileID: 1778380637}
+  _useQdrantRag: 1
+  _qdrantRag: {fileID: 1778380642}
+  _actionPlanner: {fileID: 0}
+  _evidenceState: {fileID: 0}
+  _supabaseRepo: {fileID: 0}
   _remoteHost: 127.0.0.1
   _remotePort: 8090
   _remoteModel: llama-3.2-3b-instruct:q8_0
@@ -10983,7 +10983,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a2b00eea2a038c8d890b04ea76369e61, type: 2}
   - {fileID: 11400000, guid: aa3445a7aac99dbb2b3803972a0b9de1, type: 2}
   _persistHistory: 1
-  _enableRAG: 0
+  _enableRAG: 1
   _rebuildRagFromKnowledgeIfMissing: 1
   _maxHistoryPerNPC: 20
   _initializeOnStart: 0
@@ -11124,18 +11124,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a2e4b181559021ddab4f2cbdaf4b400, type: 3}
   m_Name: 
   m_EditorClassIdentifier: NPCSystem.Runtime::NPCSystem.NPCLocalAIClient
-  host: 127.0.0.1
-  port: 8090
-  apiKey: 
-  model: llama-3.2-3b-instruct:q8_0
-  temperature: 0.2
-  topP: 0.9
-  topK: 40
-  minP: 0.05
-  repeatPenalty: 1.1
-  maxTokens: 256
-  numRetries: 3
-  requestTimeoutSeconds: 120
+  _host: 127.0.0.1
+  _port: 8090
+  _apiKey: 
+  _model: llama-3.2-3b-instruct:q8_0
+  _temperature: 0.2
+  _topP: 0.9
+  _topK: 40
+  _minP: 0.05
+  _repeatPenalty: 1.1
+  _maxTokens: 256
+  _numRetries: 3
+  _requestTimeoutSeconds: 120
 --- !u!114 &1778380644
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11192,9 +11192,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd7076bb6525c3ae6b9afa6d8d9ec1ec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: NPCSystem.Runtime::NPCSystem.NPCLocalRAG
-  _searchType: 1
   _search: {fileID: 1778380646}
-  _chunkingType: 2
   _chunking: {fileID: 0}
 --- !u!1 &1779205794
 GameObject:
@@ -11302,16 +11300,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f384f21a843533e249c443e33cb63cc1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: NPCSystem.Runtime::NPCSystem.NPCFlowLogger
-  logToUnityConsole: 1
-  logToJsonlFile: 1
-  includeTextSnippets: 1
-  includeRawTextPayloads: 1
-  maxSnippetChars: 80
-  maxInMemoryEvents: 500
-  relativeLogDirectory: NPCDialogue/Logs
-  overrideAbsoluteLogDirectory: 
-  maxLogDays: 7
-  maxLogDirectorySizeMB: 100
+  _logToUnityConsole: 1
+  _logToJsonlFile: 1
+  _includeTextSnippets: 0
+  _includeRawTextPayloads: 0
+  _maxSnippetChars: 80
+  _maxInMemoryEvents: 500
+  _relativeLogDirectory: NPCDialogue/Logs
+  _overrideAbsoluteLogDirectory: 
+  _maxLogDays: 7
+  _maxLogDirectorySizeMB: 100
+  _maxDuplicateEventsPerMinute: 5
 --- !u!4 &1788130159
 Transform:
   m_ObjectHideFlags: 0

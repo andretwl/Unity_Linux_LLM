@@ -41,7 +41,7 @@ namespace NPCSystem.Tests
             {
                 var planner = go.GetComponent<NPCDialogueActionPlanner>();
                 var plan = planner.Plan("", CreateProfile());
-                Assert.That(plan.actionType, Is.EqualTo(NPCDialogueActionType.None));
+                Assert.That(plan.ActionType, Is.EqualTo(NPCDialogueActionType.None));
             }
             finally
             {
@@ -80,7 +80,7 @@ namespace NPCSystem.Tests
             {
                 var planner = go.GetComponent<NPCDialogueActionPlanner>();
                 var plan = planner.Plan(message, CreateProfile());
-                Assert.That(plan.actionType, Is.EqualTo(NPCDialogueActionType.ShowNotes));
+                Assert.That(plan.ActionType, Is.EqualTo(NPCDialogueActionType.ShowNotes));
             }
             finally
             {
@@ -103,7 +103,7 @@ namespace NPCSystem.Tests
             {
                 var planner = go.GetComponent<NPCDialogueActionPlanner>();
                 var plan = planner.Plan(message, CreateProfile());
-                Assert.That(plan.actionType, Is.EqualTo(NPCDialogueActionType.ShowMap));
+                Assert.That(plan.ActionType, Is.EqualTo(NPCDialogueActionType.ShowMap));
             }
             finally
             {
@@ -126,7 +126,7 @@ namespace NPCSystem.Tests
             {
                 var planner = go.GetComponent<NPCDialogueActionPlanner>();
                 var plan = planner.Plan(message, CreateProfile());
-                Assert.That(plan.actionType, Is.EqualTo(NPCDialogueActionType.ShowSolve));
+                Assert.That(plan.ActionType, Is.EqualTo(NPCDialogueActionType.ShowSolve));
             }
             finally
             {
@@ -149,7 +149,7 @@ namespace NPCSystem.Tests
             {
                 var planner = go.GetComponent<NPCDialogueActionPlanner>();
                 var plan = planner.Plan(message, CreateProfile());
-                Assert.That(plan.actionType, Is.EqualTo(NPCDialogueActionType.ShowHelp));
+                Assert.That(plan.ActionType, Is.EqualTo(NPCDialogueActionType.ShowHelp));
             }
             finally
             {
@@ -173,7 +173,7 @@ namespace NPCSystem.Tests
             {
                 var planner = go.GetComponent<NPCDialogueActionPlanner>();
                 var plan = planner.Plan(message, CreateProfile(canGiveHints: true));
-                Assert.That(plan.actionType, Is.EqualTo(NPCDialogueActionType.PuzzleHint));
+                Assert.That(plan.ActionType, Is.EqualTo(NPCDialogueActionType.PuzzleHint));
             }
             finally
             {
@@ -191,7 +191,7 @@ namespace NPCSystem.Tests
                 NPCProfile profile = CreateProfile(canGiveHints: false);
                 var plan = planner.Plan("i'm stuck", profile);
                 // Should NOT match PuzzleHint when profile disables hints
-                Assert.That(plan.actionType, Is.Not.EqualTo(NPCDialogueActionType.PuzzleHint));
+                Assert.That(plan.ActionType, Is.Not.EqualTo(NPCDialogueActionType.PuzzleHint));
             }
             finally
             {
@@ -215,7 +215,7 @@ namespace NPCSystem.Tests
             {
                 var planner = go.GetComponent<NPCDialogueActionPlanner>();
                 var plan = planner.Plan(message, CreateProfile());
-                Assert.That(plan.actionType, Is.EqualTo(NPCDialogueActionType.RecallEvidence));
+                Assert.That(plan.ActionType, Is.EqualTo(NPCDialogueActionType.RecallEvidence));
             }
             finally
             {
@@ -237,7 +237,7 @@ namespace NPCSystem.Tests
             {
                 var planner = go.GetComponent<NPCDialogueActionPlanner>();
                 var plan = planner.Plan(message, CreateProfile(canAccuse: true));
-                Assert.That(plan.actionType, Is.EqualTo(NPCDialogueActionType.PressSuspect));
+                Assert.That(plan.ActionType, Is.EqualTo(NPCDialogueActionType.PressSuspect));
             }
             finally
             {
@@ -253,7 +253,7 @@ namespace NPCSystem.Tests
             {
                 var planner = go.GetComponent<NPCDialogueActionPlanner>();
                 var plan = planner.Plan("who did it", CreateProfile(canAccuse: false));
-                Assert.That(plan.actionType, Is.EqualTo(NPCDialogueActionType.None));
+                Assert.That(plan.ActionType, Is.EqualTo(NPCDialogueActionType.None));
             }
             finally
             {
@@ -274,7 +274,7 @@ namespace NPCSystem.Tests
                 var planner = go.GetComponent<NPCDialogueActionPlanner>();
                 var plan = planner.Plan("help me with my notes", CreateProfile());
                 // NotesKeywords checked first → ShowNotes
-                Assert.That(plan.actionType, Is.EqualTo(NPCDialogueActionType.ShowNotes));
+                Assert.That(plan.ActionType, Is.EqualTo(NPCDialogueActionType.ShowNotes));
             }
             finally
             {
@@ -290,7 +290,7 @@ namespace NPCSystem.Tests
             {
                 var planner = go.GetComponent<NPCDialogueActionPlanner>();
                 var plan = planner.Plan("hello, how are you today?", CreateProfile());
-                Assert.That(plan.actionType, Is.EqualTo(NPCDialogueActionType.None));
+                Assert.That(plan.ActionType, Is.EqualTo(NPCDialogueActionType.None));
             }
             finally
             {
@@ -305,9 +305,9 @@ namespace NPCSystem.Tests
         {
             var plan = new NPCDialogueActionPlan
             {
-                actionType = NPCDialogueActionType.ShowNotes,
-                reason = "test reason",
-                contextPrompt = "Guide player to notes.",
+                ActionType = NPCDialogueActionType.ShowNotes,
+                Reason = "test reason",
+                ContextPrompt = "Guide player to notes.",
             };
 
             string hint = NPCDialogueActionPlanner.BuildPromptHint(plan);

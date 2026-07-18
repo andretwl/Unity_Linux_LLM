@@ -149,6 +149,12 @@ namespace NPCSystem
 
         [Title("Knowledge")]
         [Header("Knowledge")]
+        [FormerlySerializedAs("knowledgeSource")]
+        [SerializeField]
+        [Tooltip("'local' = file-based .rag index (offline fallback); 'qdrant' = Qdrant vector DB (network, preferred)")]
+        KnowledgeSource _knowledgeSource = KnowledgeSource.Qdrant;
+        public KnowledgeSource KnowledgeSource { get => _knowledgeSource; set => _knowledgeSource = value; }
+
         [FormerlySerializedAs("ragCategory")]
         [SerializeField]
         string _ragCategory = "";
@@ -278,6 +284,12 @@ namespace NPCSystem
 
         bool HasValidRagResults() => _ragResults > 0;
 
+        /// <summary>True when this profile uses file-based local RAG (offline fallback).</summary>
+        public bool UseLocalRag => _knowledgeSource == KnowledgeSource.Local;
+
+        /// <summary>True when this profile uses Qdrant vector DB (network, preferred).</summary>
+        public bool UseQdrantRag => _knowledgeSource == KnowledgeSource.Qdrant;
+
         static string NormalizeRelativePath(string path)
         {
             return string.IsNullOrWhiteSpace(path) ? string.Empty : path.Trim().Replace('\\', '/');
@@ -328,5 +340,17 @@ namespace NPCSystem
                     )
             );
         }
+    }
+
+    /// <summary>
+    /// Selects the RAG backend used for NPC knowledge retrieval.
+    /// <c>Local</c> uses the file-based .rag index (NPCLocalRAG + NPCSimpleSearch,
+    /// suitable as offline fallback). <c>Qdrant</c> uses the Qdrant vector DB
+    /// (network service, preferred for multi-NPC dialogue with metadata filtering).
+    /// </summary>
+    public enum KnowledgeSource
+    {
+        Local,
+        Qdrant
     }
 }

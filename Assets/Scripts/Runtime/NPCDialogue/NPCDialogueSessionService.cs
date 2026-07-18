@@ -234,19 +234,19 @@ namespace NPCSystem
                 }
 
                 turnSw.Stop();
-                turnSpan.SetTag("action_type", actionPlan.actionType.ToString());
+                turnSpan.SetTag("action_type", actionPlan.ActionType.ToString());
                 turnSpan.SetTag("has_response", string.IsNullOrEmpty(dialogueMessage) ? "false" : "true");
                 turnSpan.SetTag("status", "success");
                 DatadogMetricsService.Timer("dialogue.session.turn.duration", turnSw.ElapsedMilliseconds, tags: new[]
                 {
                     $"npc:{slug}",
-                    $"action_type:{actionPlan.actionType}",
+                    $"action_type:{actionPlan.ActionType}",
                     $"has_response:{(string.IsNullOrEmpty(dialogueMessage) ? "false" : "true")}",
                 });
                 DatadogMetricsService.Increment("dialogue.session.turn.count", tags: new[]
                 {
                     $"npc:{slug}",
-                    $"action_type:{actionPlan.actionType}",
+                    $"action_type:{actionPlan.ActionType}",
                 });
 
                 OnResponseComplete?.Invoke(respondingProfile.GetDisplayName(), dialogueMessage);
@@ -255,8 +255,8 @@ namespace NPCSystem
                 {
                     ["playerMessage"] = logger.SummarizeText("player", playerMessage),
                     ["npcResponse"] = logger.SummarizeText("npc", dialogueMessage),
-                    ["plannedAction"] = actionPlan.actionType.ToString(),
-                    ["actionReason"] = actionPlan.reason,
+                    ["plannedAction"] = actionPlan.ActionType.ToString(),
+                    ["actionReason"] = actionPlan.Reason,
                 };
                 scope.Success("Dialogue generation complete.", logData);
             }

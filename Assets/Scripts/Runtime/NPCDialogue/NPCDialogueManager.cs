@@ -187,7 +187,7 @@ namespace NPCSystem
         [ReadOnly]
         [ShowInInspector]
         string ActiveProfilePreview =>
-            _currentProfile == null ? "<none>" : _currentProfile.GetDisplayName();
+            _currentNPC == null ? "<none>" : _currentNPC.GetDisplayName();
 
         [FormerlySerializedAs("onNPCChanged")]
         [HideProperty]

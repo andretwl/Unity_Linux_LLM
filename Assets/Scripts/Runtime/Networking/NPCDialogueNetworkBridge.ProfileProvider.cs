@@ -25,7 +25,7 @@ namespace NPCSystem
                     )
                 )
                 {
-                    return _dialogueManager.currentProfile;
+                    return _dialogueManager.CurrentProfile;
                 }
 
                 return FindProfileBySlug(_localSelectedNpcSlug);

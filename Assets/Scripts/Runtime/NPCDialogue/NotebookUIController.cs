@@ -147,7 +147,7 @@ namespace NPCSystem
         [ShowInInspector, ReadOnly]
         string CurrentNpcSlug =>
             NetworkBridge?.currentProfile?.GetNpcSlug()
-            ?? DialogueManager?.currentProfile?.GetNpcSlug()
+            ?? DialogueManager?.CurrentProfile?.GetNpcSlug()
             ?? "<none>";
 
         [ShowInInspector, ReadOnly]
@@ -508,8 +508,8 @@ namespace NPCSystem
 
             NPCNotebookStateMessage message = NPCNotebookStateFormatter.Build(
                 DialogueManager.CaptureEvidenceSnapshot(),
-                DialogueManager.currentProfile != null
-                    ? DialogueManager.currentProfile.GetNpcSlug()
+                DialogueManager.CurrentProfile != null
+                    ? DialogueManager.CurrentProfile.GetNpcSlug()
                     : string.Empty
             );
             ApplyNotebookState(message);

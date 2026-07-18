@@ -210,7 +210,7 @@ namespace NPCSystem
 
         public NPCProfile GetActiveProfile()
         {
-            return DialogueManager != null ? DialogueManager.currentProfile : null;
+            return DialogueManager != null ? DialogueManager.CurrentProfile : null;
         }
 
         public void ToggleNotebook()
@@ -446,7 +446,7 @@ namespace NPCSystem
             {
                 string slug = profile.GetNpcSlug();
                 int count = DialogueManager.GetHistory(slug).Count;
-                RelationshipUI.Refresh(DialogueManager.EvidenceState, slug, count);
+                RelationshipUI.Refresh(DialogueManager._evidenceState, slug, count);
             }
 
             _readyForInput = true;
@@ -504,7 +504,7 @@ namespace NPCSystem
             if (RelationshipUI != null && DialogueManager != null)
             {
                 int count = DialogueManager.GetHistory(npcName).Count;
-                RelationshipUI.Refresh(DialogueManager.EvidenceState, npcName, count);
+                RelationshipUI.Refresh(DialogueManager._evidenceState, npcName, count);
             }
         }
 

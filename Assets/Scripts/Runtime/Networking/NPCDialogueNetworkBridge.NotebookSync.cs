@@ -20,8 +20,8 @@ namespace NPCSystem
                 _dialogueManager != null
                     ? _dialogueManager.CaptureEvidenceSnapshot()
                     : new NPCEvidenceStateSnapshot(),
-                _dialogueManager != null && _dialogueManager.currentProfile != null
-                    ? _dialogueManager.currentProfile.GetNpcSlug()
+                _dialogueManager != null && _dialogueManager.CurrentProfile != null
+                    ? _dialogueManager.CurrentProfile.GetNpcSlug()
                     : _localSelectedNpcSlug
             );
         }

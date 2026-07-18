@@ -6,38 +6,15 @@ using UnityEngine.Serialization;
 
 namespace NPCSystem
 {
-    public enum NPCSearchMethods
-    {
-        SimpleSearch = 1,
-    }
-
-    public enum NPCChunkingMethods
-    {
-        NoChunking,
-        TokenSplitter,
-        WordSplitter,
-        SentenceSplitter,
-    }
-
     [Serializable]
     public class NPCLocalRAG : NPCSearchable
     {
-        [Tooltip("Search method type for local RAG (SimpleSearch only in this project).")]
-        [FormerlySerializedAs("searchType")]
-        [SerializeField]
-        NPCSearchMethods _searchType = NPCSearchMethods.SimpleSearch;
-
-        [Tooltip("Search method GameObject.")]
+        [Tooltip("Search method GameObject (NPCSimpleSearch).")]
         [FormerlySerializedAs("search")]
         [SerializeField]
         NPCSearchMethod _search;
 
-        [Tooltip("Chunking method for splitting inputs.")]
-        [FormerlySerializedAs("chunkingType")]
-        [SerializeField]
-        NPCChunkingMethods _chunkingType = NPCChunkingMethods.NoChunking;
-
-        [Tooltip("Chunking method GameObject.")]
+        [Tooltip("Chunking method GameObject (optional).")]
         [FormerlySerializedAs("chunking")]
         [SerializeField]
         NPCChunking _chunking;
@@ -46,13 +23,8 @@ namespace NPCSystem
         public NPCSearchMethod SearchMethod => _search;
         public NPCChunking Chunking => _chunking;
 
-        public void Init(
-            NPCSearchMethods searchMethod = NPCSearchMethods.SimpleSearch,
-            NPCChunkingMethods chunkingMethod = NPCChunkingMethods.NoChunking
-        )
+        public void Init()
         {
-            _searchType = searchMethod;
-            _chunkingType = chunkingMethod;
             UpdateGameObjects();
         }
 
@@ -69,19 +41,14 @@ namespace NPCSystem
                 (
                     previous,
                     current
-                ) => { /* embedder assignment handled by UpdateGameObjects */
-                }
+                ) => { /* embedder assignment handled by UpdateGameObjects */ }
             );
         }
 
         protected void ConstructChunking()
         {
-            Type type = null;
-            if (_chunkingType != NPCChunkingMethods.NoChunking)
-                type = Type.GetType("NPCSystem." + _chunkingType.ToString());
-            _chunking = ConstructComponent<NPCChunking>(type);
-            if (_chunking != null)
-                _chunking.SetSearch(_search);
+            // Chunking is optional and currently unused by the dialogue pipeline.
+            // Kept for backward compatibility with local RAG scenes that reference it.
         }
 
         public override void UpdateGameObjects()
@@ -122,16 +89,47 @@ namespace NPCSystem
 
         public override string Get(int key) => GetSearcher()?.Get(key);
 
+        /// <summary>
+        /// Add a string to the local RAG index.
+        /// DEPRECATED: Use QdrantRAGService or Cognee for dynamic knowledge updates.
+        /// Local RAG is intended as a read-only fallback for static NPC knowledge.
+        /// </summary>
         public override async Task<int> Add(string inputString, string group = "")
         {
+            NPCFlowLogger.FindOrCreate().Log(
+                NPCFlowStage.LocalRagReady,
+                NPCFlowStatus.Warning,
+                NPCFlowLogLevel.Warning,
+                $"NPCLocalRAG.Add() called — prefer Qdrant or Cognee for dynamic knowledge updates. Group: {group}",
+                source: nameof(NPCLocalRAG),
+                data: new System.Collections.Generic.Dictionary<string, object>
+                {
+                    ["group"] = group ?? "",
+                    ["textLength"] = inputString?.Length ?? 0,
+                }
+            );
+
             var searcher = GetSearcher();
             if (searcher == null)
                 return -1;
             return await searcher.Add(inputString, group);
         }
 
-        public override int Remove(string inputString, string group = "") =>
-            GetSearcher()?.Remove(inputString, group) ?? 0;
+        /// <summary>
+        /// Remove a string from the local RAG index.
+        /// DEPRECATED: Use QdrantRAGService or Cognee for dynamic knowledge updates.
+        /// </summary>
+        public override int Remove(string inputString, string group = "")
+        {
+            NPCFlowLogger.FindOrCreate().Log(
+                NPCFlowStage.LocalRagReady,
+                NPCFlowStatus.Warning,
+                NPCFlowLogLevel.Warning,
+                $"NPCLocalRAG.Remove() called — prefer Qdrant or Cognee for dynamic knowledge updates.",
+                source: nameof(NPCLocalRAG)
+            );
+            return GetSearcher()?.Remove(inputString, group) ?? 0;
+        }
 
         public override void Remove(int key) => GetSearcher()?.Remove(key);
 

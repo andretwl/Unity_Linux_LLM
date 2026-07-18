@@ -100,8 +100,8 @@ namespace NPCSystem
         {
             string ragKnowledge = string.Empty;
 
-            // 1. Qdrant search
-            if (_useQdrantRag && _qdrantRag != null)
+            // 1. Qdrant search (only if profile allows it)
+            if (_useQdrantRag && _qdrantRag != null && (profile == null || profile.UseQdrantRag))
             {
                 try
                 {
@@ -135,13 +135,14 @@ namespace NPCSystem
                 }
             }
 
-            // 2. Local RAG search
+            // 2. Local RAG search (only if profile allows it)
             if (
                 string.IsNullOrWhiteSpace(ragKnowledge)
                 && _enableRAG
                 && !_ragUnavailable
                 && _localRag != null
                 && profile != null
+                && profile.UseLocalRag
                 && !string.IsNullOrWhiteSpace(profile.GetRagCategory())
             )
             {

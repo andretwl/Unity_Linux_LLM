@@ -26,7 +26,7 @@ namespace NPCSystem.Tests
             {
                 manager.SwitchToNPCAsync("butler").GetAwaiter().GetResult();
 
-                Assert.That(manager.currentProfile, Is.SameAs(profile));
+                Assert.That(manager.CurrentProfile, Is.SameAs(profile));
                 Assert.That(changedName, Is.EqualTo("Butler"));
             }
             finally
@@ -361,7 +361,7 @@ namespace NPCSystem.Tests
             try
             {
                 manager.SwitchToNPCAsync("Chef").GetAwaiter().GetResult();
-                Assert.That(manager.currentProfile, Is.SameAs(profile));
+                Assert.That(manager.CurrentProfile, Is.SameAs(profile));
             }
             finally
             {

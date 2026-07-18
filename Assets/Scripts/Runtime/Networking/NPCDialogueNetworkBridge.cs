@@ -377,8 +377,8 @@ namespace NPCSystem
             SendNpcChangedToClient(
                 senderClientId,
                 selection.npcSlug,
-                _dialogueManager.currentProfile != null
-                    ? _dialogueManager.currentProfile.GetDisplayName()
+                _dialogueManager.CurrentProfile != null
+                    ? _dialogueManager.CurrentProfile.GetDisplayName()
                     : selection.npcSlug
             );
             SendNotebookStateToClient(senderClientId, BuildNotebookStateMessage());
@@ -610,8 +610,8 @@ namespace NPCSystem
                     message,
                     source: nameof(NPCDialogueNetworkBridge),
                     requestId: requestId,
-                    npcSlug: _dialogueManager != null && _dialogueManager.currentProfile != null
-                        ? _dialogueManager.currentProfile.GetNpcSlug()
+                    npcSlug: _dialogueManager != null && _dialogueManager.CurrentProfile != null
+                        ? _dialogueManager.CurrentProfile.GetNpcSlug()
                         : _localSelectedNpcSlug,
                     data: data
                 );

@@ -66,7 +66,7 @@ namespace NPCSystem.Tests
             chatClient.NumRetries = 0;
             chatClient.Host = "127.0.0.1";
             chatClient.Port = 19999;
-            manager.ChatClient = chatClient;
+            manager._chatClient = chatClient;
 
             var profile = CreateProfile("butler", "Butler");
             manager.Profiles = new[] { profile };
@@ -161,7 +161,7 @@ namespace NPCSystem.Tests
             chatClient.NumRetries = 0;
             chatClient.Host = "127.0.0.1";
             chatClient.Port = 19999;
-            manager.ChatClient = chatClient;
+            manager._chatClient = chatClient;
             manager.Profiles = Array.Empty<NPCProfile>();
             manager.UseQdrantRag = false;
             manager.PersistHistory = false;
@@ -188,9 +188,9 @@ namespace NPCSystem.Tests
             chatClient.NumRetries = 0;
             chatClient.Host = "127.0.0.1";
             chatClient.Port = 19999;
-            manager.ChatClient = chatClient;
+            manager._chatClient = chatClient;
             manager.Profiles = Array.Empty<NPCProfile>();
-            manager.ActionPlanner = null;
+            manager._actionPlanner = null;
             manager.PersistHistory = false;
             manager.EnableRAG = false;
             manager.InitializeOnStart = false;
@@ -214,7 +214,7 @@ namespace NPCSystem.Tests
             chatClient.NumRetries = 0;
             chatClient.Host = "127.0.0.1";
             chatClient.Port = 19999;
-            manager.ChatClient = chatClient;
+            manager._chatClient = chatClient;
             manager.Profiles = Array.Empty<NPCProfile>();
             manager.UseQdrantRag = false;
             manager.PersistHistory = false;
