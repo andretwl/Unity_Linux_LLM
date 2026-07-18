@@ -23,7 +23,7 @@ MonoBehaviour:
   CustomEndpoint: 
   BatchSize: 1
   UploadFrequency: 1
-  BatchProcessingLevel: 1
+  BatchProcessingLevel: 0
   CrashReportingEnabled: 1
   ForwardUnityLogs: 1
   RemoteLogThreshold: 3

@@ -20,7 +20,7 @@ namespace NPCSystem
 
         [FormerlySerializedAs("port")]
         [SerializeField]
-        int _port = 8090;
+        int _port = NPCLocalAIConfig.LocalAIDirectPort;
         public int Port { get => _port; set => _port = value; }
 
         [FormerlySerializedAs("apiKey")]

@@ -319,7 +319,7 @@ namespace NPCSystem
         {
             if (_dialogueManager == null)
             {
-                return "http://localhost:8080/v1/models";
+                return $"http://{NPCLocalAIConfig.DefaultHost}:{NPCLocalAIConfig.LocalAIDirectPort}/v1/models";
             }
 
             return CombineUrl(

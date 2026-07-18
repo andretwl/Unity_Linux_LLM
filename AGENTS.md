@@ -45,13 +45,14 @@ Dual source of truth (do not duplicate rule text here):
 - `NPCDialogueSystem`: `NPCDialogueManager`, `NPCDialogueBootstrapper`, `QdrantRAGService`, `NPCDialogueActionPlanner`.
 - `NPCNetworkSystem`: `NPCNetworkBootstrap`.
 - `AuthUI`: `AuthUIController`; `AuthBridge`: `AuthNetworkBridge`.
-- `LLM` and `LLMAgent` exist but are disabled; `NPCDialogueManager` currently uses HTTP to LocalAI.
+- `LLM` and `LLMAgent` exist but are disabled; `NPCDialogueManager` currently uses HTTP to LocalAI **via port 8080** (direct, no proxy — see `NPCLocalAIConfig.LocalAIDirectPort`).
 - `LLMRAG` is the active local embedding model; `CogneeMemoryService` exists but is disabled in the scene.
 - `Assets/Scenes/NPCDialoguePrototype1.unity` is the only authoritative scene file. Do not edit `.unity` files by hand.
 
 ## 4. Backend services
 
-- LocalAI: `localhost:8080` (`/mnt/data/Projects_SSD/LocalAI/docker-compose.yaml`), model store `/mnt/data/models/localai/`.
+- LocalAI (upstream): **port 8080** — all gameplay dialogue, embeddings, and health checks go directly to this port. Static config in `NPCLocalAIConfig.LocalAIDirectPort`.
+- localai-proxy (observability): **port 8090** — provides token/latency tracking for CLI tools, codebase-watchdog, and ad-hoc debugging. NOT in the gameplay path. Static config in `NPCLocalAIConfig.LocalAIProxyPort`.
 - Supabase: Gotrue `:8091`, PostgREST `:8092`.
 - Qdrant: client `/mnt/data/Projects_SSD/qdrant-client/`, storage `/mnt/data/Projects_SSD/qdrant_storage/`, port `6333`.
 - Cognee: `http://localhost:8000/api/v1`, Postgres `127.0.0.1:5432`, disabled in the active scene.

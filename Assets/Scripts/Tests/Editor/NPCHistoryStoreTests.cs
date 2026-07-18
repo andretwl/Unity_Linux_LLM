@@ -35,10 +35,10 @@ namespace NPCSystem.Tests
 
                 List<DialogueEntry> loaded = NPCHistoryStore.Load(relativePath);
                 Assert.That(loaded, Has.Count.EqualTo(2));
-                Assert.That(loaded[0].role, Is.EqualTo("user"));
-                Assert.That(loaded[0].content, Is.EqualTo("Hello"));
-                Assert.That(loaded[1].role, Is.EqualTo("assistant"));
-                Assert.That(loaded[1].content, Is.EqualTo("Hi there"));
+                Assert.That(loaded[0].Role, Is.EqualTo("user"));
+                Assert.That(loaded[0].Content, Is.EqualTo("Hello"));
+                Assert.That(loaded[1].Role, Is.EqualTo("assistant"));
+                Assert.That(loaded[1].Content, Is.EqualTo("Hi there"));
             }
             finally
             {
@@ -86,10 +86,10 @@ namespace NPCSystem.Tests
             List<DialogueEntry> result = NPCHistoryStore.NormalizeForChatTemplate(entries, out int dropped);
             Assert.That(result, Has.Count.EqualTo(4));
             Assert.That(dropped, Is.Zero);
-            Assert.That(result[0].role, Is.EqualTo("user"));
-            Assert.That(result[1].role, Is.EqualTo("assistant"));
-            Assert.That(result[2].role, Is.EqualTo("user"));
-            Assert.That(result[3].role, Is.EqualTo("assistant"));
+            Assert.That(result[0].Role, Is.EqualTo("user"));
+            Assert.That(result[1].Role, Is.EqualTo("assistant"));
+            Assert.That(result[2].Role, Is.EqualTo("user"));
+            Assert.That(result[3].Role, Is.EqualTo("assistant"));
         }
 
         [Test]
@@ -162,8 +162,8 @@ namespace NPCSystem.Tests
 
             List<DialogueEntry> result = NPCHistoryStore.NormalizeForChatTemplate(entries, out int dropped);
             Assert.That(result, Has.Count.EqualTo(2));
-            Assert.That(result[0].role, Is.EqualTo("user"));
-            Assert.That(result[1].role, Is.EqualTo("assistant"));
+            Assert.That(result[0].Role, Is.EqualTo("user"));
+            Assert.That(result[1].Role, Is.EqualTo("assistant"));
             Assert.That(dropped, Is.Zero);
         }
 

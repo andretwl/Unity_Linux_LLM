@@ -314,7 +314,7 @@ namespace NPCSystem.Tests
 
                 List<DialogueEntry> loaded = manager.GetHistory("butler");
                 Assert.That(loaded, Has.Count.EqualTo(2));
-                Assert.That(loaded[0].content, Is.EqualTo("Hello"));
+                Assert.That(loaded[0].Content, Is.EqualTo("Hello"));
             }
             finally
             {

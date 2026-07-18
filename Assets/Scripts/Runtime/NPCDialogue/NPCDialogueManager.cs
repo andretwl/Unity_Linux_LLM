@@ -98,7 +98,7 @@ namespace NPCSystem
         [FormerlySerializedAs("remotePort")]
         [FormerlySerializedAs("RemotePort")]
         [SerializeField]
-        int _remotePort = 8090;
+        int _remotePort = NPCLocalAIConfig.LocalAIDirectPort;
 
         [Dropdown(nameof(_cachedModelNames))]
         [HideProperty]
@@ -120,7 +120,7 @@ namespace NPCSystem
         [FormerlySerializedAs("remoteEmbeddingPort")]
         [FormerlySerializedAs("RemoteEmbeddingPort")]
         [SerializeField]
-        int _remoteEmbeddingPort = 8090;
+        int _remoteEmbeddingPort = NPCLocalAIConfig.LocalAIDirectPort;
 
         [FoldoutGroup(
             "Dialogue Settings",

@@ -51,7 +51,7 @@ namespace NPCSystem.Tests
             try
             {
                 Assert.That(client.Host, Is.EqualTo("127.0.0.1"));
-                Assert.That(client.Port, Is.EqualTo(8090));
+                Assert.That(client.Port, Is.EqualTo(NPCLocalAIConfig.LocalAIDirectPort));
                 Assert.That(client.Model, Is.EqualTo("llama-3.2-3b-instruct:q8_0"));
                 Assert.That(client.NumRetries, Is.EqualTo(3));
                 Assert.That(client.Temperature, Is.EqualTo(0.2f));

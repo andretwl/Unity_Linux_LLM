@@ -131,9 +131,9 @@ namespace NPCSystem.Tests
                 var secondHistory = sessionManager.GetHistorySnapshot(22ul, "butler");
 
                 Assert.That(firstHistory, Has.Count.EqualTo(2));
-                Assert.That(firstHistory[0].content, Is.EqualTo("Where were you?"));
+                Assert.That(firstHistory[0].Content, Is.EqualTo("Where were you?"));
                 Assert.That(secondHistory, Has.Count.EqualTo(2));
-                Assert.That(secondHistory[0].content, Is.EqualTo("Did you hear a noise?"));
+                Assert.That(secondHistory[0].Content, Is.EqualTo("Did you hear a noise?"));
             }
             finally
             {
@@ -237,12 +237,12 @@ namespace NPCSystem.Tests
             var clone = NPCDialogueNetworkBridge.CloneHistorySnapshot(original);
 
             Assert.That(clone, Has.Count.EqualTo(2));
-            Assert.That(clone["butler"][0].content, Is.EqualTo("Hello"));
-            Assert.That(clone["maid"][1].content, Is.EqualTo("Of course"));
+            Assert.That(clone["butler"][0].Content, Is.EqualTo("Hello"));
+            Assert.That(clone["maid"][1].Content, Is.EqualTo("Of course"));
 
-            clone["butler"][0].content = "Modified";
+            clone["butler"][0].Content = "Modified";
             Assert.That(
-                original["butler"][0].content,
+                original["butler"][0].Content,
                 Is.EqualTo("Hello"),
                 "Clone should be a deep copy"
             );

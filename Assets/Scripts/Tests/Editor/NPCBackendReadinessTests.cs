@@ -41,7 +41,7 @@ namespace NPCSystem.Tests
                     .GetField("serviceBaseUrl", BindingFlags.Instance | BindingFlags.NonPublic)
                     ?.SetValue(authService, "http://localhost:5100/");
                 dialogueManager.RemoteHost = "127.0.0.1";
-                dialogueManager.RemotePort = 8080;
+                dialogueManager.RemotePort = NPCLocalAIConfig.LocalAIDirectPort;
                 service.AuthService = authService;
                 service.DialogueManager = dialogueManager;
 
@@ -60,7 +60,7 @@ namespace NPCSystem.Tests
                 );
                 Assert.That(
                     localAiMethod?.Invoke(service, null) as string,
-                    Is.EqualTo("http://127.0.0.1:8080/v1/models")
+                    Is.EqualTo($"http://127.0.0.1:{NPCLocalAIConfig.LocalAIDirectPort}/v1/models")
                 );
             }
             finally
