@@ -352,7 +352,7 @@ namespace NPCSystem.Dialogue.Session
             }
 
             messages.Add(
-                new NPCOpenAIMessage { Role = "system", Content = sysPrompt + "\n" + prompt }
+                new NPCOpenAIMessage { role = "system", content = sysPrompt + "\n" + prompt }
             );
 
             int historyTurns = 0;
@@ -368,11 +368,11 @@ namespace NPCSystem.Dialogue.Session
                 )
                     ? "assistant"
                     : "user";
-                messages.Add(new NPCOpenAIMessage { Role = role, Content = entry.Content });
+                messages.Add(new NPCOpenAIMessage { role = role, content = entry.Content });
                 historyTurns++;
             }
 
-            messages.Add(new NPCOpenAIMessage { Role = "user", Content = playerMessage });
+            messages.Add(new NPCOpenAIMessage { role = "user", content = playerMessage });
             promptSw.Stop();
 
             var localAiSw = System.Diagnostics.Stopwatch.StartNew();

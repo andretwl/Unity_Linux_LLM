@@ -90,19 +90,47 @@ namespace NPCSystem.Monitoring.Datadog
             if (!_initialized)
                 return;
 
-            _cts?.Cancel();
-            _senderThread?.Join(TimeSpan.FromSeconds(2));
-            _udpClient?.Close();
-            _udpClient = null;
+            try
+            {
+                _cts?.Cancel();
+                _senderThread?.Join(TimeSpan.FromSeconds(2));
+            }
+            catch
+            {
+                // Ignore shutdown-thread join errors
+            }
+
+            try
+            {
+                _udpClient?.Close();
+            }
+            catch
+            {
+                // Ignore socket close errors during shutdown
+            }
+            finally
+            {
+                _udpClient = null;
+            }
+
             _initialized = false;
 
-            NPCFlowLogger.FindOrCreate().Log(
-                NPCFlowStage.SceneBootstrap,
-                NPCFlowStatus.Success,
-                NPCFlowLogLevel.Info,
-                "[DatadogMetrics] Shutdown complete.",
-                source: nameof(DatadogMetricsService)
-            );
+            // Logger may already be destroyed during scene teardown — skip safely
+            try
+            {
+                NPCFlowLogger.FindOrCreate()
+                    ?.Log(
+                        NPCFlowStage.SceneBootstrap,
+                        NPCFlowStatus.Success,
+                        NPCFlowLogLevel.Info,
+                        "[DatadogMetrics] Shutdown complete.",
+                        source: nameof(DatadogMetricsService)
+                    );
+            }
+            catch
+            {
+                // Silently ignore log failures during shutdown
+            }
         }
 
         // ──────────────────────────────────────────────

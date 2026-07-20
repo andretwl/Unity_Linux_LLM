@@ -143,18 +143,51 @@ namespace NPCSystem.Monitoring.Datadog
 
             NPCFlowScope.OnScopeComplete -= OnFlowScopeComplete;
 
-            _flushTimer?.Dispose();
-            FlushAsync().GetAwaiter().GetResult();
-            _httpClient?.Dispose();
+            try
+            {
+                _flushTimer?.Dispose();
+            }
+            catch
+            {
+                // Ignore timer dispose errors during shutdown
+            }
+
+            try
+            {
+                FlushAsync().GetAwaiter().GetResult();
+            }
+            catch
+            {
+                // Ignore flush errors during shutdown
+            }
+
+            try
+            {
+                _httpClient?.Dispose();
+            }
+            catch
+            {
+                // Ignore HTTP client dispose errors during shutdown
+            }
+
             _initialized = false;
 
-            NPCFlowLogger.FindOrCreate().Log(
-                NPCFlowStage.SceneBootstrap,
-                NPCFlowStatus.Success,
-                NPCFlowLogLevel.Info,
-                "[DatadogTracer] Shutdown complete.",
-                source: nameof(DatadogTracer)
-            );
+            // Logger may already be destroyed during scene teardown — skip safely
+            try
+            {
+                NPCFlowLogger.FindOrCreate()
+                    ?.Log(
+                        NPCFlowStage.SceneBootstrap,
+                        NPCFlowStatus.Success,
+                        NPCFlowLogLevel.Info,
+                        "[DatadogTracer] Shutdown complete.",
+                        source: nameof(DatadogTracer)
+                    );
+            }
+            catch
+            {
+                // Silently ignore log failures during shutdown
+            }
         }
 
         /// <summary>

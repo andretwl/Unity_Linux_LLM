@@ -9,6 +9,7 @@ using UnityEngine.UI;
 
 
 using NPCSystem.Monitoring;
+using NPCSystem.Monitoring.Datadog;
 using NPCSystem.Dialogue.Core;
 using NPCSystem.Network.Core;
 using NPCSystem.Character.Player;
@@ -275,7 +276,7 @@ namespace NPCSystem.Dialogue.UI
                             NPCFlowStage.SceneBootstrap,
                             NPCFlowStatus.Error,
                             NPCFlowLogLevel.Error,
-                            "Neither NPCDialogueManager nor NPCDialogueNetworkBridge is available.",
+                            "Neither NPCDialogueManager nor NPCDialogueNetworkBridge is available. Input disabled.",
                             source: nameof(NPCDialogueUIController)
                         );
                     return;
@@ -288,21 +289,8 @@ namespace NPCSystem.Dialogue.UI
 
                 BindRuntimeEvents();
                 AutoSelectFirstProfile();
-            }
-            catch (System.Exception ex)
-            {
-                NPCFlowLogger
-                    .FindOrCreate()
-                    .Log(
-                        NPCFlowStage.SceneBootstrap,
-                        NPCFlowStatus.Fallback,
-                        NPCFlowLogLevel.Warning,
-                        $"Dialogue bootstrap init failed: {ex.Message}. Input still enabled.",
-                        source: nameof(NPCDialogueUIController)
-                    );
-            }
-            finally
-            {
+
+                // Only enable input after successful initialization
                 _readyForInput = true;
                 SetInputEnabled(true);
                 if (PlayerInput != null)
@@ -311,6 +299,35 @@ namespace NPCSystem.Dialogue.UI
                     PlayerInput.ActivateInputField();
                 }
             }
+            catch (System.Exception ex)
+            {
+                NPCFlowLogger
+                    .FindOrCreate()
+                    .Log(
+                        NPCFlowStage.SceneBootstrap,
+                        NPCFlowStatus.Error,
+                        NPCFlowLogLevel.Error,
+                        $"Dialogue bootstrap init failed: {ex.Message}. Input disabled.",
+                        source: nameof(NPCDialogueUIController),
+                        data: new System.Collections.Generic.Dictionary<string, object>
+                        {
+                            ["exception"] = ex.ToString(),
+                        }
+                    );
+                // Do NOT enable input — user would see a functional-looking field
+                // that silently drops messages because no NPC is loaded.
+                _readyForInput = false;
+                SetInputEnabled(false);
+                return;
+            }
+
+            DatadogMetricsService.Increment(
+                "dialogue.ui.initialized",
+                tags: new[]
+                {
+                    NetworkBridge != null ? "mode:network_bridge" : "mode:direct",
+                }
+            );
 
             NPCFlowLogger
                 .FindOrCreate()

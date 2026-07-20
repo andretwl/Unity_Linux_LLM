@@ -13,20 +13,25 @@
       }
     },
     "gladekit-unity": {
-      "command": "uvx",
+      "command": "/home/athar/.local/bin/uvx",
       "args": [
         "gladekit-mcp"
-      ]
+      ],
+      "env": {
+        "no_proxy": "localhost,127.0.0.1",
+        "NO_PROXY": "localhost,127.0.0.1"
+      }
     },
     "datadog": {
       "command": "npx",
       "args": [
-        "datadog-mcp@latest",
-        "--url=https://mcp.us5.datadoghq.com/v1/mcp"
+        "-y",
+        "@winor30/mcp-server-datadog"
       ],
       "env": {
-        "DD_API_KEY": "5cc57a1d-3b22-4a13-9c0c-e243cd1d811e",
-        "DD_APP_KEY": "e6146ab1-56fd-4c96-9347-2391d4f2fe62"
+        "DATADOG_API_KEY": "5cc57a1d-3b22-4a13-9c0c-e243cd1d811e",
+        "DATADOG_APP_KEY": "e6146ab1-56fd-4c96-9347-2391d4f2fe62",
+        "DATADOG_SITE": "us5.datadoghq.com"
       }
     },
     "unity-mcp": {

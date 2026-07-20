@@ -180,6 +180,13 @@ namespace NPCSystem.Dialogue.Core
         NPCDialogueSessionService _sessionService;
         PlayerDialogueContextService _contextService;
 
+        // ── Init reliability tracking ──
+        [SerializeField, ReadOnly]
+        string _initFlowId;
+        [Tooltip("Max time (ms) to wait for dialogue services to initialize before warning. Default: 30000")]
+        [SerializeField, HideProperty]
+        int _initTimeoutMs = 30000;
+
         static NPCFlowLogger Logger => NPCFlowLogger.FindOrCreate();
 
         public NPCProfile CurrentProfile => _currentNPC;
@@ -222,26 +229,46 @@ namespace NPCSystem.Dialogue.Core
         /// </summary>
         void ResolveServices()
         {
-            _historyService ??= GetComponentInChildren<NPCDialogueHistoryService>(true)
-                ?? GetComponent<NPCDialogueHistoryService>();
-            _retrievalService ??= GetComponentInChildren<NPCDialogueRetrievalService>(true)
-                ?? GetComponent<NPCDialogueRetrievalService>();
-            _sessionService ??= GetComponentInChildren<NPCDialogueSessionService>(true)
-                ?? GetComponent<NPCDialogueSessionService>();
-            _contextService ??= GetComponentInChildren<PlayerDialogueContextService>(true)
-                ?? GetComponent<PlayerDialogueContextService>();
+            // Services live on sibling GameObjects (NPCDialogueSystem/Services), so
+            // GetComponentInChildren (searches only self + direct children) can't find them.
+            // Search the parent hierarchy which includes all siblings.
+            Transform searchRoot = transform.parent != null ? transform.parent : transform;
+            _historyService ??= searchRoot.GetComponentInChildren<NPCDialogueHistoryService>(true);
+            _retrievalService ??= searchRoot.GetComponentInChildren<NPCDialogueRetrievalService>(true);
+            _sessionService ??= searchRoot.GetComponentInChildren<NPCDialogueSessionService>(true);
+            _contextService ??= searchRoot.GetComponentInChildren<PlayerDialogueContextService>(true);
         }
 
-        public Task InitializeAsync()
+        public async Task InitializeAsync()
         {
+            string flowId;
+            Task initTask;
             lock (_initializationLock)
             {
                 if (_initializationTask == null)
                 {
+                    _initFlowId = Guid.NewGuid().ToString("N")[..8];
                     _initializationTask = InitializeInternalAsync();
                 }
-                return _initializationTask;
+                flowId = _initFlowId;
+                initTask = _initializationTask;
             }
+
+            if (_initTimeoutMs > 0)
+            {
+                var timeoutTask = Task.Delay(_initTimeoutMs);
+                Task completed = await Task.WhenAny(initTask, timeoutTask);
+                if (completed == timeoutTask && !initTask.IsCompleted)
+                {
+                    string error = $"[{flowId}] Init timed out after {_initTimeoutMs}ms.";
+                    Logger?.Log(NPCFlowStage.SceneBootstrap, NPCFlowStatus.Error, NPCFlowLogLevel.Error, error, source: nameof(NPCDialogueManager));
+                    OnError?.Invoke(error);
+                    DatadogMetricsService.Increment("dialogue.init.timeout", tags: new[] { $"flow_id:{flowId}" });
+                    return;
+                }
+            }
+
+            await initTask;
         }
 
         async Task InitializeInternalAsync()
@@ -252,7 +279,8 @@ namespace NPCSystem.Dialogue.Core
             using var scope = NPCFlowScope.Start(
                 Logger,
                 NPCFlowStage.SceneBootstrap,
-                source: nameof(NPCDialogueManager)
+                source: nameof(NPCDialogueManager),
+                data: new Dictionary<string, object> { ["flowId"] = _initFlowId ?? "?" }
             );
 
             try
@@ -310,15 +338,9 @@ namespace NPCSystem.Dialogue.Core
 
                 scope.Success("Initialization complete.");
 
-                // Auto-select first available NPC profile
-                if (_currentNPC == null)
-                {
-                    string defaultSlug = GetDefaultProfileSlug();
-                    if (!string.IsNullOrWhiteSpace(defaultSlug))
-                    {
-                        _ = SwitchToNPCAsync(defaultSlug);
-                    }
-                }
+                // NOTE: Auto-selection of the first NPC profile is intentionally NOT done here
+                // to prevent a circular await with SwitchToNPCAsync. The UI controller
+                // (NPCDialogueUIController.AutoSelectFirstProfile) handles this after init.
             }
             catch (Exception ex)
             {
@@ -326,8 +348,9 @@ namespace NPCSystem.Dialogue.Core
                     NPCFlowStage.SceneBootstrap,
                     NPCFlowStatus.Error,
                     NPCFlowLogLevel.Error,
-                    $"Initialization failed: {ex.Message}",
-                    source: nameof(NPCDialogueManager)
+                    $"[{_initFlowId ?? "?"}] Initialization failed: {ex.Message}",
+                    source: nameof(NPCDialogueManager),
+                    data: new Dictionary<string, object> { ["flowId"] = _initFlowId ?? "?", ["exception"] = ex.ToString() }
                 );
                 scope.Error(ex, "Initialization failed.");
                 throw;
@@ -396,7 +419,19 @@ namespace NPCSystem.Dialogue.Core
                 Logger, NPCFlowStage.NPCSwitch,
                 source: nameof(NPCDialogueManager), npcSlug: npcName
             );
-            await InitializeAsync();
+
+            // Require initialization before switching — the caller (e.g. UI or network bridge)
+            // is responsible for calling InitializeAsync() first. This prevents the circular
+            // await that caused a stack-overflow crash: SwitchToNPCAsync awaiting the same
+            // _initializationTask that fired it from InitializeInternalAsync.
+            if (!IsInitialized)
+            {
+                string error = "DialogueManager not initialized. Call InitializeAsync() before SwitchToNPCAsync.";
+                Logger?.Log(NPCFlowStage.NPCSwitch, NPCFlowStatus.Error, NPCFlowLogLevel.Error, error, source: nameof(NPCDialogueManager));
+                OnError?.Invoke(error);
+                scope.Skipped(error);
+                return;
+            }
 
             NPCProfile profile = FindProfile(npcName);
             if (profile == null)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using EditorAttributes;
 using Unity.Multiplayer;
 using Unity.Netcode;
@@ -89,11 +90,11 @@ namespace NPCSystem.Auth
         }
 
         [Tooltip(
-            "False for Docker/dedicated-server flow: auth starts StartClient() against the dedicated server. Enable only for intentional legacy listen-server host tests."
+            "True by default for single-player listen-server: auth starts StartHost() immediately (no client connect timeout). Set false for dedicated-server flow where the player connects as a client."
         )]
         [FormerlySerializedAs("StartAsHost")]
         [SerializeField]
-        bool _startAsHost = false;
+        bool _startAsHost = true;
 
         /// <summary>Public accessor for _startAsHost (used by tests).</summary>
         public bool StartAsHost
@@ -124,6 +125,17 @@ namespace NPCSystem.Auth
 
         [SerializeField, ReadOnly]
         string lastBridgeStatus = "Idle";
+
+        // ── Connection reliability tracking ──
+        [SerializeField, ReadOnly]
+        string _authFlowId;
+        [SerializeField, ReadOnly]
+        bool _authConnected;
+        [SerializeField, ReadOnly]
+        bool _authFallbackAttempted;
+        [Tooltip("How long to wait for client connection before attempting fallback (ms). Default: 15000")]
+        [SerializeField]
+        int _connectionTimeoutMs = 15000;
 
         public string PlayerName => _authenticatedPlayerName;
 
@@ -247,12 +259,45 @@ namespace NPCSystem.Auth
 
         async void HandleAuthSuccess(string username)
         {
+            try
+            {
+                await HandleAuthSuccessAsync(username);
+            }
+            catch (Exception ex)
+            {
+                _logger?.Log(
+                    NPCFlowStage.AuthSession,
+                    NPCFlowStatus.Error,
+                    NPCFlowLogLevel.Error,
+                    $"[{_authFlowId ?? "?"}] Auth success handler threw: {ex.Message}",
+                    source: nameof(AuthNetworkBridge),
+                    data: new Dictionary<string, object>
+                    {
+                        ["flowId"] = _authFlowId ?? "?",
+                        ["exception"] = ex.ToString(),
+                    }
+                );
+                lastBridgeStatus = $"Auth handler crashed: {ex.Message}";
+                DatadogMetricsService.Increment(
+                    "auth.handler.crash",
+                    tags: new[] { $"flow_id:{_authFlowId ?? "?"}" }
+                );
+            }
+        }
+
+        async Task HandleAuthSuccessAsync(string username)
+        {
+            // Generate a unique flow ID so every auth attempt is traceable end-to-end
+            _authFlowId = Guid.NewGuid().ToString("N")[..8];
+            _authConnected = false;
+            _authFallbackAttempted = false;
+
             using var authSpan = DatadogTracer.StartSpan(
                 "auth.login",
                 service: "unity-dedicated-server",
                 resource: "PlayerAuth",
                 type: "auth",
-                tags: new[] { $"player_name:{username?.Trim() ?? "unknown"}" }
+                tags: new[] { $"player_name:{username?.Trim() ?? "unknown"}", $"flow_id:{_authFlowId}" }
             );
 
 #if UNITY_WEBGL && !UNITY_EDITOR
@@ -283,32 +328,41 @@ namespace NPCSystem.Auth
 
             DatadogMetricsService.Increment(
                 "auth.login.count",
-                tags: new[] { $"mode:{resolvedMode.ToString().ToLowerInvariant()}" }
+                tags: new[] { $"mode:{resolvedMode.ToString().ToLowerInvariant()}", $"flow_id:{_authFlowId}" }
             );
 
             _logger?.Log(
                 NPCFlowStage.UIInput,
                 NPCFlowStatus.Success,
                 NPCFlowLogLevel.Info,
-                $"Auth success for '{_authenticatedPlayerName}'. Starting network (mode: {resolvedMode.ToString().ToLowerInvariant()})...",
+                $"[{_authFlowId}] Auth success for '{_authenticatedPlayerName}'. Starting network (mode: {resolvedMode.ToString().ToLowerInvariant()}, fallback: enabled)...",
                 source: nameof(AuthNetworkBridge),
                 data: new Dictionary<string, object>
                 {
+                    ["flowId"] = _authFlowId,
                     ["playerName"] = _authenticatedPlayerName,
-                    ["_startAsHost"] = _startAsHost,
-                    ["_autoDetectStartupMode"] = _autoDetectStartupMode,
                     ["resolvedMode"] = resolvedMode.ToString(),
+                    ["fallbackEnabled"] = resolvedMode == ResolvedNetworkStartupMode.Client,
                 }
             );
             lastBridgeStatus =
-                $"Auth success for {_authenticatedPlayerName}; resolved mode {resolvedMode}.";
+                $"[{_authFlowId}] Auth ok for {_authenticatedPlayerName}; mode={resolvedMode}";
 
             await PrepareGameplayAsync();
 
+            // Register connection tracking before starting (detached from bootstrap callbacks)
+            RegisterAuthCallbacks();
+
             if (resolvedMode == ResolvedNetworkStartupMode.Host)
+            {
                 StartHostAndRegisterPlayerName();
+            }
             else
+            {
                 StartClientAndRegisterPlayerName();
+                // Fire-and-forget watcher: monitors connection, triggers Host fallback on timeout
+                _ = StartConnectionWatcherAsync();
+            }
         }
 
         async System.Threading.Tasks.Task PrepareGameplayAsync()
@@ -458,6 +512,160 @@ namespace NPCSystem.Auth
             }
         }
 
+        // ── Connection reliability ─────────────────────────────────
+
+        /// <summary>
+        /// Register temporary callbacks on NetworkManager to track whether
+        /// the client connection succeeded. These are cleaned up after
+        /// first connect/disconnect or when fallback fires.
+        /// </summary>
+        void RegisterAuthCallbacks()
+        {
+            NetworkManager nm = GetNetworkManager();
+            if (nm == null) return;
+            // Unregister first to avoid double-subscription from retry paths
+            nm.OnClientConnectedCallback -= OnAuthClientConnected;
+            nm.OnClientDisconnectCallback -= OnAuthClientDisconnected;
+            nm.OnClientConnectedCallback += OnAuthClientConnected;
+            nm.OnClientDisconnectCallback += OnAuthClientDisconnected;
+        }
+
+        void UnregisterAuthCallbacks()
+        {
+            NetworkManager nm = GetNetworkManager();
+            if (nm == null) return;
+            nm.OnClientConnectedCallback -= OnAuthClientConnected;
+            nm.OnClientDisconnectCallback -= OnAuthClientDisconnected;
+        }
+
+        void OnAuthClientConnected(ulong clientId)
+        {
+            if (!_authFallbackAttempted)
+            {
+                _authConnected = true;
+                _logger?.Log(
+                    NPCFlowStage.NetworkHost,
+                    NPCFlowStatus.Success,
+                    NPCFlowLogLevel.Info,
+                    $"[{_authFlowId ?? "?"}] Client connected to server (clientId={clientId}).",
+                    source: nameof(AuthNetworkBridge),
+                    data: new Dictionary<string, object> { ["flowId"] = _authFlowId ?? "?", ["clientId"] = clientId }
+                );
+            }
+            // Keep callbacks registered for full session — bootstrap handles disconnect logging
+        }
+
+        void OnAuthClientDisconnected(ulong clientId)
+        {
+            if (_authFallbackAttempted || _authConnected)
+                return;
+
+            _logger?.Log(
+                NPCFlowStage.NetworkHost,
+                NPCFlowStatus.Warning,
+                NPCFlowLogLevel.Info,
+                $"[{_authFlowId ?? "?"}] Client disconnected before establishing connection (clientId={clientId}).",
+                source: nameof(AuthNetworkBridge),
+                data: new Dictionary<string, object> { ["flowId"] = _authFlowId ?? "?", ["clientId"] = clientId }
+            );
+
+            // Don't trigger fallback here — let StartConnectionWatcherAsync handle it
+            // with a clear timeout. This avoids racing against the 60s Unity internal timeout.
+        }
+
+        /// <summary>
+        /// Polls for connection success up to _connectionTimeoutMs.
+        /// If no connection is established within the window, triggers a Host fallback.
+        /// Only meaningful in Client mode.
+        /// </summary>
+        async Task StartConnectionWatcherAsync()
+        {
+            if (_authConnected || _authFallbackAttempted || _connectionTimeoutMs <= 0)
+                return;
+
+            int timeoutMs = _connectionTimeoutMs;
+            int waited = 0;
+            int intervalMs = Mathf.Min(200, timeoutMs / 10);
+
+            while (waited < timeoutMs && !_authConnected && !_authFallbackAttempted)
+            {
+                await System.Threading.Tasks.Task.Delay(intervalMs);
+                waited += intervalMs;
+            }
+
+            if (!_authConnected && !_authFallbackAttempted)
+            {
+                await TryFallbackToHostAsync();
+            }
+        }
+
+        /// <summary>
+        /// Fallback: shut down the failed client attempt, then start as Host.
+        /// Only fires once per auth flow.
+        /// </summary>
+        async Task TryFallbackToHostAsync()
+        {
+            if (_authFallbackAttempted) return;
+            _authFallbackAttempted = true;
+
+            string flowId = _authFlowId ?? Guid.NewGuid().ToString("N")[..8];
+
+            _logger?.Log(
+                NPCFlowStage.NetworkHost,
+                NPCFlowStatus.Fallback,
+                NPCFlowLogLevel.Warning,
+                $"[{flowId}] Client connection failed or timed out after {_connectionTimeoutMs}ms. Falling back to Host mode.",
+                source: nameof(AuthNetworkBridge),
+                data: new Dictionary<string, object>
+                {
+                    ["flowId"] = flowId,
+                    ["timeoutMs"] = _connectionTimeoutMs,
+                    ["fallback"] = true,
+                    ["playerName"] = _authenticatedPlayerName,
+                }
+            );
+
+            DatadogMetricsService.Increment(
+                "auth.fallback.to_host",
+                tags: new[] { $"flow_id:{flowId}" }
+            );
+            lastBridgeStatus = $"[{flowId}] Client failed; falling back to Host";
+
+            UnregisterAuthCallbacks();
+
+            // Clean shutdown of stale client connection
+            NetworkManager netManager = GetNetworkManager();
+            if (netManager != null && netManager.IsListening)
+            {
+                netManager.Shutdown();
+                // Let shutdown propagate before re-starting
+                await System.Threading.Tasks.Task.Delay(500);
+            }
+
+            // Reset connection flag for host attempt
+            _authConnected = false;
+
+            // Configure for Host mode
+            if (_networkBootstrap != null)
+            {
+                _networkBootstrap.TransportConfig.AutoStartMode = NPCNetworkAutoStartMode.Host;
+                _networkBootstrap.TransportConfig.ConnectAddress = "0.0.0.0";
+            }
+
+            _logger?.Log(
+                NPCFlowStage.NetworkHost,
+                NPCFlowStatus.Start,
+                NPCFlowLogLevel.Info,
+                $"[{flowId}] Attempting Host start after client fallback.",
+                source: nameof(AuthNetworkBridge),
+                data: new Dictionary<string, object> { ["flowId"] = flowId }
+            );
+
+            // Re-register callbacks for Host mode
+            RegisterAuthCallbacks();
+            StartHostAndRegisterPlayerName();
+        }
+
         // ── Host mode ─────────────────────────────────────────────
 
         async void StartHostAndRegisterPlayerName()
@@ -468,10 +676,10 @@ namespace NPCSystem.Auth
                     NPCFlowStage.NetworkHost,
                     NPCFlowStatus.Error,
                     NPCFlowLogLevel.Error,
-                    "Cannot start host: NPCNetworkBootstrap not found.",
+                    $"[{_authFlowId ?? "?"}] Cannot start host: NPCNetworkBootstrap not found.",
                     source: nameof(AuthNetworkBridge)
                 );
-                lastBridgeStatus = "Cannot start host: NPCNetworkBootstrap not found.";
+                lastBridgeStatus = $"[{_authFlowId ?? "?"}] Cannot start host: NPCNetworkBootstrap not found.";
                 return;
             }
 
@@ -482,10 +690,10 @@ namespace NPCSystem.Auth
                     NPCFlowStage.NetworkHost,
                     NPCFlowStatus.Error,
                     NPCFlowLogLevel.Error,
-                    "Cannot start host: NetworkManager not found via bootstrap.",
+                    $"[{_authFlowId ?? "?"}] Cannot start host: NetworkManager not found via bootstrap.",
                     source: nameof(AuthNetworkBridge)
                 );
-                lastBridgeStatus = "Cannot start host: NetworkManager not found.";
+                lastBridgeStatus = $"[{_authFlowId ?? "?"}] Cannot start host: NetworkManager not found.";
                 return;
             }
 
@@ -522,10 +730,13 @@ namespace NPCSystem.Auth
                 NPCFlowStage.NetworkHost,
                 NPCFlowStatus.Success,
                 NPCFlowLogLevel.Info,
-                "Host started via bootstrap. Waiting for local player object...",
+                $"[{_authFlowId ?? "?"}] Host started via bootstrap. Waiting for local player object...",
                 source: nameof(AuthNetworkBridge)
             );
-            lastBridgeStatus = "Host started. Waiting for local player object.";
+            lastBridgeStatus = $"[{_authFlowId ?? "?"}] Host started. Waiting for local player object.";
+
+            _authConnected = true;
+            UnregisterAuthCallbacks();
 
             // Wait for player object to spawn
             int attempts = 0;
@@ -567,10 +778,10 @@ namespace NPCSystem.Auth
                     NPCFlowStage.NetworkHost,
                     NPCFlowStatus.Error,
                     NPCFlowLogLevel.Error,
-                    "Cannot connect as client: NPCNetworkBootstrap not found.",
+                    $"[{_authFlowId ?? "?"}] Cannot connect as client: NPCNetworkBootstrap not found.",
                     source: nameof(AuthNetworkBridge)
                 );
-                lastBridgeStatus = "Cannot connect as client: NPCNetworkBootstrap not found.";
+                lastBridgeStatus = $"[{_authFlowId ?? "?"}] Cannot connect as client: NPCNetworkBootstrap not found.";
                 return;
             }
 
@@ -581,10 +792,10 @@ namespace NPCSystem.Auth
                     NPCFlowStage.NetworkHost,
                     NPCFlowStatus.Error,
                     NPCFlowLogLevel.Error,
-                    "Cannot connect as client: NetworkManager not found via bootstrap.",
+                    $"[{_authFlowId ?? "?"}] Cannot connect as client: NetworkManager not found via bootstrap.",
                     source: nameof(AuthNetworkBridge)
                 );
-                lastBridgeStatus = "Cannot connect as client: NetworkManager not found.";
+                lastBridgeStatus = $"[{_authFlowId ?? "?"}] Cannot connect as client: NetworkManager not found.";
                 return;
             }
 
@@ -594,10 +805,10 @@ namespace NPCSystem.Auth
                     NPCFlowStage.NetworkHost,
                     NPCFlowStatus.Skipped,
                     NPCFlowLogLevel.Info,
-                    "Network already listening. Ignoring client start request.",
+                    $"[{_authFlowId ?? "?"}] Network already listening. Ignoring client start request.",
                     source: nameof(AuthNetworkBridge)
                 );
-                lastBridgeStatus = "Network already listening; skipped duplicate client start.";
+                lastBridgeStatus = $"[{_authFlowId ?? "?"}] Network already listening; skipped duplicate client start.";
                 return;
             }
 
@@ -618,10 +829,10 @@ namespace NPCSystem.Auth
                     NPCFlowStage.NetworkHost,
                     NPCFlowStatus.Error,
                     NPCFlowLogLevel.Error,
-                    "Failed to start client via bootstrap.",
+                    $"[{_authFlowId ?? "?"}] Failed to start client via bootstrap.",
                     source: nameof(AuthNetworkBridge)
                 );
-                lastBridgeStatus = $"Failed to start client to {_hostAddress}:{_hostPort}.";
+                lastBridgeStatus = $"[{_authFlowId ?? "?"}] Failed to start client to {_hostAddress}:{_hostPort}.";
                 return;
             }
 
@@ -631,20 +842,20 @@ namespace NPCSystem.Auth
                 NPCFlowStage.NetworkHost,
                 NPCFlowStatus.Success,
                 NPCFlowLogLevel.Info,
-                $"Client started via bootstrap, connecting to {effectiveAddress}:{effectivePort}...",
+                $"[{_authFlowId ?? "?"}] Client started, connecting to {effectiveAddress}:{effectivePort}...",
                 source: nameof(AuthNetworkBridge),
                 data: new Dictionary<string, object>
                 {
-                    ["_hostAddress"] = effectiveAddress,
-                    ["_hostPort"] = effectivePort,
+                    ["flowId"] = _authFlowId ?? "?",
+                    ["hostAddress"] = effectiveAddress,
+                    ["hostPort"] = effectivePort,
                 }
             );
             lastBridgeStatus =
-                $"Client started to {_hostAddress}:{(_hostPort > 0 ? _hostPort : _networkBootstrap.TransportConfig.Port)} as {_authenticatedPlayerName}.";
+                $"[{_authFlowId ?? "?"}] Client started to {effectiveAddress}:{effectivePort} as {_authenticatedPlayerName}.";
 
             // Name will be registered automatically by NPCPlayerNetworkAvatar.OnNetworkSpawn
             // which reads AuthNetworkBridge.ActivePlayerName and calls RegisterPlayerNameServerRpc.
-
             _onHostStarted?.Invoke(_authenticatedPlayerName);
         }
 

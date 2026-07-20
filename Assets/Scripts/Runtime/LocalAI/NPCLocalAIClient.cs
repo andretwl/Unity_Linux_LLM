@@ -260,7 +260,7 @@ namespace NPCSystem.LocalAI
                             tags: new[] { $"model:{modelName}", $"status:success" }
                         );
 
-                        string rawContent = response.choices[0].message.Content ?? string.Empty;
+                        string rawContent = response.choices[0].message.content ?? string.Empty;
                         rawContent = Regex
                             .Replace(rawContent, @"<think>.*?</think>", "", RegexOptions.Singleline)
                             .Trim();
@@ -410,8 +410,8 @@ namespace NPCSystem.LocalAI
     [Serializable]
     public class NPCOpenAIMessage
     {
-        public string Role;
-        public string Content;
+        public string role;
+        public string content;
     }
 
     [Serializable]

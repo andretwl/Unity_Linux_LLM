@@ -2123,7 +2123,6 @@ MonoBehaviour:
     _webSocketPath: /npc-dialogue
     _autoStartMode: 0
   ConfigureOnAwake: 1
-  AutoStartInPlayMode: 1
   AutoAssignClientBindPort: 1
   ClientBindPortOverride: 0
   ForceRunInBackground: 1
@@ -2260,6 +2259,7 @@ MonoBehaviour:
   _initializeNetworkBridge: 0
   _validateAfterInitialization: 0
   _startNetworkingAfterInitialization: 0
+  _config: {fileID: 0}
 --- !u!4 &774187517
 Transform:
   m_ObjectHideFlags: 0
@@ -4129,6 +4129,10 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   lastBridgeStatus: Idle
+  _authFlowId: 
+  _authConnected: 0
+  _authFallbackAttempted: 0
+  _connectionTimeoutMs: 15000
 --- !u!114 &1351714800
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4672,6 +4676,8 @@ MonoBehaviour:
   OnError:
     m_PersistentCalls:
       m_Calls: []
+  _initFlowId: 
+  _initTimeoutMs: 30000
 --- !u!114 &1555757781
 MonoBehaviour:
   m_ObjectHideFlags: 0

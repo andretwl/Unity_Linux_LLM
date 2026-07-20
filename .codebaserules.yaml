@@ -104,3 +104,51 @@ rules:
     agents_md_ref: "§1.4 Formatting Rules"
     check: roslyn
     description: "Public methods should have XML documentation comments."
+
+  # --- INITIALIZATION PHASE RULES (Phase system refactoring) ---
+  - id: INIT01
+    title: Phase class naming convention
+    severity: Info
+    agents_md_ref: "§15 Holistic Unity Session Workflow"
+    check: regex
+    pattern: "class\\s+\\w+Phase\\s*.*:\\s*ISceneInitializationPhase"
+    exclude_files: ["**/Tests/**"]
+    message: "Phase class detected — verify it follows naming convention (XxxPhase : ISceneInitializationPhase)."
+
+  - id: INIT02
+    title: Phase files must be in Initialization/Phases/ directory
+    severity: Warning
+    agents_md_ref: "§15 Holistic Unity Session Workflow"
+    check: regex
+    pattern: "class\\s+\\w+Phase\\s*.*:\\s*ISceneInitializationPhase"
+    include_files: ["**/Initialization/**"]
+    exclude_files: ["**/Initialization/Phases/**", "**/Tests/**"]
+    message: "ISceneInitializationPhase implementations must be in Initialization/Phases/ directory."
+
+  - id: INIT03
+    title: Avoid raw Debug.Log in initialization code
+    severity: Suggestion
+    agents_md_ref: "§15 Holistic Unity Session Workflow"
+    check: regex
+    pattern: "Debug\\.(Log|LogWarning|LogError)\\("
+    exclude_files: ["**/Tests/**", "**/Editor/**"]
+    message: "Prefer NPCFlowLogger/NPCFlowScope for structured logging in initialization code."
+
+  # --- TELEMETRY RULES ---
+  - id: TEL01
+    title: Init telemetry must use InitTelemetry helper
+    severity: Warning
+    agents_md_ref: "§16 Editor Console Pro Integration"
+    check: regex
+    pattern: "TelemetryRouter\\.Point\\(.*category:\\s*\"init\""
+    exclude_files: ["**/InitTelemetry.cs", "**/Tests/**"]
+    message: "Use InitTelemetry helper for init events — it handles both TelemetryRouter and DatadogMetricsService."
+
+  - id: TEL02
+    title: TelemetryRouter.Point must include correlationId tag
+    severity: Warning
+    agents_md_ref: "§16 Editor Console Pro Integration"
+    check: regex
+    pattern: "TelemetryRouter\\.Point\\("
+    exclude_files: ["**/InitTelemetry.cs", "**/Tests/**"]
+    message: "TelemetryRouter.Point calls should include correlationId in tags for cross-component tracing."

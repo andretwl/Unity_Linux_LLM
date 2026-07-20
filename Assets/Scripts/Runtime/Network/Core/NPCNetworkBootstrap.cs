@@ -69,7 +69,6 @@ namespace NPCSystem.Network.Core
             true,
             nameof(TransportConfig),
             nameof(ConfigureOnAwake),
-            nameof(AutoStartInPlayMode),
             nameof(AutoAssignClientBindPort),
             nameof(ClientBindPortOverride)
         )]
@@ -83,10 +82,6 @@ namespace NPCSystem.Network.Core
         [FormerlySerializedAs("configureOnAwake")]
         [HideProperty]
         public bool ConfigureOnAwake = true;
-
-        [FormerlySerializedAs("autoStartInPlayMode")]
-        [HideProperty]
-        public bool AutoStartInPlayMode = false;
 
         [FormerlySerializedAs("autoAssignClientBindPort")]
         [HideProperty]

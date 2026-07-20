@@ -69,6 +69,7 @@ namespace NPCSystem.Network.Bridges
         string _localSelectedNpcSlug = string.Empty;
         bool _eventsBound;
         bool _disconnectCallbackRegistered;
+        bool _isRelayMode; // True when processing RPC-originated requests; false when delegating locally
         BaseRpcTarget _persistentClientTarget;
         Dictionary<string, List<DialogueEntry>> _baselineHistorySnapshot =
             new Dictionary<string, List<DialogueEntry>>(StringComparer.OrdinalIgnoreCase);
@@ -651,21 +652,29 @@ namespace NPCSystem.Network.Bridges
         void HandleManagerNpcChanged(string npcSlug)
         {
             _localSelectedNpcSlug = npcSlug;
+            if (!_isRelayMode)
+                return; // Don't re-fire local events — manager already does
             OnNpcChanged?.Invoke(npcSlug);
         }
 
         void HandleManagerResponseStart(string requestId)
         {
+            if (!_isRelayMode)
+                return;
             OnResponseStart?.Invoke(requestId);
         }
 
         void HandleManagerResponseComplete(string requestId, string response)
         {
+            if (!_isRelayMode)
+                return;
             OnResponseComplete?.Invoke(requestId, response);
         }
 
         void HandleManagerError(string error)
         {
+            if (!_isRelayMode)
+                return;
             OnError?.Invoke(error);
         }
 
@@ -745,6 +754,7 @@ namespace NPCSystem.Network.Bridges
         async Task BeginDialogueRequestAsync(ulong senderClientId, NPCDialogueRequestMessage request)
         {
             SetActiveClient(senderClientId, request.requestId);
+            _isRelayMode = true;
 
             // Notify client that processing has started
             SendResponseStartToClient(senderClientId, new NPCDialogueResponseMessage
@@ -824,6 +834,7 @@ namespace NPCSystem.Network.Bridges
             _activeClientId = null;
             _activeRequestId = string.Empty;
             _persistentClientTarget = null;
+            _isRelayMode = false;
         }
 
         /// <summary>

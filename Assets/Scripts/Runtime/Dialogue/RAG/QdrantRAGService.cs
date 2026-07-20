@@ -294,7 +294,7 @@ namespace NPCSystem.Dialogue.RAG
                 // 2. Dense Query
                 var payload = new QueryPayload
                 {
-                    query = new DenseQuery { vector = queryVector },
+                    query = queryVector,
                     limit = limit,
                     with_payload = true
                 };
@@ -368,7 +368,7 @@ namespace NPCSystem.Dialogue.RAG
         [Serializable]
         class QueryPayload
         {
-            public DenseQuery query;
+            public List<float> query;
             public int limit;
             public bool with_payload;
         }

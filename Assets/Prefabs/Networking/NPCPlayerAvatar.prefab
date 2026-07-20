@@ -1223,7 +1223,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 4442102780728157853}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 392683ab17916abeead3a8bc00ff1ed2, type: 3}
+  m_Script: {fileID: 11500000, guid: b1d8238389c287d8fa8ded4436a0681c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: NPCSystem.Runtime::NPCSystem.NPCMultiplayerInputActions
   _inputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
@@ -1238,7 +1238,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 4442102780728157853}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80ecede4997618f4faf1aa559a8bcfe8, type: 3}
+  m_Script: {fileID: 11500000, guid: e692d08fcd9b138329a1db1201785e9a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: NPCSystem.Runtime::NPCSystem.NPCCharacterMotor
   _walkSpeed: 3.5
@@ -1284,7 +1284,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 4442102780728157853}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2fee1ad867ca30b78c38c3b18a92b82, type: 3}
+  m_Script: {fileID: 11500000, guid: b26c8e2b4224ae31c81acf76f13c55d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: NPCSystem.Runtime::NPCSystem.NPCCharacterAnimatorBridge
   animator: {fileID: 5178309420554491902}
@@ -1300,7 +1300,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 4442102780728157853}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 183f3058ab04f8e26a027c5f68bb8f23, type: 3}
+  m_Script: {fileID: 11500000, guid: 0078879e96302c8acb126ba2e8258499, type: 3}
   m_Name: 
   m_EditorClassIdentifier: NPCSystem.Runtime::NPCSystem.NPCThirdPersonCameraController
   _followTarget: {fileID: 8082035525083606262}
@@ -1322,7 +1322,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 4442102780728157853}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 24e50cfa0935bde47ac2fd06af52edd8, type: 3}
+  m_Script: {fileID: 11500000, guid: e0805561f20d9d6c8992e7612b045a96, type: 3}
   m_Name: 
   m_EditorClassIdentifier: NPCSystem.Runtime::NPCSystem.NPCOwnerNetworkTransform
   ShowTopMostFoldoutHeaderGroup: 1
@@ -1368,7 +1368,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 4442102780728157853}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e8c7022e7f9686cca8a9481907e2219, type: 3}
+  m_Script: {fileID: 11500000, guid: 119eadf85f60ad9af9845706516418e7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: NPCSystem.Runtime::NPCSystem.NPCPlayerCharacterController
   ShowTopMostFoldoutHeaderGroup: 1
@@ -1388,7 +1388,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 4442102780728157853}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3a7895cdbdfffe4b397e68561cbf1a39, type: 3}
+  m_Script: {fileID: 11500000, guid: 5babb46272dffdf53b172259c6c37e1e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: NPCSystem.Runtime::NPCSystem.NPCPlayerNetworkAvatar
   ShowTopMostFoldoutHeaderGroup: 1
@@ -1406,7 +1406,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 4442102780728157853}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 81320daaf04a6fe01b60edd0fed3cfaf, type: 3}
+  m_Script: {fileID: 11500000, guid: 1dc32bcf4c173727d86c8d27373fd11e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: NPCSystem.Runtime::NPCSystem.NPCPlayerInventory
   ShowTopMostFoldoutHeaderGroup: 1
@@ -1420,7 +1420,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 4442102780728157853}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51aed9fdd58f043a8a8cc656a0fbd2a9, type: 3}
+  m_Script: {fileID: 11500000, guid: 1c71ebe7e9de321959abf7df84d2c327, type: 3}
   m_Name: 
   m_EditorClassIdentifier: NPCSystem.Runtime::NPCSystem.NPCNetworkItemInteractor
   ShowTopMostFoldoutHeaderGroup: 1
@@ -1436,45 +1436,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 4442102780728157853}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e8d0727d5ae3244e3b569694d3912374, type: 3}
+  m_Script: {fileID: 11500000, guid: de3be5f410868b456a2dc021af6535e4, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Components.NetworkAnimator
-  ShowTopMostFoldoutHeaderGroup: 1
-  NetworkAnimatorExpanded: 0
-  AuthorityMode: 1
-  m_Animator: {fileID: 5178309420554491902}
-  TransitionStateInfoList: []
-  AnimatorParameterEntries:
-    ParameterEntries:
-    - name: MoveX
-      NameHash: 675470966
-      Synchronize: 1
-      ParameterType: 1
-    - name: MoveY
-      NameHash: 1598418656
-      Synchronize: 1
-      ParameterType: 1
-    - name: Speed
-      NameHash: -823668238
-      Synchronize: 1
-      ParameterType: 1
-    - name: MotionSpeed
-      NameHash: 1939466105
-      Synchronize: 1
-      ParameterType: 1
-    - name: Grounded
-      NameHash: 862969536
-      Synchronize: 1
-      ParameterType: 4
-    - name: Sprinting
-      NameHash: -126100601
-      Synchronize: 1
-      ParameterType: 4
-    - name: Jump
-      NameHash: 125937960
-      Synchronize: 1
-      ParameterType: 9
-  AnimatorParametersExpanded: 0
+  m_EditorClassIdentifier: 
+  _sendIntervalSec: 0.05
+  _enableServerFallback: 1
 --- !u!1 &4454843594434457466
 GameObject:
   m_ObjectHideFlags: 0
