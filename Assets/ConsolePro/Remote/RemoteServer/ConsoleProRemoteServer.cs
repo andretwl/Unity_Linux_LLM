@@ -1,5 +1,7 @@
-// Uncomment to use in Editor:
-#define USECONSOLEPROREMOTESERVERINEDITOR
+// Commented out: Remote Server is not needed in Editor with Console Pro 3 integration.
+// Our CPAPI magic strings directly embed filter/watch commands in Debug.Log output.
+// In WebGL builds, add ConsoleProRemoteServer to the scene via Tools > Console Pro > Add Remote Server.
+//#define USECONSOLEPROREMOTESERVERINEDITOR
 
 #if (!UNITY_EDITOR && DEBUG) || (UNITY_EDITOR && USECONSOLEPROREMOTESERVERINEDITOR)
 #if !UNSUPPORTEDCONSOLEPROREMOTESERVER

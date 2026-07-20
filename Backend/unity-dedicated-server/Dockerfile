@@ -5,7 +5,7 @@
 #
 # BUILD:
 #   1. Build the server in Unity: File → Build Settings → Server subtarget
-#      → output to Builds/Server/
+#      → output to Builds/Server1/
 #   2. cd <project-root> && docker build -t npc-dedicated-server -f Backend/unity-dedicated-server/Dockerfile .
 #
 # DEV QUICK START (bind-mount instead of rebuild on every build):
@@ -39,7 +39,7 @@ RUN groupadd -r npc && useradd -r -g npc -d /server -s /sbin/nologin npc && \
 FROM base AS with-build
 
 # Copy the server build if it exists — empty directory is fine (COPY won't fail).
-COPY Builds/Server/ /server/
+COPY Builds/Server1/ /server/
 
 RUN chmod +x /server/*.x86_64 2>/dev/null; chown -R npc:npc /server/; true
 

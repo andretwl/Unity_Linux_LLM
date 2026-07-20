@@ -25,7 +25,7 @@ namespace NPCSystem.Items
     {
         public readonly NetworkList<FixedString64Bytes> itemIds = new NetworkList<FixedString64Bytes>();
 
-        [SerializeField] string lastInventoryStatus = "Empty";
+        [SerializeField] private string lastInventoryStatus = "Empty";
 
         public IReadOnlyList<string> Items
         {

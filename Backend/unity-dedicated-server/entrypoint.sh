@@ -6,24 +6,24 @@ set -e
 SERVER_PORT="${SERVER_PORT:-11474}"
 SERVER_ADDRESS="${SERVER_ADDRESS:-0.0.0.0}"
 
-# Locate the server binary — try common names
-if [ -f "/Server/LinuxDedicatedServer.x86_64" ]; then
-    SERVER_BINARY="/Server/LinuxDedicatedServer.x86_64"
-elif [ -f "/Server1/Server1.x86_64" ]; then
-    SERVER_BINARY="/Server/ServerWS.x86_64"
-elif [ -f "/Server/NPCServer.x86_64" ]; then
-    SERVER_BINARY="/Server/NPCServer.x86_64"
-elif [ -f "/Server/Server.x86_64" ]; then
-    SERVER_BINARY="/Server/Server.x86_64"
-elif [ -f "/Server/Linux.x86_64" ]; then
-    SERVER_BINARY="/Server/Linux.x86_64"
-elif ls /Server/*.x86_64 1>/dev/null 2>&1; then
-    SERVER_BINARY="$(ls /Server/*.x86_64 | head -n 1)"
+# Locate the server binary — try common names (in /server, lowercase)
+if [ -f "/server/LinuxDedicatedServer.x86_64" ]; then
+    SERVER_BINARY="/server/LinuxDedicatedServer.x86_64"
+elif [ -f "/server/Server1.x86_64" ]; then
+    SERVER_BINARY="/server/Server1.x86_64"
+elif [ -f "/server/NPCServer.x86_64" ]; then
+    SERVER_BINARY="/server/NPCServer.x86_64"
+elif [ -f "/server/Server.x86_64" ]; then
+    SERVER_BINARY="/server/Server.x86_64"
+elif [ -f "/server/Linux.x86_64" ]; then
+    SERVER_BINARY="/server/Linux.x86_64"
+elif ls /server/*.x86_64 1>/dev/null 2>&1; then
+    SERVER_BINARY="$(ls /server/*.x86_64 | head -n 1)"
 else
-    echo "ERROR: No server binary found in /Server/"
-    echo "Bind-mount or COPY your Unity dedicated server build to /Server/."
-    echo "Expected files: LinuxDedicatedServer.x86_64 (or NPCServer.x86_64), UnityPlayer.so, GameAssembly.so, and the matching *_Data/ folder"
-    ls -la /Server/ 2>/dev/null || echo "  /Server/ is empty or missing"
+    echo "ERROR: No server binary found in /server/"
+    echo "Bind-mount or COPY your Unity dedicated server build to /server/."
+    echo "Expected files: LinuxDedicatedServer.x86_64 (or Server1.x86_64 or NPCServer.x86_64), UnityPlayer.so, GameAssembly.so, and the matching *_Data/ folder"
+    ls -la /server/ 2>/dev/null || echo "  /server/ is empty or missing"
     exit 1
 fi
 

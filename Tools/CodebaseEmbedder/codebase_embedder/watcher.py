@@ -243,7 +243,13 @@ class CodebaseWatcher:
         updated_paths_rel: set[str] = set()
 
         for path in changed_paths:
-            rel = path.relative_to(self.project_root).as_posix()
+            try:
+                rel = path.relative_to(self.project_root).as_posix()
+            except ValueError:
+                logger.warning(
+                    f"Skipping path outside project root (stale artifact entry?): {path}"
+                )
+                continue
             updated_paths_rel.add(rel)
 
             # Find matching chunks to delete and collect their point IDs

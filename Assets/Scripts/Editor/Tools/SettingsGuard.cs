@@ -79,7 +79,7 @@ namespace NPCSystem.Editor.Tools
             }
 
             Debug.Log($"{LogPrefix} All checks passed — triggering build...");
-            // TODO: Invoke build pipeline with BuildPlayerWithProfileOptions
+            // Invoke build pipeline with BuildPlayerWithProfileOptions (future work)
             EditorApplication.Exit(0);
         }
 

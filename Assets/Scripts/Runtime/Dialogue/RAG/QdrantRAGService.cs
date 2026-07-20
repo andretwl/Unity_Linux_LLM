@@ -98,10 +98,10 @@ namespace NPCSystem.Dialogue.RAG
             try
             {
                 Uri pageUri = new Uri(Application.absoluteURL);
-                if (pageUri.Host != "localhost" && pageUri.Host != "127.0.0.1")
+                if (!NPCNetworkUtils.IsLocalHost(pageUri.Host))
                 {
                     Uri qdrantUri = new Uri(_qdrantUrl);
-                    if (qdrantUri.Host == "localhost" || qdrantUri.Host == "127.0.0.1")
+                    if (NPCNetworkUtils.IsLocalHost(qdrantUri.Host))
                     {
                         var builder = new UriBuilder(qdrantUri);
                         builder.Host = pageUri.Host;
@@ -116,23 +116,31 @@ namespace NPCSystem.Dialogue.RAG
         }
 
         [Button("Validate Qdrant Inspector Settings")]
-        async void ValidateInspectorSettings()
+        async Task ValidateInspectorSettings()
         {
-            if (!HasValidQdrantUrl() || !HasValidCollectionName())
+            try
             {
-                inspectorStatus = "Qdrant settings are invalid. Check URL and collection name.";
-                return;
-            }
+                if (!HasValidQdrantUrl() || !HasValidCollectionName())
+                {
+                    inspectorStatus = "Qdrant settings are invalid. Check URL and collection name.";
+                    return;
+                }
 
-            inspectorStatus = "Validating...";
-            string collectionInfo = await GetCollectionInfo();
-            if (string.IsNullOrEmpty(collectionInfo))
-            {
-                inspectorStatus = "Failed to fetch collection info. Is Qdrant reachable?";
+                inspectorStatus = "Validating...";
+                string collectionInfo = await GetCollectionInfo();
+                if (string.IsNullOrEmpty(collectionInfo))
+                {
+                    inspectorStatus = "Failed to fetch collection info. Is Qdrant reachable?";
+                }
+                else
+                {
+                    inspectorStatus = $"Validated: {collectionInfo}";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                inspectorStatus = $"Validated: {collectionInfo}";
+                inspectorStatus = $"Validation error: {ex.Message}";
+                Debug.LogError($"[QdrantRAGService] Validation failed: {ex}");
             }
         }
 
@@ -216,23 +224,31 @@ namespace NPCSystem.Dialogue.RAG
         }
 
         [Button("Test Qdrant Connection")]
-        async void TestQdrantConnection()
+        async Task TestQdrantConnection()
         {
-            NPCFlowLogger logger = NPCFlowLogger.FindOrCreate();
-            string endpoint = BuildQueryEndpoint();
-            
-            using var request = UnityWebRequest.Get($"{_qdrantUrl}/collections");
-            await request.SendWebRequest();
-
-            if (request.result != UnityWebRequest.Result.Success)
+            try
             {
-                inspectorStatus = $"Connection failed: {request.error}";
-                logger.Log(NPCFlowStage.ConfigurationValidation, NPCFlowStatus.Error, NPCFlowLogLevel.Error, inspectorStatus);
-                return;
-            }
+                NPCFlowLogger logger = NPCFlowLogger.FindOrCreate();
+                string endpoint = BuildQueryEndpoint();
 
-            inspectorStatus = "Qdrant is reachable.";
-            logger.Log(NPCFlowStage.ConfigurationValidation, NPCFlowStatus.Success, NPCFlowLogLevel.Info, inspectorStatus);
+                using var request = UnityWebRequest.Get($"{_qdrantUrl}/collections");
+                await request.SendWebRequest();
+
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    inspectorStatus = $"Connection failed: {request.error}";
+                    logger.Log(NPCFlowStage.ConfigurationValidation, NPCFlowStatus.Error, NPCFlowLogLevel.Error, inspectorStatus);
+                    return;
+                }
+
+                inspectorStatus = "Qdrant is reachable.";
+                logger.Log(NPCFlowStage.ConfigurationValidation, NPCFlowStatus.Success, NPCFlowLogLevel.Info, inspectorStatus);
+            }
+            catch (Exception ex)
+            {
+                inspectorStatus = $"Connection error: {ex.Message}";
+                Debug.LogError($"[QdrantRAGService] Connection test failed: {ex}");
+            }
         }
 
         public string BuildQueryEndpoint() =>
