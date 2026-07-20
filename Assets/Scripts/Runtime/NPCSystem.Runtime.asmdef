@@ -8,7 +8,8 @@
         "Unity.DedicatedServer.MultiplayerRoles",
         "Unity.TextMeshPro",
         "EditorAttributes",
-        "NPCSystem.Monitoring"
+        "NPCSystem.Monitoring",
+        "com.datadog.unity"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -27,13 +28,6 @@
         "Microsoft.IdentityModel.JsonWebTokens.dll",
         "Microsoft.IdentityModel.Logging.dll",
         "Microsoft.IdentityModel.Tokens.dll",
-        "System.IdentityModel.Tokens.Jwt.dll",
-        "MimeMapping.dll",
-        "System.Reactive.dll",
-        "Websocket.Client.dll"
-    ],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
+        "System.IdentityModel.Tokens.Jwt.dll"
+    ]
 }

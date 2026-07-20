@@ -44,10 +44,9 @@ namespace NPCSystem.Dialogue.Core
 
         static NPCFlowLogger Logger => NPCFlowLogger.FindOrCreate();
 
-        public async void Start()
-        {
-            await ValidateConfiguration();
-        }
+        // Start() is empty — smoke validation is called by
+        // NPCSceneInitializationController Phase 7 (Validation) only.
+        // The async void Start() pattern was removed to eliminate dual-initialization paths.
 
         public async Task ValidateConfiguration()
         {

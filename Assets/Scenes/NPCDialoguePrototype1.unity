@@ -2123,7 +2123,7 @@ MonoBehaviour:
     _webSocketPath: /npc-dialogue
     _autoStartMode: 0
   ConfigureOnAwake: 1
-  AutoStartInPlayMode: 0
+  AutoStartInPlayMode: 1
   AutoAssignClientBindPort: 1
   ClientBindPortOverride: 0
   ForceRunInBackground: 1
@@ -2253,12 +2253,12 @@ MonoBehaviour:
   _backendReadiness: {fileID: 850448794}
   _networkBridge: {fileID: 701091027}
   _smokeValidator: {fileID: 1555757781}
-  _initializeOnStart: 1
+  _initializeOnStart: 0
   _configureNetworkTransport: 0
   _initializeDialogueManager: 0
   _verifyBackendsDuringInitialization: 0
-  _initializeNetworkBridge: 1
-  _validateAfterInitialization: 1
+  _initializeNetworkBridge: 0
+  _validateAfterInitialization: 0
   _startNetworkingAfterInitialization: 0
 --- !u!4 &774187517
 Transform:

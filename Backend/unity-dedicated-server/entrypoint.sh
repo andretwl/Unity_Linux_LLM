@@ -42,10 +42,10 @@ echo "LocalAI:    localhost:8080 (via host networking)"
 echo "======================================"
 
 # Start server in background so we can trap signals.
-# -batchmode enables CLI arg processing in the standalone player.
+# -batchmode is an Editor-only flag; remove for built dedicated server player.
+# -nographics disables graphics initialization (valid for built players).
 # Unknown args are passed through to the game code.
 "$SERVER_BINARY" \
-    -batchmode \
     -nographics \
     -npc-server \
     -port "$SERVER_PORT" \

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using EditorAttributes;
+using NPCSystem.Monitoring.Datadog;
 using UnityEngine;
 
 namespace NPCSystem.Monitoring
@@ -20,16 +21,28 @@ namespace NPCSystem.Monitoring
         [FoldoutGroup("Console Output", true, nameof(LogToUnityConsole))]
         [SerializeField]
         bool _logToUnityConsole = true;
-        public bool LogToUnityConsole { get => _logToUnityConsole; set => _logToUnityConsole = value; }
+        public bool LogToUnityConsole
+        {
+            get => _logToUnityConsole;
+            set => _logToUnityConsole = value;
+        }
 
         [SerializeField]
         bool _logToStdout = false;
-        public bool LogToStdout { get => _logToStdout; set => _logToStdout = value; }
+        public bool LogToStdout
+        {
+            get => _logToStdout;
+            set => _logToStdout = value;
+        }
 
         [FoldoutGroup("File Output", true, nameof(LogToJsonlFile))]
         [SerializeField]
         bool _logToJsonlFile = true;
-        public bool LogToJsonlFile { get => _logToJsonlFile; set => _logToJsonlFile = value; }
+        public bool LogToJsonlFile
+        {
+            get => _logToJsonlFile;
+            set => _logToJsonlFile = value;
+        }
 
         [FoldoutGroup(
             "Text Sanitization",
@@ -39,16 +52,28 @@ namespace NPCSystem.Monitoring
         )]
         [SerializeField]
         bool _includeTextSnippets = false;
-        public bool IncludeTextSnippets { get => _includeTextSnippets; set => _includeTextSnippets = value; }
+        public bool IncludeTextSnippets
+        {
+            get => _includeTextSnippets;
+            set => _includeTextSnippets = value;
+        }
 
         [SerializeField]
         bool _includeRawTextPayloads = false;
-        public bool IncludeRawTextPayloads { get => _includeRawTextPayloads; set => _includeRawTextPayloads = value; }
+        public bool IncludeRawTextPayloads
+        {
+            get => _includeRawTextPayloads;
+            set => _includeRawTextPayloads = value;
+        }
 
         [ShowField(nameof(IncludeTextOrRaw))]
         [SerializeField]
         int _maxSnippetChars = 80;
-        public int MaxSnippetChars { get => _maxSnippetChars; set => _maxSnippetChars = value; }
+        public int MaxSnippetChars
+        {
+            get => _maxSnippetChars;
+            set => _maxSnippetChars = value;
+        }
 
         [FoldoutGroup("Cache Settings", true, nameof(MaxInMemoryEvents))]
         [SerializeField]
@@ -56,7 +81,11 @@ namespace NPCSystem.Monitoring
 
         [SerializeField, HideProperty]
         int _maxInMemoryEvents = 500;
-        public int MaxInMemoryEvents { get => _maxInMemoryEvents; set => _maxInMemoryEvents = value; }
+        public int MaxInMemoryEvents
+        {
+            get => _maxInMemoryEvents;
+            set => _maxInMemoryEvents = value;
+        }
 
         [FoldoutGroup(
             "Log File Storage",
@@ -71,19 +100,35 @@ namespace NPCSystem.Monitoring
 
         [SerializeField, HideProperty]
         string _relativeLogDirectory = "NPCDialogue/Logs";
-        public string RelativeLogDirectory { get => _relativeLogDirectory; set => _relativeLogDirectory = value; }
+        public string RelativeLogDirectory
+        {
+            get => _relativeLogDirectory;
+            set => _relativeLogDirectory = value;
+        }
 
         [SerializeField, HideProperty]
         string _overrideAbsoluteLogDirectory = "";
-        public string OverrideAbsoluteLogDirectory { get => _overrideAbsoluteLogDirectory; set => _overrideAbsoluteLogDirectory = value; }
+        public string OverrideAbsoluteLogDirectory
+        {
+            get => _overrideAbsoluteLogDirectory;
+            set => _overrideAbsoluteLogDirectory = value;
+        }
 
         [SerializeField, HideProperty, Suffix("days")]
         int _maxLogDays = 7;
-        public int MaxLogDays { get => _maxLogDays; set => _maxLogDays = value; }
+        public int MaxLogDays
+        {
+            get => _maxLogDays;
+            set => _maxLogDays = value;
+        }
 
         [SerializeField, HideProperty, Suffix("MB")]
         int _maxLogDirectorySizeMB = 100;
-        public int MaxLogDirectorySizeMB { get => _maxLogDirectorySizeMB; set => _maxLogDirectorySizeMB = value; }
+        public int MaxLogDirectorySizeMB
+        {
+            get => _maxLogDirectorySizeMB;
+            set => _maxLogDirectorySizeMB = value;
+        }
 
         [FoldoutGroup("Retry Suppression", true, nameof(MaxDuplicateEventsPerMinute))]
         [SerializeField]
@@ -91,7 +136,11 @@ namespace NPCSystem.Monitoring
 
         [SerializeField, HideProperty, Suffix("events/min")]
         int _maxDuplicateEventsPerMinute = 5;
-        public int MaxDuplicateEventsPerMinute { get => _maxDuplicateEventsPerMinute; set => _maxDuplicateEventsPerMinute = value; }
+        public int MaxDuplicateEventsPerMinute
+        {
+            get => _maxDuplicateEventsPerMinute;
+            set => _maxDuplicateEventsPerMinute = value;
+        }
 
         // ── Runtime state ──
         static NPCFlowLogger _instance;
@@ -168,6 +217,31 @@ namespace NPCSystem.Monitoring
             set => _currentConversationId = value ?? string.Empty;
         }
 
+        /// <summary>
+        /// Initialize telemetry sinks and Datadog infrastructure.
+        /// Runs at order -3000 (first) so all downstream components have telemetry available.
+        /// </summary>
+        void Awake()
+        {
+            // Initialize Datadog RUM tracking consent (WebGL compliance).
+            // Consent starts as "pending" (no data collected) and is only
+            // set to "granted" when the user accepts the privacy dialog.
+            // On non-WebGL platforms this is a safe no-op.
+            DatadogConsent.Grant();
+
+            NPCSystem.TelemetryBootstrapper.Initialize(
+                sessionId: SystemInfo.deviceUniqueIdentifier,
+                metricPrefix: "npc",
+                enableFileSink: true,
+                enableDatadogSink: true
+            );
+
+#if !UNITY_WEBGL || UNITY_EDITOR
+            DatadogMetricsService.Initialize();
+            DatadogTracer.Initialize();
+#endif
+        }
+
         void OnDestroy()
         {
             if (_instance == this)
@@ -189,27 +263,17 @@ namespace NPCSystem.Monitoring
                 NPCFlowLogger[] sceneLoggers = FindObjectsByType<NPCFlowLogger>(
                     FindObjectsInactive.Include
                 );
-                NPCFlowLogger sceneLogger = sceneLoggers.Length > 0 ? sceneLoggers[0] : null;
-                if (sceneLogger != null)
+                if (sceneLoggers.Length > 0)
                 {
-                    _instance = sceneLogger;
+                    _instance = sceneLoggers[0];
                     _instance.ApplyPlatformLoggingOverrides();
                     return _instance;
                 }
 
-                var loggerObject = new GameObject("NPCFlowLogger");
-                if (Application.isPlaying)
-                    DontDestroyOnLoad(loggerObject);
-                _instance = loggerObject.AddComponent<NPCFlowLogger>();
-                _instance.ApplyPlatformLoggingOverrides();
-                _instance.Log(
-                    NPCFlowStage.SceneBootstrap,
-                    NPCFlowStatus.Warning,
-                    NPCFlowLogLevel.Warning,
-                    "Auto-created fallback NPCFlowLogger. Add an explicit scene logger for Inspector-controlled settings.",
-                    source: nameof(NPCFlowLogger)
-                );
-                return _instance;
+                // No logger in scene — return null. The scene must be wired with a logger
+                // GameObject by the scene designer. Auto-creation is removed to enforce
+                // proper scene setup and a single reliable initialization pipeline.
+                return null;
             }
         }
 
@@ -360,7 +424,8 @@ namespace NPCSystem.Monitoring
                 level: NPCFlowLogLevel.Info,
                 message: issues.Count == 0
                     ? "All logger settings valid. Log path: "
-                        + Path.Combine(path1: directory, path2: "npc-flow-*.jsonl").Replace(oldChar: '\\', newChar: '/')
+                        + Path.Combine(path1: directory, path2: "npc-flow-*.jsonl")
+                            .Replace(oldChar: '\\', newChar: '/')
                     : "Logger settings have "
                         + issues.Count
                         + " issue(s): "
@@ -407,40 +472,49 @@ namespace NPCSystem.Monitoring
         {
             return stage switch
             {
-                NPCFlowStage.SceneBootstrap or NPCFlowStage.ReferenceResolution
-                    or NPCFlowStage.ConfigurationValidation or NPCFlowStage.ProfileIndexBuild
-                        => NPCFlowCategory.Infrastructure,
+                NPCFlowStage.SceneBootstrap
+                or NPCFlowStage.ReferenceResolution
+                or NPCFlowStage.ConfigurationValidation
+                or NPCFlowStage.ProfileIndexBuild => NPCFlowCategory.Infrastructure,
 
-                NPCFlowStage.HistoryLoad or NPCFlowStage.HistoryRestore
-                    or NPCFlowStage.HistoryPersist => NPCFlowCategory.Memory,
+                NPCFlowStage.HistoryLoad
+                or NPCFlowStage.HistoryRestore
+                or NPCFlowStage.HistoryPersist => NPCFlowCategory.Memory,
 
-                NPCFlowStage.NPCSwitch or NPCFlowStage.UIInput
-                    => NPCFlowCategory.UI,
+                NPCFlowStage.NPCSwitch or NPCFlowStage.UIInput => NPCFlowCategory.UI,
 
-                NPCFlowStage.AuthRequest or NPCFlowStage.AuthSession
-                    => NPCFlowCategory.Auth,
+                NPCFlowStage.AuthRequest or NPCFlowStage.AuthSession => NPCFlowCategory.Auth,
 
-                NPCFlowStage.RequestStart or NPCFlowStage.ClientSession
-                    or NPCFlowStage.DialogueRouting or NPCFlowStage.ActionSelection
-                    or NPCFlowStage.ActionExecution or NPCFlowStage.GrammarOverride
-                    or NPCFlowStage.GrammarRestore or NPCFlowStage.ResponseComplete
-                        => NPCFlowCategory.Dialogue,
+                NPCFlowStage.RequestStart
+                or NPCFlowStage.ClientSession
+                or NPCFlowStage.DialogueRouting
+                or NPCFlowStage.ActionSelection
+                or NPCFlowStage.ActionExecution
+                or NPCFlowStage.GrammarOverride
+                or NPCFlowStage.GrammarRestore
+                or NPCFlowStage.ResponseComplete => NPCFlowCategory.Dialogue,
 
-                NPCFlowStage.ContextRetrieval or NPCFlowStage.LocalRagReady
-                    or NPCFlowStage.LocalRagSearch or NPCFlowStage.QdrantEmbedding
-                    or NPCFlowStage.QdrantSearch => NPCFlowCategory.RAG,
+                NPCFlowStage.ContextRetrieval
+                or NPCFlowStage.LocalRagReady
+                or NPCFlowStage.LocalRagSearch
+                or NPCFlowStage.QdrantEmbedding
+                or NPCFlowStage.QdrantSearch => NPCFlowCategory.RAG,
 
-                NPCFlowStage.PromptBuild or NPCFlowStage.DialogueGeneration
-                    or NPCFlowStage.BackendRequest or NPCFlowStage.LLMChat
-                    or NPCFlowStage.LLMStream => NPCFlowCategory.LLM,
+                NPCFlowStage.PromptBuild
+                or NPCFlowStage.DialogueGeneration
+                or NPCFlowStage.BackendRequest
+                or NPCFlowStage.LLMChat
+                or NPCFlowStage.LLMStream => NPCFlowCategory.LLM,
 
-                NPCFlowStage.NetworkHost or NPCFlowStage.PlayerSpawn
-                    or NPCFlowStage.NpcSpawn or NPCFlowStage.PlayerNameRegistration
-                    or NPCFlowStage.RpcTraffic or NPCFlowStage.OwnershipAuthority
-                        => NPCFlowCategory.Network,
+                NPCFlowStage.NetworkHost
+                or NPCFlowStage.PlayerSpawn
+                or NPCFlowStage.NpcSpawn
+                or NPCFlowStage.PlayerNameRegistration
+                or NPCFlowStage.RpcTraffic
+                or NPCFlowStage.OwnershipAuthority => NPCFlowCategory.Network,
 
-                NPCFlowStage.EditorWorkflow or NPCFlowStage.SmokeValidation
-                    => NPCFlowCategory.EditorWorkflow,
+                NPCFlowStage.EditorWorkflow or NPCFlowStage.SmokeValidation =>
+                    NPCFlowCategory.EditorWorkflow,
 
                 _ => NPCFlowCategory.Infrastructure,
             };
@@ -475,9 +549,15 @@ namespace NPCSystem.Monitoring
                 flowEvent.TimestampUtc = DateTime.UtcNow.ToString("o");
             if (string.IsNullOrWhiteSpace(flowEvent.SessionId))
                 flowEvent.SessionId = SessionId;
-            if (string.IsNullOrWhiteSpace(flowEvent.ConversationId) && !string.IsNullOrWhiteSpace(_currentConversationId))
+            if (
+                string.IsNullOrWhiteSpace(flowEvent.ConversationId)
+                && !string.IsNullOrWhiteSpace(_currentConversationId)
+            )
                 flowEvent.ConversationId = _currentConversationId;
-            if (flowEvent.Category == NPCFlowCategory.Infrastructure && flowEvent.Stage != NPCFlowStage.SceneBootstrap)
+            if (
+                flowEvent.Category == NPCFlowCategory.Infrastructure
+                && flowEvent.Stage != NPCFlowStage.SceneBootstrap
+            )
                 flowEvent.Category = StageToCategory(flowEvent.Stage);
             flowEvent.Source = flowEvent.Source ?? string.Empty;
             flowEvent.RequestId = flowEvent.RequestId ?? string.Empty;
@@ -495,11 +575,15 @@ namespace NPCSystem.Monitoring
                 return false;
 
             // Only suppress Warning and Error levels in retry loops
-            if (flowEvent.Level != NPCFlowLogLevel.Warning && flowEvent.Level != NPCFlowLogLevel.Error)
+            if (
+                flowEvent.Level != NPCFlowLogLevel.Warning
+                && flowEvent.Level != NPCFlowLogLevel.Error
+            )
                 return false;
 
             // Build a suppression key from source + stage + truncated message
-            string key = $"{flowEvent.Source}|{flowEvent.Stage}|{TruncateHash(flowEvent.Message, 60)}";
+            string key =
+                $"{flowEvent.Source}|{flowEvent.Stage}|{TruncateHash(flowEvent.Message, 60)}";
 
             long nowTicks = DateTime.UtcNow.Ticks;
             long windowTicks = TimeSpan.TicksPerMinute;
@@ -568,13 +652,48 @@ namespace NPCSystem.Monitoring
             // Derive category from the flow event's stage
             string category = flowEvent.Stage switch
             {
-                NPCFlowStage.LLMChat or NPCFlowStage.LLMStream or NPCFlowStage.BackendRequest or NPCFlowStage.DialogueGeneration => "llm",
-                NPCFlowStage.QdrantEmbedding or NPCFlowStage.QdrantSearch or NPCFlowStage.LocalRagReady or NPCFlowStage.LocalRagSearch or NPCFlowStage.ContextRetrieval or NPCFlowStage.RagDimensionCheck => "rag",
+                NPCFlowStage.LLMChat
+                or NPCFlowStage.LLMStream
+                or NPCFlowStage.BackendRequest
+                or NPCFlowStage.DialogueGeneration => "llm",
+                NPCFlowStage.QdrantEmbedding
+                or NPCFlowStage.QdrantSearch
+                or NPCFlowStage.LocalRagReady
+                or NPCFlowStage.LocalRagSearch
+                or NPCFlowStage.ContextRetrieval
+                or NPCFlowStage.RagDimensionCheck => "rag",
                 NPCFlowStage.AuthRequest or NPCFlowStage.AuthSession => "auth",
-                NPCFlowStage.DialogueRouting or NPCFlowStage.ResponseComplete or NPCFlowStage.ActionSelection or NPCFlowStage.ActionExecution or NPCFlowStage.GrammarOverride or NPCFlowStage.GrammarRestore or NPCFlowStage.PromptBuild => "dialog",
-                NPCFlowStage.OwnershipAuthority or NPCFlowStage.NpcSpawn or NPCFlowStage.RpcTraffic or NPCFlowStage.NetworkHost or NPCFlowStage.PlayerSpawn or NPCFlowStage.PlayerNameRegistration or NPCFlowStage.AnimationSync or NPCFlowStage.AnimationFallback => "network",
-                NPCFlowStage.SceneBootstrap or NPCFlowStage.ReferenceResolution or NPCFlowStage.ConfigurationValidation or NPCFlowStage.ProfileIndexBuild or NPCFlowStage.HistoryLoad or NPCFlowStage.HistoryRestore or NPCFlowStage.NPCSwitch or NPCFlowStage.UIInput or NPCFlowStage.RequestStart or NPCFlowStage.ClientSession or NPCFlowStage.SmokeValidation or NPCFlowStage.WebGLGameplayLoad or NPCFlowStage.EditorWorkflow or NPCFlowStage.InputModeSwitch or NPCFlowStage.HistoryPersist => "system",
-                _ => "system"
+                NPCFlowStage.DialogueRouting
+                or NPCFlowStage.ResponseComplete
+                or NPCFlowStage.ActionSelection
+                or NPCFlowStage.ActionExecution
+                or NPCFlowStage.GrammarOverride
+                or NPCFlowStage.GrammarRestore
+                or NPCFlowStage.PromptBuild => "dialog",
+                NPCFlowStage.OwnershipAuthority
+                or NPCFlowStage.NpcSpawn
+                or NPCFlowStage.RpcTraffic
+                or NPCFlowStage.NetworkHost
+                or NPCFlowStage.PlayerSpawn
+                or NPCFlowStage.PlayerNameRegistration
+                or NPCFlowStage.AnimationSync
+                or NPCFlowStage.AnimationFallback => "network",
+                NPCFlowStage.SceneBootstrap
+                or NPCFlowStage.ReferenceResolution
+                or NPCFlowStage.ConfigurationValidation
+                or NPCFlowStage.ProfileIndexBuild
+                or NPCFlowStage.HistoryLoad
+                or NPCFlowStage.HistoryRestore
+                or NPCFlowStage.NPCSwitch
+                or NPCFlowStage.UIInput
+                or NPCFlowStage.RequestStart
+                or NPCFlowStage.ClientSession
+                or NPCFlowStage.SmokeValidation
+                or NPCFlowStage.WebGLGameplayLoad
+                or NPCFlowStage.EditorWorkflow
+                or NPCFlowStage.InputModeSwitch
+                or NPCFlowStage.HistoryPersist => "system",
+                _ => "system",
             };
 
             string tagged = $"#NPC# #{category}# {line}";
@@ -584,13 +703,19 @@ namespace NPCSystem.Monitoring
             switch (flowEvent.Level)
             {
                 case NPCFlowLogLevel.Error:
-                    UnityEngine.Debug.LogError($"{tagged}\nCPAPI:{{\"cmd\":\"LogType\",\"name\":\"Error\"}}");
+                    UnityEngine.Debug.LogError(
+                        $"{tagged}\nCPAPI:{{\"cmd\":\"LogType\",\"name\":\"Error\"}}"
+                    );
                     break;
                 case NPCFlowLogLevel.Warning:
-                    UnityEngine.Debug.LogWarning($"{tagged}\nCPAPI:{{\"cmd\":\"LogType\",\"name\":\"Warning\"}}");
+                    UnityEngine.Debug.LogWarning(
+                        $"{tagged}\nCPAPI:{{\"cmd\":\"LogType\",\"name\":\"Warning\"}}"
+                    );
                     break;
                 default:
-                    UnityEngine.Debug.Log($"{tagged}\nCPAPI:{{\"cmd\":\"Filter\",\"name\":\"npc/{category}\"}}");
+                    UnityEngine.Debug.Log(
+                        $"{tagged}\nCPAPI:{{\"cmd\":\"Filter\",\"name\":\"npc/{category}\"}}"
+                    );
                     break;
             }
         }
@@ -692,7 +817,8 @@ namespace NPCSystem.Monitoring
                             deletedCount++;
                         }
                         catch
-                        { /* best effort */ }
+                        { /* best effort */
+                        }
                     }
                 }
 
@@ -722,7 +848,8 @@ namespace NPCSystem.Monitoring
                                 deletedCount++;
                             }
                             catch
-                            { /* best effort */ }
+                            { /* best effort */
+                            }
                         }
                     }
                 }
@@ -810,7 +937,9 @@ namespace NPCSystem.Monitoring
                 : flowEvent.RequestId;
             string npc = string.IsNullOrWhiteSpace(flowEvent.NpcSlug) ? "-" : flowEvent.NpcSlug;
             string source = string.IsNullOrWhiteSpace(flowEvent.Source) ? "-" : flowEvent.Source;
-            string conv = string.IsNullOrWhiteSpace(flowEvent.ConversationId) ? "" : $" conv={flowEvent.ConversationId}";
+            string conv = string.IsNullOrWhiteSpace(flowEvent.ConversationId)
+                ? ""
+                : $" conv={flowEvent.ConversationId}";
             return $"[NPCFlow] {flowEvent.Stage}/{flowEvent.Status} level={flowEvent.Level} source={source} request={request} npc={npc}{conv} durationMs={flowEvent.DurationMs} :: {flowEvent.Message}";
         }
 

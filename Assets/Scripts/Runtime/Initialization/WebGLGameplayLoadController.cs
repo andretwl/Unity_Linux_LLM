@@ -118,6 +118,18 @@ namespace NPCSystem.Initialization
             if (!_initializeDialogueUi)
                 return;
 
+            // Find the initialization controller that was set up in the initial scene
+            NPCSceneInitializationController initController = FindAnyObjectByType<NPCSceneInitializationController>(
+                FindObjectsInactive.Include
+            );
+
+            if (initController != null && initController.IsDeferred)
+            {
+                // Let the pipeline handle Phases 3-8 in order
+                await initController.ContinueInitializationAsync();
+            }
+
+            // Activate UI canvas after pipeline completes
             NPCDialogueUIController uiController = FindAnyObjectByType<NPCDialogueUIController>(
                 FindObjectsInactive.Include
             );
@@ -130,14 +142,7 @@ namespace NPCSystem.Initialization
                         gameplayCanvas.SetActive(true);
                 }
                 await uiController.InitializeOnDemandAsync();
-                return;
             }
-
-            NPCDialogueManager manager = FindAnyObjectByType<NPCDialogueManager>(
-                FindObjectsInactive.Include
-            );
-            if (manager != null)
-                await manager.InitializeAsync();
         }
 
         static GameObject FindInactiveRoot(string rootName)

@@ -211,14 +211,9 @@ namespace NPCSystem.Dialogue.Core
 
         void Start()
         {
-#if !UNITY_WEBGL || UNITY_EDITOR
-            DatadogMetricsService.Initialize();
-            DatadogTracer.Initialize();
-#endif
-            if (InitializeOnStart)
-            {
-                _ = InitializeAsync();
-            }
+            // Intentionally empty — dialogue initialization is sequenced by
+            // NPCSceneInitializationController Phase 4 (DialogueServices).
+            // The InitializeOnStart flag is read by the controller, not self-triggered.
         }
 
         /// <summary>

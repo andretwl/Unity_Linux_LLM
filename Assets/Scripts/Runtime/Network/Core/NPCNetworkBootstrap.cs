@@ -124,6 +124,12 @@ namespace NPCSystem.Network.Core
                 TransportConfig = NPCTransportConfig.CreateDefault();
             }
 
+            // Detect dedicated server CLI arg and configure mode (not start)
+            if (Application.isBatchMode && HasCommandLineArg("-npc-server"))
+            {
+                TransportConfig.AutoStartMode = NPCNetworkAutoStartMode.Server;
+            }
+
             ApplyCommandLineOverrides();
             ApplyRuntimeSettings();
             ResolveReferences();
@@ -137,24 +143,8 @@ namespace NPCSystem.Network.Core
 
         void Start()
         {
-            // Detect dedicated server CLI arg and auto-configure to Server mode
-            if (Application.isBatchMode && HasCommandLineArg("-npc-server"))
-            {
-                TransportConfig.AutoStartMode = NPCNetworkAutoStartMode.Server;
-            }
-
-            if (
-                (
-                    AutoStartInPlayMode
-                    || (
-                        Application.isBatchMode
-                        && TransportConfig.AutoStartMode != NPCNetworkAutoStartMode.Manual
-                    )
-                ) && Application.isPlaying
-            )
-            {
-                StartConfiguredMode();
-            }
+            // Intentionally empty — network start is sequenced by NPCSceneInitializationController
+            // Phase 8 (Spawning). This ensures all services initialize before networking starts.
         }
 
         static bool HasCommandLineArg(string argName)

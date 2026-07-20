@@ -5,21 +5,10 @@ using NPCSystem.Monitoring;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-
 using NPCSystem.Dialogue.Core;
 using NPCSystem.Network.Core;
-using NPCSystem.Character.Player;
-using NPCSystem.Auth;
-using NPCSystem.Items;
-using NPCSystem.LocalAI;
-using NPCSystem.Initialization;
 using NPCSystem.Network.Bridges;
-using NPCSystem.Dialogue.Core;
-using NPCSystem.Character.NPC;
-using NPCSystem.Dialogue.Session;
-using NPCSystem.Dialogue.UI;
-using NPCSystem.Dialogue.RAG;
-using NPCSystem.Dialogue.Persistence;
+
 namespace NPCSystem.Initialization
 {
     public enum NPCSceneInitializationPhase
@@ -34,6 +23,18 @@ namespace NPCSystem.Initialization
         Spawning,
     }
 
+    /// <summary>
+    /// Single orchestrator for all scene initialization.
+    ///
+    /// CONTRACT:
+    /// - Every component's Start() is empty — no self-init, no fire-and-forget.
+    /// - All references are serialized in the Inspector (no FindAnyObjectByType).
+    /// - On WebGL, Phases 1-2 run immediately (logger + ref validation),
+    ///   Phases 3-8 run on explicit ContinueInitializationAsync() after scene load.
+    /// - On all other platforms, all 8 phases run in Start().
+    /// - If a required serialized reference is null, the pipeline logs an error
+    ///   and skips that phase — the scene is misconfigured.
+    /// </summary>
     [DefaultExecutionOrder(-2000)]
     [DisallowMultipleComponent]
     public sealed class NPCSceneInitializationController : MonoBehaviour
@@ -59,7 +60,7 @@ namespace NPCSystem.Initialization
         public bool ConfigureNetworkTransport => _configureNetworkTransport;
         public bool StartNetworkingAfterInitialization => _startNetworkingAfterInitialization;
 
-        [Header("References")]
+        [Header("References — all must be serialized in Inspector")]
         [FormerlySerializedAs("FlowLogger")]
         [SerializeField]
         NPCFlowLogger _flowLogger;
@@ -79,7 +80,7 @@ namespace NPCSystem.Initialization
         [SerializeField]
         NPCDialogueSmokeValidator _smokeValidator;
 
-        [Header("Startup")]
+        [Header("Startup Flags")]
         [FormerlySerializedAs("InitializeOnStart")]
         [SerializeField]
         bool _initializeOnStart = true;
@@ -88,7 +89,7 @@ namespace NPCSystem.Initialization
         bool _configureNetworkTransport = false;
 
         [Tooltip(
-            "If true, initializes the dialogue manager immediately during scene start. Set to false to delay initialization until after player login (recommended for WebGL memory-smart start)."
+            "If true, initializes the dialogue manager during scene initialization. Set to false to delay initialization until after player login (recommended for WebGL memory-smart start)."
         )]
         [FormerlySerializedAs("InitializeDialogueManager")]
         [SerializeField]
@@ -107,49 +108,75 @@ namespace NPCSystem.Initialization
         bool _startNetworkingAfterInitialization = false;
 
         bool _started;
+        bool _deferredStartRequested;
         Task _initializationTask;
 
         public bool IsInitialized =>
             _initializationTask != null && _initializationTask.IsCompletedSuccessfully;
         public Task InitializationTask => _initializationTask;
 
+        /// <summary>
+        /// If true, only Phases 1-2 ran and the rest are pending ContinueInitializationAsync().
+        /// </summary>
+        public bool IsDeferred =>
+            !_started && _deferredStartRequested && _initializationTask == null;
+
         void Reset()
         {
-            ResolveReferences();
+            // Reset logs a warning if references are null — sets up the developer.
+            ValidateSerializedReferences();
         }
 
         void OnValidate()
         {
             if (!Application.isPlaying)
             {
-                ResolveReferences();
+                ValidateSerializedReferences();
             }
         }
 
         void Awake()
         {
-            ResolveReferences();
+            ValidateSerializedReferences();
         }
 
         async void Start()
         {
             if (!_initializeOnStart)
                 return;
-            if (ShouldDeferInitializationForWebGL())
+
+            if (Application.platform == RuntimePlatform.WebGLPlayer)
             {
-                _flowLogger = _flowLogger != null ? _flowLogger : NPCFlowLogger.FindOrCreate();
-                _flowLogger.Log(
-                    NPCFlowStage.SceneBootstrap,
-                    NPCFlowStatus.Skipped,
-                    NPCFlowLogLevel.Info,
-                    "Deferred automatic scene initialization for WebGL startup to avoid browser bootstrap instability. Call InitializeSceneAsync after the page finishes loading and the player is ready.",
-                    source: nameof(NPCSceneInitializationController)
-                );
+                // WebGL: run Phases 1-2 immediately (logger + ref validation),
+                // defer Phases 3-8 to ContinueInitializationAsync().
+                await RunPhasesAsync(0, 2);
+                _deferredStartRequested = true;
                 return;
             }
+
             await InitializeSceneAsync();
         }
 
+        /// <summary>
+        /// Continue WebGL initialization after the scene is fully loaded.
+        /// Runs Phases 3-8 (Transport, Dialogue, Backend, Bridge, Validation, Spawning).
+        /// Safe to call multiple times — only the first call has effect.
+        /// </summary>
+        public Task ContinueInitializationAsync()
+        {
+            if (!_deferredStartRequested)
+                throw new InvalidOperationException(
+                    "ContinueInitializationAsync() is only valid on WebGL after Start() deferred the pipeline."
+                );
+
+            _initializationTask ??= RunPhasesAsync(2, OrderedPhases.Length);
+            return _initializationTask;
+        }
+
+        /// <summary>
+        /// Run the full pipeline immediately (all 8 phases).
+        /// Used from ContextMenu or external triggers on all platforms.
+        /// </summary>
         [ContextMenu("Initialize Scene")]
         public async void InitializeSceneFromContextMenu()
         {
@@ -158,30 +185,33 @@ namespace NPCSystem.Initialization
 
         public Task InitializeSceneAsync()
         {
-            _initializationTask ??= InitializeSceneInternalAsync();
+            _initializationTask ??= RunPhasesAsync(0, OrderedPhases.Length);
             return _initializationTask;
         }
 
-        bool ShouldDeferInitializationForWebGL()
+        async Task RunPhasesAsync(int startIndex, int endIndex)
         {
-            return Application.platform == RuntimePlatform.WebGLPlayer;
-        }
-
-        async Task InitializeSceneInternalAsync()
-        {
-            if (_started)
+            if (_started && startIndex == 0)
                 return;
-            _started = true;
 
-            foreach (NPCSceneInitializationPhase phase in OrderedPhases)
+            if (_started && startIndex > 0)
             {
-                await RunPhaseAsync(phase);
+                // Allow continuation from a deferred state only once
+                if (!_deferredStartRequested)
+                    return;
+            }
+
+            _started = startIndex == 0;
+
+            for (int i = startIndex; i < endIndex; i++)
+            {
+                await RunPhaseAsync(OrderedPhases[i]);
             }
         }
 
         async Task RunPhaseAsync(NPCSceneInitializationPhase phase)
         {
-            NPCFlowLogger logger = _flowLogger ?? NPCFlowLogger.FindOrCreate();
+            NPCFlowLogger logger = _flowLogger;
             using var scope = NPCFlowScope.Start(
                 logger,
                 NPCFlowStage.SceneBootstrap,
@@ -194,114 +224,133 @@ namespace NPCSystem.Initialization
                 switch (phase)
                 {
                     case NPCSceneInitializationPhase.Logger:
-                        _flowLogger = logger;
-                        // Initialize Datadog RUM tracking consent (WebGL compliance).
-                        // Consent starts as "pending" (no data collected) and is only
-                        // set to "granted" when the user accepts the privacy dialog.
-                        // On non-WebGL platforms this is a safe no-op.
-                        DatadogConsent.Grant();
-
-                        // Initialize TelemetryRouter with file and Datadog sinks.
-                        TelemetryBootstrapper.Initialize(
-                            sessionId: SystemInfo.deviceUniqueIdentifier,
-                            metricPrefix: "npc",
-                            enableFileSink: true,
-                            enableDatadogSink: true
+                        // DatadogConsent, TelemetryBootstrapper, and Datadog init
+                        // are handled by NPCFlowLogger.Awake() at order -3000.
+                        // This phase exists only to capture the logger reference
+                        // and log that the pipeline started.
+                        logger?.Log(
+                            NPCFlowStage.SceneBootstrap,
+                            NPCFlowStatus.Start,
+                            NPCFlowLogLevel.Info,
+                            "Scene initialization pipeline started.",
+                            source: nameof(NPCSceneInitializationController)
                         );
                         break;
+
                     case NPCSceneInitializationPhase.SceneReferences:
-                        ResolveReferences();
+                        ValidateSerializedReferences();
                         break;
 
                     case NPCSceneInitializationPhase.NetworkTransport:
-                        if (_configureNetworkTransport && _networkBootstrap != null)
+                        if (!_configureNetworkTransport)
                         {
-                            _networkBootstrap.ApplyTransportConfiguration();
+                            logger?.Log(
+                                NPCFlowStage.SceneBootstrap,
+                                NPCFlowStatus.Skipped,
+                                NPCFlowLogLevel.Debug,
+                                "Network transport configuration is disabled (_configureNetworkTransport = false).",
+                                source: nameof(NPCSceneInitializationController)
+                            );
+                            break;
                         }
+                        if (_networkBootstrap == null)
+                        {
+                            LogMissingRef(logger, "_networkBootstrap (NPCNetworkBootstrap)");
+                            break;
+                        }
+                        _networkBootstrap.ApplyTransportConfiguration();
                         break;
 
                     case NPCSceneInitializationPhase.DialogueServices:
-                        if (_initializeDialogueManager && _dialogueManager != null)
+                        if (!_initializeDialogueManager)
                         {
-                            await _dialogueManager.InitializeAsync();
+                            logger?.Log(
+                                NPCFlowStage.SceneBootstrap,
+                                NPCFlowStatus.Skipped,
+                                NPCFlowLogLevel.Debug,
+                                "Dialogue manager initialization is disabled (_initializeDialogueManager = false).",
+                                source: nameof(NPCSceneInitializationController)
+                            );
+                            break;
                         }
+                        if (_dialogueManager == null)
+                        {
+                            LogMissingRef(logger, "_dialogueManager (NPCDialogueManager)");
+                            break;
+                        }
+                        await _dialogueManager.InitializeAsync();
                         break;
 
                     case NPCSceneInitializationPhase.BackendReadiness:
-                        if (_verifyBackendsDuringInitialization && _backendReadiness != null)
+                        if (!_verifyBackendsDuringInitialization)
+                        {
+                            logger?.Log(
+                                NPCFlowStage.SceneBootstrap,
+                                NPCFlowStatus.Skipped,
+                                NPCFlowLogLevel.Debug,
+                                "Backend readiness verification is disabled (_verifyBackendsDuringInitialization = false).",
+                                source: nameof(NPCSceneInitializationController)
+                            );
+                            break;
+                        }
+                        if (_backendReadiness == null)
+                        {
+                            LogMissingRef(logger, "_backendReadiness (NPCBackendReadinessService)");
+                            break;
+                        }
                         {
                             bool probeLocalAi =
                                 _initializeDialogueManager
-                                && (_dialogueManager != null && _dialogueManager.InitializeOnStart);
+                                && _dialogueManager != null
+                                && _dialogueManager.InitializeOnStart;
                             await _backendReadiness.ProbeAsync(probeLocalAi);
                         }
                         break;
 
                     case NPCSceneInitializationPhase.NetworkBridge:
-                        if (_initializeNetworkBridge && _networkBridge != null)
+                        if (!_initializeNetworkBridge)
                         {
-                            await _networkBridge.InitializeAsync();
+                            logger?.Log(
+                                NPCFlowStage.SceneBootstrap,
+                                NPCFlowStatus.Skipped,
+                                NPCFlowLogLevel.Debug,
+                                "Network bridge initialization is disabled (_initializeNetworkBridge = false).",
+                                source: nameof(NPCSceneInitializationController)
+                            );
+                            break;
                         }
+                        if (_networkBridge == null)
+                        {
+                            LogMissingRef(logger, "_networkBridge (NPCDialogueNetworkBridge)");
+                            break;
+                        }
+                        await _networkBridge.InitializeAsync();
                         break;
 
                     case NPCSceneInitializationPhase.Validation:
-                        if (_validateAfterInitialization && _smokeValidator != null)
+                        if (!_validateAfterInitialization)
                         {
-                            if (_dialogueManager != null && !_dialogueManager.IsInitialized)
-                            {
-                                logger.Log(
-                                    NPCFlowStage.SceneBootstrap,
-                                    NPCFlowStatus.Skipped,
-                                    NPCFlowLogLevel.Info,
-                                    "Skipped scene initialization smoke validation because dialogue manager is not initialized yet (deferred loading active).",
-                                    source: nameof(NPCSceneInitializationController),
-                                    data: new Dictionary<string, object>
-                                    {
-                                        ["phase"] = phase.ToString(),
-                                    }
-                                );
-                            }
-                            else
-                            {
-                                await _smokeValidator.ValidateConfiguration();
-                            }
-                        }
-                        break;
-
-                    case NPCSceneInitializationPhase.Spawning:
-                        if (_startNetworkingAfterInitialization && _networkBootstrap != null)
-                        {
-                            bool skipForBatchmodeBootstrap =
-                                Application.isBatchMode
-                                && _networkBootstrap.TransportConfig.AutoStartMode
-                                    != NPCNetworkAutoStartMode.Manual;
-
-                            if (skipForBatchmodeBootstrap)
-                            {
-                                logger.Log(
-                                    NPCFlowStage.SceneBootstrap,
-                                    NPCFlowStatus.Skipped,
-                                    NPCFlowLogLevel.Info,
-                                    "Skipped scene initialization network start because batchmode bootstrap auto-start is active.",
-                                    source: nameof(NPCSceneInitializationController),
-                                    data: new Dictionary<string, object>
-                                    {
-                                        ["phase"] = phase.ToString(),
-                                        ["autoStartMode"] =
-                                            _networkBootstrap.TransportConfig.AutoStartMode.ToString(),
-                                    }
-                                );
-                                break;
-                            }
-
-                            bool started = _networkBootstrap.StartConfiguredMode();
-                            logger.Log(
+                            logger?.Log(
                                 NPCFlowStage.SceneBootstrap,
-                                started ? NPCFlowStatus.Success : NPCFlowStatus.Skipped,
-                                started ? NPCFlowLogLevel.Info : NPCFlowLogLevel.Warning,
-                                started
-                                    ? "NetworkManager started from scene initialization controller."
-                                    : "NetworkManager start skipped by scene initialization controller.",
+                                NPCFlowStatus.Skipped,
+                                NPCFlowLogLevel.Debug,
+                                "Post-init validation is disabled (_validateAfterInitialization = false).",
+                                source: nameof(NPCSceneInitializationController)
+                            );
+                            break;
+                        }
+                        if (_smokeValidator == null)
+                        {
+                            LogMissingRef(logger, "_smokeValidator (NPCDialogueSmokeValidator)");
+                            break;
+                        }
+                        if (_dialogueManager != null && !_dialogueManager.IsInitialized)
+                        {
+                            logger?.Log(
+                                NPCFlowStage.SceneBootstrap,
+                                NPCFlowStatus.Skipped,
+                                NPCFlowLogLevel.Info,
+                                "Skipped smoke validation because dialogue manager is not initialized yet (deferred loading active).",
                                 source: nameof(NPCSceneInitializationController),
                                 data: new Dictionary<string, object>
                                 {
@@ -309,6 +358,66 @@ namespace NPCSystem.Initialization
                                 }
                             );
                         }
+                        else
+                        {
+                            await _smokeValidator.ValidateConfiguration();
+                        }
+                        break;
+
+                    case NPCSceneInitializationPhase.Spawning:
+                        if (!_startNetworkingAfterInitialization)
+                        {
+                            logger?.Log(
+                                NPCFlowStage.SceneBootstrap,
+                                NPCFlowStatus.Skipped,
+                                NPCFlowLogLevel.Debug,
+                                "Network start after init is disabled (_startNetworkingAfterInitialization = false).",
+                                source: nameof(NPCSceneInitializationController)
+                            );
+                            break;
+                        }
+                        if (_networkBootstrap == null)
+                        {
+                            LogMissingRef(logger, "_networkBootstrap (NPCNetworkBootstrap)");
+                            break;
+                        }
+
+                        // In batch mode, the bootstrap already handled auto-start in Awake()
+                        // via CLI args (see NPCNetworkBootstrap.Awake). Skip here to avoid double-start.
+                        if (Application.isBatchMode
+                            && _networkBootstrap.TransportConfig.AutoStartMode
+                                != NPCNetworkAutoStartMode.Manual)
+                        {
+                            logger?.Log(
+                                NPCFlowStage.SceneBootstrap,
+                                NPCFlowStatus.Skipped,
+                                NPCFlowLogLevel.Info,
+                                "Skipped network start because batchmode bootstrap is handling it via CLI args.",
+                                source: nameof(NPCSceneInitializationController),
+                                data: new Dictionary<string, object>
+                                {
+                                    ["phase"] = phase.ToString(),
+                                    ["autoStartMode"] =
+                                        _networkBootstrap.TransportConfig.AutoStartMode.ToString(),
+                                }
+                            );
+                            break;
+                        }
+
+                        bool started = _networkBootstrap.StartConfiguredMode();
+                        logger?.Log(
+                            NPCFlowStage.SceneBootstrap,
+                            started ? NPCFlowStatus.Success : NPCFlowStatus.Skipped,
+                            started ? NPCFlowLogLevel.Info : NPCFlowLogLevel.Warning,
+                            started
+                                ? "NetworkManager started from scene initialization controller."
+                                : "NetworkManager start skipped by scene initialization controller.",
+                            source: nameof(NPCSceneInitializationController),
+                            data: new Dictionary<string, object>
+                            {
+                                ["phase"] = phase.ToString(),
+                            }
+                        );
                         break;
 
                     default:
@@ -326,7 +435,7 @@ namespace NPCSystem.Initialization
             }
             catch (Exception ex)
             {
-                logger.Log(
+                logger?.Log(
                     NPCFlowStage.SceneBootstrap,
                     NPCFlowStatus.Error,
                     NPCFlowLogLevel.Warning,
@@ -345,35 +454,75 @@ namespace NPCSystem.Initialization
             }
         }
 
-        public void ResolveReferences()
+        /// <summary>
+        /// Validates that all serialized references are assigned in the Inspector.
+        /// Logs warnings for null references — the pipeline will skip their phases.
+        /// Does NOT search for references via FindAnyObjectByType — scene wiring is mandatory.
+        /// </summary>
+        void ValidateSerializedReferences()
         {
+            var missing = new List<string>();
+
             if (_flowLogger == null)
-                _flowLogger = NPCFlowLogger.FindOrCreate();
-
+                missing.Add("_flowLogger (NPCFlowLogger)");
+            // _networkBootstrap and others are optional depending on flags
             if (_networkBootstrap == null)
-                _networkBootstrap = FindAnyObjectByType<NPCNetworkBootstrap>(
-                    FindObjectsInactive.Include
-                );
-
+                missing.Add("_networkBootstrap (NPCNetworkBootstrap)");
             if (_dialogueManager == null)
-                _dialogueManager = FindAnyObjectByType<NPCDialogueManager>(
-                    FindObjectsInactive.Include
-                );
-
-            if (_networkBridge == null)
-                _networkBridge = FindAnyObjectByType<NPCDialogueNetworkBridge>(
-                    FindObjectsInactive.Include
-                );
-
+                missing.Add("_dialogueManager (NPCDialogueManager)");
             if (_backendReadiness == null)
-                _backendReadiness = FindAnyObjectByType<NPCBackendReadinessService>(
-                    FindObjectsInactive.Include
-                );
-
+                missing.Add("_backendReadiness (NPCBackendReadinessService)");
+            if (_networkBridge == null)
+                missing.Add("_networkBridge (NPCDialogueNetworkBridge)");
             if (_smokeValidator == null)
-                _smokeValidator = FindAnyObjectByType<NPCDialogueSmokeValidator>(
-                    FindObjectsInactive.Include
+                missing.Add("_smokeValidator (NPCDialogueSmokeValidator)");
+
+            if (missing.Count == 0)
+                return;
+
+            string msg =
+                "Scene initialization controller is missing serialized references: "
+                + string.Join(", ", missing)
+                + ". "
+                + "Drag the required components into the Inspector slots. "
+                + "FindAnyObjectByType is not used — all dependencies must be wired in the scene.";
+
+            if (_flowLogger != null)
+            {
+                _flowLogger.Log(
+                    NPCFlowStage.ConfigurationValidation,
+                    NPCFlowStatus.Warning,
+                    NPCFlowLogLevel.Warning,
+                    msg,
+                    source: nameof(NPCSceneInitializationController)
                 );
+            }
+            else
+            {
+                Debug.LogWarning($"[{nameof(NPCSceneInitializationController)}] {msg}");
+            }
+        }
+
+        static void LogMissingRef(NPCFlowLogger logger, string refName)
+        {
+            string msg =
+                $"Cannot run phase because serialized reference {refName} is null. "
+                + "Wire it in the Inspector — FindAnyObjectByType is not used.";
+
+            if (logger != null)
+            {
+                logger.Log(
+                    NPCFlowStage.ConfigurationValidation,
+                    NPCFlowStatus.Error,
+                    NPCFlowLogLevel.Error,
+                    msg,
+                    source: nameof(NPCSceneInitializationController)
+                );
+            }
+            else
+            {
+                Debug.LogError($"[{nameof(NPCSceneInitializationController)}] {msg}");
+            }
         }
     }
 }

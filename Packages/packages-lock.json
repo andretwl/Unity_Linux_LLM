@@ -472,9 +472,9 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.transport": {
-      "version": "file:com.unity.transport",
+      "version": "6.5.0",
       "depth": 0,
-      "source": "embedded",
+      "source": "builtin",
       "dependencies": {
         "com.unity.collections": "6.5.0",
         "com.unity.burst": "1.8.24",

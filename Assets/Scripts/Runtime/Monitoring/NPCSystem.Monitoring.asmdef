@@ -1,0 +1,1 @@
+{"name":"NPCSystem.Monitoring","rootNamespace":"NPCSystem.Monitoring","references":["EditorAttributes","UnityEngine.TestTools","com.datadog.unity"],"includePlatforms":[],"excludePlatforms":[],"allowUnsafeCode":false,"overrideReferences":false,"precompiledReferences":[],"autoReferenced":true,"defineConstraints":[],"versionDefines":[],"noEngineReferences":false}
