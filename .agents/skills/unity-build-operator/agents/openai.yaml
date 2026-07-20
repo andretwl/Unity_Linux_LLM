@@ -1,4 +1,0 @@
-interface:
-  display_name: "Unity Build Operator"
-  short_description: "Run and repair Unity tests, builds, and WebGL stripping"
-  default_prompt: "Use $unity-build-operator to diagnose this Unity project, run the relevant tests, and produce a verified dedicated-server or WebGL build."
